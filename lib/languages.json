@@ -1,0 +1,111 @@
+{
+	"en": {
+		"YEAR": [
+			"years",
+			"year",
+			"yrs",
+			"yr",
+			"y"
+		],
+		"MONTH": [
+			"months",
+			"month",
+			"mth",
+			"mo"
+		],
+		"WEEK": [
+			"weeks",
+			"week",
+			"w"
+		],
+		"DAY": [
+			"days",
+			"day",
+			"d"
+		],
+		"HOUR": [
+			"hours",
+			"hour",
+			"hrs",
+			"hr",
+			"h"
+		],
+		"MINUTE": [
+			"minutes",
+			"minute",
+			"mins",
+			"min",
+			"m"
+		],
+		"SECOND": [
+			"seconds",
+			"second",
+			"secs",
+			"sec",
+			"segs",
+			"seg",
+			"s"
+		],
+		"MS": [
+			"milliseconds",
+			"millisecond",
+			"msecs",
+			"msec",
+			"msegs",
+			"mseg",
+			"ms"
+		]
+	},
+	"es": {
+		"YEAR": [
+			"años",
+			"año"
+		],
+		"MONTH": [
+			"meses",
+			"mes"
+		],
+		"WEEK": [
+			"semanas",
+			"semana",
+			"sem"
+		],
+		"DAY": [
+			"dias",
+			"dia",
+			"d"
+		],
+		"HOUR": [
+			"horas",
+			"hora",
+			"hrs",
+			"hr",
+			"h"
+		],
+		"MINUTE": [
+			"minutos",
+			"minuto",
+			"mins",
+			"min",
+			"m"
+		],
+		"SECOND": [
+			"segundos",
+			"segundo",
+			"secs",
+			"sec",
+			"segs",
+			"seg",
+			"s"
+		],
+		"MS": [
+			"milisegundos",
+			"milisegundo",
+			"msegs",
+			"mseg",
+			"msecs",
+			"msec",
+			"ms"
+		]
+	}
+}

@@ -1,43 +1,40 @@
 {
 	"name": "@fabricio-191/ms",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"main": "./lib/index.js",
-	"types": "./typings/index.d.ts",
+	"typings": "./lib/index.d.ts",
 	"homepage": "https://github.com/Fabricio-191/ms#readme",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Fabricio-191/ms",
-		"email" : "fabricio19110@gmail.com"
+		"email": "fabricio19110@gmail.com"
 	},
 	"bugs": {
-	  	"url": "https://github.com/Fabricio-191/ms/issues"
+		"url": "https://github.com/Fabricio-191/ms/issues"
 	},
 	"author": {
-		"name" : "Fabricio-191",
-		"email" : "fabricio19110@gmail.com",
-		"url" : "https://github.com/Fabricio-191/"
+		"name": "Fabricio-191",
+		"email": "fabricio19110@gmail.com",
+		"url": "https://github.com/Fabricio-191/"
 	},
 	"license": "Apache License 2.0",
 	"description": "Tiny millisecond conversion utility",
 	"deprecated": false,
-	"devDependencies": {
-		"babel-eslint": "^10.1.0",
-		"eslint": "4.18.2",
-		"expect.js": "0.3.1",
-		"mocha": "^8.3.2"
-	},
 	"scripts": {
 		"lint": "eslint lib --fix",
 		"test": "mocha lib/tests.js"
 	},
 	"keywords": [
-		"ms",
-		"spanish",
-		"español"
+		"ms"
 	],
 	"funding": {
-		"type" : "patreon",
-		"url" : "https://www.patreon.com/fabricio_191"
+		"type": "patreon",
+		"url": "https://www.patreon.com/fabricio_191"
+	},
+	"dependencies": {
+		"babel-eslint": "^10.1.0",
+		"eslint": "^7.22.0",
+		"expect.js": "^0.3.1",
+		"mocha": "^8.3.2"
 	}
-  }
-  
+}
