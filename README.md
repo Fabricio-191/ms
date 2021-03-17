@@ -14,20 +14,20 @@ But now is quite different with multi-language support and multiple args
 ```js
 const ms = require('@fabricio-191/ms');
 
-ms('2 days')  // 172800000
-ms('1d')      // 86400000
-ms('10h')     // 36000000
-ms('2.5 hrs') // 9000000
-ms('2h')      // 7200000
-ms('1y')      // 31557600000
-ms('100')     // 100
-ms('-3 days') // -259200000
-ms('.5m') // 300000
-ms('-.5 mins'); //-150000
-ms('-1h1h')   // 0
+ms('2 days')        // 172800000
+ms('1d')            // 86400000
+ms('10h')           // 36000000
+ms('2.5 hrs')       // 9000000
+ms('2h')            // 7200000
+ms('1y')            // 31557600000
+ms('100')           // 100
+ms('-3 days')       // -259200000
+ms('.5m')           // 30000
+ms('-.5 mins');     //-30000
+ms('-1h1h')         // 0
 ms('1 week 2 day'); // 777600000
-ms('1m10secs')// 70000
-ms('5s50ms')  // 5050
+ms('1m10secs')      // 70000
+ms('5s50ms')        // 5050
 ms('1 day', { language: 'es' }); // NaN (wrong language)
 ms('1 dia', { language: 'es' }); // 86400000
 
@@ -43,8 +43,12 @@ ms('2.5 horas 30 minutes', { languages: ['en', 'es'] }); // 10800000
 
 //  5.5 minutes 2 days 30 seconds -0.5 hours
 ms('5.5 minute, 2 days asdw 30s rqw -.5hour'); // 171360000
+```
 
-//bad input
+## Bad inputs
+* This is different against ms
+
+```js
 ms(''); // null
 ms(undefined); // null
 ms(null); // null
@@ -55,14 +59,12 @@ ms(Infinity); // null
 ms(-Infinity); // null
 ms('absda'); //NaN
 ms('123nothing'); //NaN
+ms('123 minutesabc'); //NaN
 
-//result may be (depend on the input) NaN or null
-//Simply use isNaN
-
+//To check the result just use isNaN
 if(isNaN(result)){
 	//...
 }
-
 ```
 
 # Format

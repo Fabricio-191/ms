@@ -41,8 +41,8 @@
 			"seconds",
 			"second",
 			"secs",
-			"sec",
 			"segs",
+			"sec",
 			"seg",
 			"s"
 		],
@@ -50,8 +50,8 @@
 			"milliseconds",
 			"millisecond",
 			"msecs",
-			"msec",
 			"msegs",
+			"msec",
 			"mseg",
 			"ms"
 		]
@@ -93,8 +93,8 @@
 			"segundos",
 			"segundo",
 			"secs",
-			"sec",
 			"segs",
+			"sec",
 			"seg",
 			"s"
 		],
@@ -102,8 +102,8 @@
 			"milisegundos",
 			"milisegundo",
 			"msegs",
-			"mseg",
 			"msecs",
+			"mseg",
 			"msec",
 			"ms"
 		]
