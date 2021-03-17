@@ -1,6 +1,6 @@
 {
 	"name": "@fabricio-191/ms",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"main": "./lib/index.js",
 	"typings": "./lib/index.d.ts",
 	"homepage": "https://github.com/Fabricio-191/ms#readme",
@@ -31,7 +31,7 @@
 		"type": "patreon",
 		"url": "https://www.patreon.com/fabricio_191"
 	},
-	"dependencies": {
+	"devDependencies": {
 		"babel-eslint": "^10.1.0",
 		"eslint": "^7.22.0",
 		"expect.js": "^0.3.1",
