@@ -19,24 +19,20 @@ ms('1d')      // 86400000
 ms('10h')     // 36000000
 ms('2.5 hrs') // 9000000
 ms('2h')      // 7200000
-ms('1m')      // 60000
-ms('5s')      // 5000
 ms('1y')      // 31557600000
 ms('100')     // 100
 ms('-3 days') // -259200000
-ms('-1h')     // -3600000
-ms('-200')    // -200
-
-//other languages
+ms('.5m') // 300000
+ms('-.5 mins'); //-150000
+ms('-1h1h')   // 0
+ms('1 week 2 day'); // 777600000
+ms('1m10secs')// 70000
+ms('5s50ms')  // 5050
 ms('1 day', { language: 'es' }); // NaN (wrong language)
 ms('1 dia', { language: 'es' }); // 86400000
 
-//multiple languages
-ms('12 seconds', { languages: ['en', 'es'] }); // 12000
-ms('-3 minutos', { languages: ['en', 'es'] }); // -180000
-
-//multiple args
-ms('1 week 2 day'); // 777600000
+ms('12 seconds', { languages: ['en', 'es'] }); // 12000 (english)
+ms('-3 minutos', { languages: ['en', 'es'] }); // -180000 (spanish)
 
 //multiple args and multiple languages
 ms('2 minutes 15 seconds', { languages: ['en', 'es'] }); // 135000
@@ -45,11 +41,28 @@ ms('2 minutos 15 segundos', { languages: ['en', 'es'] }); // 135000
 //multiple args and multiple languages in the same string
 ms('2.5 horas 30 minutes', { languages: ['en', 'es'] }); // 10800000
 
-//other
-ms('-.5 mins'); //-150000
-
 //  5.5 minutes 2 days 30 seconds -0.5 hours
 ms('5.5 minute, 2 days asdw 30s rqw -.5hour'); // 171360000
+
+//bad input
+ms(''); // null
+ms(undefined); // null
+ms(null); // null
+ms([]); // null
+ms({}); // null
+ms(NaN); // null
+ms(Infinity); // null
+ms(-Infinity); // null
+ms('absda'); //NaN
+ms('123nothing'); //NaN
+
+//result may be (depend on the input) NaN or null
+//Simply use isNaN
+
+if(isNaN(result)){
+	//...
+}
+
 ```
 
 # Format
@@ -58,6 +71,8 @@ ms('5.5 minute, 2 days asdw 30s rqw -.5hour'); // 171360000
 
 ```js
 const num = 1412440000;
+
+//if not a number is introduced it will return null
 
 //default quantity = 3
 ms(num); //16d 8h 20m
