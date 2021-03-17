@@ -22,7 +22,8 @@
 	"deprecated": false,
 	"scripts": {
 		"lint": "eslint lib --fix",
-		"test": "mocha lib/tests.js"
+		"test": "mocha lib/tests.js",
+		"git": "git add . && git commit -m - && git push"
 	},
 	"keywords": [
 		"ms"
