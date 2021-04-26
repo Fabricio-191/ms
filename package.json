@@ -21,7 +21,7 @@
 	"description": "Tiny millisecond conversion utility",
 	"deprecated": false,
 	"scripts": {
-		"lint": "eslint lib --fix",
+		"lint": "eslint . --fix",
 		"test": "mocha lib/tests.js",
 		"git": "git add . && git commit -m - && git push"
 	},

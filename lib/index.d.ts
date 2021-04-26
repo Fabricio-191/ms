@@ -1,17 +1,28 @@
 type language = 'en' | 'es';
 type ParseOptions = {
-	/* Language to use in the operation */
+	/** Language to use in the operation */
 	language?: language | 'all';
+	languages?: never;
 } | {
-	/* Languages to use in the operation */
+	/** Language to use in the operation */
 	languages?: language[] | 'all';
-}
+	language?: never;
+};
 
-interface FormatOptions extends ParseOptions{
-	/* Whenether to use weeks or months when formatting */
+interface FormatOptions {
+	/** Language to use in the operation */
+	language?: language;
+	/** Whenether to use weeks or months when formatting */
 	useWeeks?: boolean;
-	/* Whenether to long notations when formatting */
+	/** Whenether to long notations when formatting */
 	long?: boolean;
+	/**
+	 * Max notations that the result can have
+	 * @deprecated use 'length'
+	*/
+	quantity?: number;
+	/** Max notations that the result can have */
+	length?: number;
 }
 
 /**
