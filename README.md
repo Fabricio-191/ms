@@ -24,7 +24,6 @@ ms('100');           // 100
 ms('-3 days');       // -259200000
 ms('.5m');           // 30000
 ms('-.5 mins');      // -30000
-ms('-1h1h');         // 0 (i need to change/improve this)
 ms('0 seconds');     // 0
 ms('1m10secs');      // 70000
 ms('5s50ms');        // 5050
@@ -39,6 +38,8 @@ ms('2 minutos 15 segundos', 'all'); // 135000
 ms('2.5 horas 30 minutes', 'all');  // 10800000
 
 ms('5.5 minute, 2 days asdw 30s rqw -.5hour'); // 171360000
+
+ms('-1h1h');         // 0 (i need to change/improve this)
 ```
 
 ## Format

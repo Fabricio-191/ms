@@ -1,6 +1,6 @@
 {
 	"name": "@fabricio-191/ms",
-	"version": "1.0.4-2",
+	"version": "1.2.0-0",
 	"main": "./lib/index.js",
 	"typings": "./typings/index.d.ts",
 	"homepage": "https://github.com/Fabricio-191/ms#readme",
@@ -26,7 +26,11 @@
 		"git": "git pull && git add . && git commit -m - && git push"
 	},
 	"keywords": [
-		"ms"
+		"ms", 
+		"milisecond",
+		"utility",
+		"conversion",
+		"parse"
 	],
 	"funding": {
 		"type": "patreon",
