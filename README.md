@@ -75,8 +75,8 @@ ms(num, { long: true, language: 'es' }); //16 dias 8 horas 20 minutos
 	ms(1412440000); //16d 8h 20m
 	ms(1412440000, { format: 'HS' }); //392h 1240s
 
-	ms(41200994000, { format: 'WDHM', length: 2 }); //15mo 2w 6d
-	ms(41200994000, { format: 'WDHM', length: 8 }); //15mo 2w 6d 7h 13m
+	ms(41200994000, { format: 'WDHM', length: 2 }); //6w 5d
+	ms(41200994000, { format: 'WDHM', length: 8 }); //6w 5d 11h 9m
 	```
 </details>
 

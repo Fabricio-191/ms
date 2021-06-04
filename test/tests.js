@@ -87,6 +87,15 @@ describe('parse', () => {
 		expect(ms('1.5 hours', langs)).toBe(5400000);
 		expect(ms('5.5 minutes, 2 dias asdw 30 secs rqw-.5 horas', langs)).toBe(171360000);
 	});
+
+	it('undesirable expected behavior (to fix)', () => {
+		expect(ms('2,1 secs')).toBe(1000);
+		expect(ms('300,000 ms')).toBe(0);
+		expect(ms('3,000,000')).toBe(null);
+		expect(ms('3.000.000')).toBe(null);
+		expect(ms('3.000.000,6')).toBe(6);
+		expect(ms('-1hr 1hr')).toBe(0);
+	});
 });
 
 describe('format', () => {
@@ -156,6 +165,7 @@ describe('format', () => {
 	});
 
 	it('formats', () => {
+		expect(ms(1244122144, { format: 'WDHM' })).toBe('2w 9h 35m');
 		expect(ms(1244122144, { format: 'WDHM', long: true })).toBe('2 weeks 9 hours 35 minutes');
 		expect(ms(1244122144, { format: 'WDHM', long: true, length: 1 })).toBe('2 weeks');
 		expect(ms(1244122312344, { long: true, length: 8 })).toBe(
