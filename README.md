@@ -38,8 +38,6 @@ ms('2 minutos 15 segundos', 'all'); // 135000
 ms('2.5 horas 30 minutes', 'all');  // 10800000
 
 ms('5.5 minute, 2 days asdw 30s rqw -.5hour'); // 171360000
-
-ms('-1h1h');         // 0 (i need to change/improve this)
 ```
 
 ## Format
@@ -56,7 +54,7 @@ ms(num, { long: true, language: 'es' }); //16 dias 8 horas 20 minutos
 ```
 
 <details>
-	<summary>Format</summary>
+	<summary>Formats</summary>
 
 	The full format would be `YMoWDHMSMs`
 

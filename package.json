@@ -22,7 +22,7 @@
 	"deprecated": false,
 	"scripts": {
 		"lint": "eslint . --fix",
-		"test": "mocha test/tests.js",
+		"test": "mocha lib/tests.js",
 		"git": "git pull && git add . && git commit -m - && git push"
 	},
 	"keywords": [
