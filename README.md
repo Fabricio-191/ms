@@ -1,3 +1,26 @@
+<style>
+details {
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: .5em .5em 0;
+}
+
+summary {
+    font-weight: bold;
+    margin: -.5em -.5em 0;
+    padding: .5em;
+}
+
+details[open] {
+    padding: .5em;
+}
+
+details[open] summary {
+    border-bottom: 1px solid #aaa;
+    margin-bottom: .5em;
+}
+
+</style>
 <a href="https://www.buymeacoffee.com/Fabricio191" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="135"></a>
 [![Discord](https://img.shields.io/discord/555535212461948936?style=for-the-badge&color=7289da)](https://discord.gg/zrESMn6)
 [![Issues](https://img.shields.io/github/issues/Fabricio-191/ms?style=for-the-badge)](https://github.com/Fabricio-191/ms/issues)
@@ -54,29 +77,30 @@ ms(num, { long: true, language: 'es' }); //16 dias 8 horas 20 minutos
 ```
 
 <details>
-	<summary>Formats</summary>
+<summary>Formats</summary>
+	
+The full format would be `YMoWDHMSMs`
 
-	The full format would be `YMoWDHMSMs`
+* `Y`: year
+* `Mo`: month
+* `W`: week
+* `D`: day
+* `H`: hour
+* `M`: minute
+* `S`: second
+* `Ms`: milisecond
 
-	* `Y`: year
-	* `Mo`: month
-	* `W`: week
-	* `D`: day
-	* `H`: hour
-	* `M`: minute
-	* `S`: second
-	* `Ms`: mili second
+The default format is `YMoDHMSMs` (without weeks)
 
-	The default format is `YMoDHMSMs` (without weeks)
+```js
+ms(1412440000); //16d 8h 20m
+ms(1412440000, { format: 'HS' }); //392h 1240s
 
-	```js
-	ms(1412440000); //16d 8h 20m
-	ms(1412440000, { format: 'HS' }); //392h 1240s
-
-	ms(41200994000, { format: 'WDHM', length: 2 }); //6w 5d
-	ms(41200994000, { format: 'WDHM', length: 8 }); //6w 5d 11h 9m
-	```
+ms(41200994000, { format: 'WDHM', length: 2 }); //6w 5d
+ms(41200994000, { format: 'WDHM', length: 8 }); //6w 5d 11h 9m
+```
 </details>
+</br>
 
 # Supported languages
 ```js
@@ -87,17 +111,17 @@ ms(num, { long: true, language: 'es' }); //16 dias 8 horas 20 minutos
 If you want me to add a language, [contact me on Discord](https://discord.gg/zrESMn6), it is something I can do in 5 mins, but you will have to give me the translation (I guide you how)
 
 <details>
-	<summary>Extra</summary>
-	Execute this, it looks nice
+<summary>Extra</summary>
+Execute this, it looks nice
 
-	```js
-	const ms = require('@fabricio-191/ms'), years = ms('1970 years');
+```js
+const ms = require('@fabricio-191/ms'), years = ms('1970 years');
 
-	setInterval(() => {
-		process.stdout.clearLine(0);
-		process.stdout.cursorTo(0);
-		process.stdout.write(ms(Date.now() + years, { length: 8 }));
-		process.stdout.cursorTo(31);
-	}, 1);
-	```
+setInterval(() => {
+	process.stdout.clearLine(0);
+	process.stdout.cursorTo(0);
+	process.stdout.write(ms(Date.now() + years, { length: 8 }));
+	process.stdout.cursorTo(31);
+}, 1);
+```
 </details>
