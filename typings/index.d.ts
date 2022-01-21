@@ -1,5 +1,23 @@
 declare module '@fabricio-191/ms' {
-	type language = 'en' | 'es';
+	/*
+		type LANGUAGE_KEYS = 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' | 'SECOND' | 'MILLISECOND';
+
+	interface LANGUAGE {
+		[key in LANGUAGE_KEYS]: {
+			list: string[],
+			common: {
+				plural?: string,
+				singular: string,
+				short: string,
+			}
+		};
+	}
+
+	export function addLanguage(languageName: string, data: LANGUAGE): void;
+	export function checkLanguage(data: LANGUAGE): void;
+	*/
+
+	type language = 'en' | 'es' | 'ja';
 
 	interface FormatOptions {
 		/** Language to use in the operation */

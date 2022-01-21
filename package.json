@@ -3,6 +3,7 @@
 	"version": "1.2.0-2",
 	"main": "./lib/index.js",
 	"typings": "./typings/index.d.ts",
+	"type": "commonjs",
 	"homepage": "https://github.com/Fabricio-191/ms#readme",
 	"repository": {
 		"type": "git",
@@ -22,12 +23,12 @@
 	"deprecated": false,
 	"scripts": {
 		"lint": "eslint . --fix",
-		"test": "mocha lib/tests.js",
-		"git": "git pull && git add . && git commit -m - && git push"
+		"test": "mocha test/tests.js"
 	},
 	"keywords": [
 		"ms", 
 		"milisecond",
+		"util",
 		"utility",
 		"conversion",
 		"parse"

@@ -12,7 +12,7 @@
 ```js
 const ms = require('@fabricio-191/ms');
 
-ms('2 days 1 hour'); // 172800000
+ms('2 days 1 hour'); // 176400000
 ms('1 week 2 day');  // 777600000
 ms('1d');            // 86400000
 ms('10h');           // 36000000
@@ -46,14 +46,14 @@ const num = 1412440000;
 
 ms(num); //16d 8h 20m
 ms(num, { length: 2 }); //16d 8h
-ms(num, { length: 5 }); //16d 8h 20m
+ms(num, { length: 5 }); //16d 8h 20m 40s
 
 ms(num, { long: true }); //16 days 8 hours 20 minutes
 ms(num, { long: true, language: 'es' }); //16 dias 8 horas 20 minutos
 ```
 
 ### Formats
-	
+
 The full format would be `YMoWDHMSMs`
 
 * `Y`: year
@@ -71,16 +71,19 @@ The default format is `YMoDHMSMs` (without weeks)
 ms(1412440000); //16d 8h 20m
 ms(1412440000, { format: 'HS' }); //392h 1240s
 
-ms(41200994000, { format: 'WDHM', length: 2 }); //6w 5d
-ms(41200994000, { format: 'WDHM', length: 8 }); //6w 5d 11h 9m
-```
-# Supported languages
-```js
-'en' => 'English'
-'es' => 'Español'
+ms(4100940000, { format: 'WDHM', length: 2 }); //6w 5d
+ms(4100940000, { format: 'WDHM', length: 8 }); //6w 5d 11h 9m
 ```
 
-If you want me to add a language, [contact me on Discord](https://discord.gg/zrESMn6), it is something I can do in 5 mins, but you will have to give me the translation (I guide you how)
+# Supported languages
+
+```js
+'en' => 'English'
+'es' => 'Español' // Spanish
+'ja' => '日本' // Japanese
+```
+
+If you want me to add a language, [contact me on Discord](https://discord.gg/zrESMn6)
 
 <details>
 <summary>Extra</summary>
@@ -90,10 +93,11 @@ Execute this, it looks nice
 const ms = require('@fabricio-191/ms'), years = ms('1970 years');
 
 setInterval(() => {
-	process.stdout.clearLine(0);
-	process.stdout.cursorTo(0);
-	process.stdout.write(ms(Date.now() + years, { length: 8 }));
-	process.stdout.cursorTo(31);
+  process.stdout.clearLine(0);
+  process.stdout.cursorTo(0);
+  process.stdout.write(ms(Date.now() + years, { length: 8 }));
+  process.stdout.cursorTo(31);
 }, 1);
 ```
+
 </details>

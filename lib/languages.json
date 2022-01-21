@@ -1,0 +1,267 @@
+{
+	"en": {
+		"YEAR": {
+			"all": [
+				"years",
+				"year",
+				"yrs",
+				"yr",
+				"y"
+			],
+			"plural": "years",
+			"singular": "year",
+			"shortSingular": "y"
+		},
+		"MONTH": {
+			"all": [
+				"months",
+				"month",
+				"mth",
+				"mo"
+			],
+			"plural": "months",
+			"singular": "month",
+			"shortSingular": "mo"
+		},
+		"WEEK": {
+			"all": [
+				"weeks",
+				"week",
+				"w"
+			],
+			"plural": "weeks",
+			"singular": "week",
+			"shortSingular": "w"
+		},
+		"DAY": {
+			"all": [
+				"days",
+				"day",
+				"d"
+			],
+			"plural": "days",
+			"singular": "day",
+			"shortSingular": "d"
+		},
+		"HOUR": {
+			"all": [
+				"hours",
+				"hour",
+				"hrs",
+				"hr",
+				"h"
+			],
+			"plural": "hours",
+			"singular": "hour",
+			"shortSingular": "h"
+		},
+		"MINUTE": {
+			"all": [
+				"minutes",
+				"minute",
+				"mins",
+				"min",
+				"m"
+			],
+			"plural": "minutes",
+			"singular": "minute",
+			"shortSingular": "m"
+		},
+		"SECOND": {
+			"all": [
+				"seconds",
+				"second",
+				"secs",
+				"segs",
+				"sec",
+				"seg",
+				"s"
+			],
+			"plural": "seconds",
+			"singular": "second",
+			"shortSingular": "s"
+		},
+		"MS": {
+			"all": [
+				"milliseconds",
+				"millisecond",
+				"mseconds",
+				"msecond",
+				"msecs",
+				"msec",
+				"ms"
+			],
+			"plural": "milliseconds",
+			"singular": "millisecond",
+			"shortSingular": "ms"
+		}
+	},
+	"es": {
+		"YEAR": {
+			"all": [
+				"años",
+				"año"
+			],
+			"plural": "años",
+			"singular": "año",
+			"shortPlural": "años",
+			"shortSingular": "año"
+		},
+		"MONTH": {
+			"all": [
+				"meses",
+				"mes"
+			],
+			"plural": "meses",
+			"singular": "mes",
+			"shortPlural": "meses",
+			"shortSingular": "mes"
+		},
+		"WEEK": {
+			"all": [
+				"semanas",
+				"semana",
+				"sem"
+			],
+			"plural": "semanas",
+			"singular": "semana",
+			"shortSingular": "sem"
+		},
+		"DAY": {
+			"all": [
+				"dias",
+				"dia",
+				"d"
+			],
+			"plural": "dias",
+			"singular": "dia",
+			"shortSingular": "d"
+		},
+		"HOUR": {
+			"all": [
+				"horas",
+				"hora",
+				"hrs",
+				"hr",
+				"h"
+			],
+			"plural": "horas",
+			"singular": "hora",
+			"shortSingular": "h"
+		},
+		"MINUTE": {
+			"all": [
+				"minutos",
+				"minuto",
+				"mins",
+				"min",
+				"m"
+			],
+			"plural": "minutos",
+			"singular": "minuto",
+			"shortSingular": "m"
+		},
+		"SECOND": {
+			"all": [
+				"segundos",
+				"segundo",
+				"secs",
+				"segs",
+				"sec",
+				"seg",
+				"s"
+			],
+			"plural": "segundos",
+			"singular": "segundo",
+			"shortSingular": "s"
+		},
+		"MS": {
+			"all": [
+				"milisegundos",
+				"milisegundo",
+				"msegs",
+				"msecs",
+				"mseg",
+				"msec",
+				"ms"
+			],
+			"plural": "milisegundos",
+			"singular": "milisegundo",
+			"shortSingular": "ms"
+		}
+	},
+	"ja": {
+		"YEAR": {
+			"all": [
+				"とし",
+				"年"
+			],
+			"singular": "年",
+			"shortSingular": "年"
+		},
+		"MONTH": {
+			"all": [
+				"箇月 かげつ",
+				"げっかん",
+				"月間",
+				"ヶ月",
+				"つき",
+				"月"
+			],
+			"singular": "ヶ月",
+			"shortSingular": "ヶ月"
+		},
+		"WEEK": {
+			"all": [
+				"しゅう",
+				"週"
+			],
+			"singular": "週",
+			"shortSingular": "週"
+		},
+		"DAY": {
+			"all": [
+				"ひ",
+				"日"
+			],
+			"singular": "日",
+			"shortSingular": "日"
+		},
+		"HOUR": {
+			"all": [
+				"じかん",
+				"時間",
+				"じ",
+				"時"
+			],
+			"singular": "時間",
+			"shortSingular": "時間"
+		},
+		"MINUTE": {
+			"all": [
+				"ぶん",
+				"分"
+			],
+			"singular": "分",
+			"shortSingular": "分"
+		},
+		"SECOND": {
+			"all": [
+				"びょう",
+				"秒"
+			],
+			"singular": "秒",
+			"shortSingular": "秒"
+		},
+		"MS": {
+			"all": [
+				"ミリセコンド",
+				"ミリセカンド",
+				"ミリびょう",
+				"ミリ秒"
+			],
+			"singular": "ミリ秒",
+			"shortSingular": "ミリ秒"
+		}
+	}
+}
