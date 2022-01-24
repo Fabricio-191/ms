@@ -213,14 +213,17 @@
 		},
 		"WEEK": {
 			"all": [
+				"ウィーク",
 				"しゅう",
+				"週間",
 				"週"
 			],
-			"singular": "週",
-			"shortSingular": "週"
+			"singular": "週間",
+			"shortSingular": "週間"
 		},
 		"DAY": {
 			"all": [
+				"日々",
 				"ひ",
 				"日"
 			],
