@@ -1,9 +1,9 @@
 /* eslint-disable no-invalid-this */
-// @ts-nocheck
 /* eslint-env mocha */
 
+// @ts-ignore
 const ms = require('../');
-const _ms = require('ms');
+const vercelMS = require('ms');
 const {
 	createFormatArgs,
 	expect,
@@ -20,44 +20,7 @@ if(typeof global.it !== 'function'){
 
 describe('languages', () => {
 	for(const lang in LANGUAGES){
-		it(lang, () => {
-			const language = LANGUAGES[lang];
-			const keys = Object.keys(language); // ['YEAR', 'MONTH', ...]
-
-			const missingKeys = TIMES_KEYS.filter(key => !keys.includes(key));
-			if(missingKeys.length){
-				throw new Error(`does not have [${missingKeys.join(', ')}] keys`);
-			}
-
-			for(const key of keys){
-				if(key === 'REGEX') continue;
-				const notations = language[key];
-
-				if(!('all' in notations)){
-					throw new Error(`'${key}' does not have an 'all' property `);
-				}else if(!Array.isArray(notations.all)){
-					throw new Error(`'${key}', 'all' property is not an array`);
-				}else if(!('singular' in notations)){
-					throw new Error(`'${key}' does not have singular notation`);
-				}else if(!('shortSingular' in notations)){
-					throw new Error(`'${key}' does not have short singular notation`);
-				}
-
-				for(const k of ['singular', 'shortSingular', 'plural', 'shortPlural']){
-					if(k in notations && !notations.all.includes(notations[k])){
-						throw new Error(`${notations[k]} notation is not in notations all in '${key}'`);
-					}
-				}
-
-				const allNotations = [].concat(...Object.values(language).map(x => x.all));
-
-				allNotations.forEach((notation, i) => {
-					if(allNotations.includes(notation, i + 1)){
-						throw new Error(`notation '${notation}' repeated`);
-					}
-				});
-			}
-		});
+		it(lang, () => ms.checkLanguage(LANGUAGES[lang]));
 	}
 });
 
@@ -88,7 +51,7 @@ describe('parse', () => {
 				for(const notation of LANGUAGES[lang][key].all){
 					for(const num of numsToTest){
 						expect(
-							ms(num + random(['', ' ']) + notation)
+							ms(num + random(['', ' ']) + notation, lang)
 						).toBe(TIMES[key] * num);
 					}
 				}
@@ -112,35 +75,53 @@ describe('parse', () => {
 		testNums(['.5', '-.5']);
 	});
 
-	it('should work with mm:ss and hh:mm:ss', () => {
-		for(let i = 0; i < 500; i++){
-			const minutes = random(300);
-			const seconds = random(60);
+	function create(withHours = false){
+		const minutes = random(withHours ? 60 : 300);
+		const seconds = random(60);
 
-			expect(ms(
-				minutes.toString().padStart(random(2) + 1, '0') +':' +
-				seconds.toString().padStart(2, '0')
-			)).toBe(minutes * TIMES.MINUTE + seconds * TIMES.SECOND);
+		let result = minutes * TIMES.MINUTE + seconds * TIMES.SECOND;
+		let str =
+			minutes.toString() + ':' +
+			seconds.toString().padStart(2, '0');
+
+		if(withHours){
+			const hours = random(300);
+
+			str = hours + ':' + str.padStart(5, '0');
+
+			result += hours * TIMES.HOUR;
 		}
 
-		for(let i = 0; i < 500; i++){
-			const hours = random(300);
-			const minutes = random(60);
-			const seconds = random(60);
+		return { str, result };
+	}
 
-			expect(
-				ms(
-					hours + ':' +
-					minutes.toString().padStart(2, '0') + ':' +
-					seconds.toString().padStart(2, '0')
-				)
-			).toBe(hours * TIMES.HOUR + minutes * TIMES.MINUTE + seconds * TIMES.SECOND);
+	it('should work with mm:ss and hh:mm:ss', () => {
+		for(let i = 0; i < 500; i++){ // mm:ss
+			const { str, result } = create();
+
+			expect(ms(str)).toBe(result);
+		}
+
+		for(let i = 0; i < 500; i++){ // hh:mm:ss
+			const { str, result } = create(true);
+
+			expect(ms(str)).toBe(result);
+		}
+
+		for(let i = 0; i < 100; i++){ // hh:mm:ss.sss  and  mm:ss.sss
+			const { str, result } = create(random(true));
+			const float = '.' + random(100).toString().padStart(random(4) + 1, '0');
+
+			expect(ms(str + float)).toBe(
+				result + parseFloat(float) * 1000
+			);
 		}
 	});
 
 	it('README.md examples should work', () => {
-		expect(ms('2 days 1 hour')).toBe(176400000);
-		expect(ms('1 week 2 day')).toBe(777600000);
+		expect(ms('2 hours, 5.5 minutes and .3s')).toBe(7530300);
+		expect(ms('1 week 2 days')).toBe(777600000);
+		expect(ms('2 days 1 hours')).toBe(176400000);
 		expect(ms('1d')).toBe(86400000);
 		expect(ms('10h')).toBe(36000000);
 		expect(ms('2.5 hrs')).toBe(9000000);
@@ -155,6 +136,11 @@ describe('parse', () => {
 		expect(ms('1m10secs')).toBe(70000);
 		expect(ms('5s50ms')).toBe(5050);
 
+		expect(ms('2:09:00')).toBe(7740000);
+		expect(ms('2:09:00.233')).toBe(7740233);
+		expect(ms('3:10')).toBe(190000);
+		expect(ms('3:10.7')).toBe(190700);
+
 		expect(ms('1 day', 'es')).toBe(null);
 		expect(ms('1 dia', 'es')).toBe(86400000);
 
@@ -165,40 +151,52 @@ describe('parse', () => {
 		expect(ms('2.5 horas 30 minutes', 'all')).toBe(10800000);
 	});
 
+	function createString(lang){
+		let str = '', result = 0;
+
+		while(str.length === 0){
+			for(const key of TIMES_KEYS){
+				if(random(1, 1) > 0.3) continue;
+
+				const num = random(true) ? random(1000) : random(1000, 1);
+
+				result += num * TIMES[key];
+				const a = random(true), b = random(true);
+
+				str += num.toString();
+				if(a) str += ' ';
+				str += random(LANGUAGES[lang][key].all);
+				if(b) str += ' ';
+			}
+		}
+
+		return { str, result };
+	}
+
 	it('should work using notations from each language', function(){
 		// this is slow because the amount of Math.random() calls
 		this.slow(200);
 		for(const lang in LANGUAGES){
 			for(let i = 0; i < 1000; i++){
-				let str = '', result = 0;
+				const { str, result } = createString(lang);
 
-				while(str.length === 0){
-					for(const key of TIMES_KEYS){
-						if(random(1, 1) > 0.3) continue;
-
-						const num = random(true) ? random(1000) : random(1000, 1);
-
-						result += num * TIMES[key];
-						str += num.toString() + random(['', ' ']) + random(LANGUAGES[lang][key].all) + random(['', ' ']);
-					}
-				}
-
-				expect(ms(str)).toBe(result);
+				expect(ms(str, lang)).toBe(result);
 			}
 		}
 	});
 
 	it('should give the same result as vercel/ms', () => {
-		for(let i = 0; i < 1000; i++){
-			const [num, opts] = createFormatArgs({
+		let i = 0;
+		for(; i < 1000; i++){
+			const { num, options } = createFormatArgs({
 				language: 'en',
 				length: 1,
 			});
-			const formatted = ms(num, opts);
+			const formatted = ms(num, options);
 			// eslint-disable-next-line no-undefined
-			if(_ms(formatted) === undefined){ i--; continue; }
+			if(vercelMS(formatted) === undefined) continue;
 
-			expect(_ms(formatted)).toBe(num);
+			expect(vercelMS(formatted)).toBe(num);
 			expect(ms(formatted)).toBe(num);
 		}
 	});
@@ -206,28 +204,28 @@ describe('parse', () => {
 
 describe('format', () => {
 	it('README.md examples should work', () => {
-		const num = 1412440000;
+		const num = ms('16 days 8 hours 20 mins 40 secs');
 
 		expect(ms(num)).toBe('16d 8h 20m');
 		expect(ms(num, { length: 2 })).toBe('16d 8h');
-		expect(ms(num, { length: 5 })).toBe('16d 8h 20m 40s');
+		expect(ms(num, { length: 8 })).toBe('16d 8h 20m 40s');
 		expect(ms(num, { long: true })).toBe('16 days 8 hours 20 minutes');
 		expect(ms(num, { long: true, language: 'es' })).toBe('16 dias 8 horas 20 minutos');
+		expect(ms(num, { language: 'ja' })).toBe('16日 8時間 20分');
+
 		expect(ms(num, { format: 'HS' })).toBe('392h 1240s');
 		expect(ms(4100940000, { format: 'WDHM', length: 2 })).toBe('6w 5d');
 		expect(ms(4100940000, { format: 'WDHM', length: 8 })).toBe('6w 5d 11h 9m');
 		expect(ms(10, { format: 'HS' })).toBe('0s');
-		expect(ms(1412440000, { language: 'ja' })).toBe('16日 8時間 20分');
-		expect(ms(1412440000, { long: true, language: 'ja' })).toBe('16 日 8 時間 20 分');
 	});
 
 	it('should work', () => {
 		for(let i = 0; i < 1000; i++){
-			const [num, opts] = createFormatArgs();
-			const formatted = ms(num, opts);
+			const { num, options } = createFormatArgs();
+			const formatted = ms(num, options);
 
-			expect(ms(formatted)).toBe(num);
-			// if formatted is correct, and parsing is working well, after parsing should be the same number
+			expect(ms(formatted, options.language)).toBe(num);
+			// if after parsing the formatted string is the same number, then format is working
 		}
 	});
 });
@@ -245,4 +243,58 @@ describe('others', () => {
 			expect(ms(value)).toBe(null);
 		}
 	});
+
+	/*
+	const { execSync } = require('child_process');
+
+	const execute = (type, code, args = []) => {
+		try{
+			execSync(`node --input-type=${type} ${args.join(' ')} --eval "${
+				code // makes the code a one-liner
+					.split('\n')
+					.filter(Boolean)
+					.map(x => x.trim())
+					.join(';')
+			}"`, { stdio: 'inherit' });
+		}catch(e){
+			throw new Error(e.stderr.toString());
+		}
+	};
+
+	it('should work as CJS module', function(){
+		this.slow(250);
+
+		const CJScode = `
+		const { expect } = require('./test/utils.js');
+		const ms = require('./');
+
+		expect(ms('2 hours, 5.5 minutes and .3s')).toBe(7530300);
+		for(const lang in ms.languages){
+			ms.checkLanguage(ms.languages[lang]);
+		}`;
+
+		execute('commonjs', CJScode);
+	});
+
+
+	it('should work as MJS module', function(){
+		this.slow(250);
+
+		const MJScode = `
+		import { expect } from './test/utils.js';
+
+		import * as all from './';
+		import ms, { languages, addLanguage, checkLanguage } from './';
+		console.log(ms, { addLanguage, checkLanguage }, all)
+
+		expect(ms).toBe(all.default);
+		expect(languages).toBe(all.languages);
+		expect(addLanguage).toBe(all.addLanguage);
+		expect(checkLanguage).toBe(all.checkLanguage);
+		expect(ms('2 hours, 5.5 minutes and .3s')).toBe(7530300);
+		for(const lang in languages) checkLanguage(languages[lang]);`;
+
+		execute('module', MJScode, [ '--experimental-specifier-resolution=node' ]);
+	});
+	*/
 });

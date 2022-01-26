@@ -55,7 +55,7 @@ function createFormatArgs(opts = {}){
 		length,
 	}, opts);
 
-	return [num, options];
+	return { num, options };
 }
 
 module.exports = {
@@ -70,13 +70,32 @@ module.exports = {
 function expect(value){
 	return {
 		toBe(val){
-			if(typeof value === 'function') value = value();
+			if(
+				typeof value === 'function' &&
+				typeof val !== 'function'
+			) value = value();
 			if(typeof val === 'number' && typeof value === 'number'){
 				// decimal comparision may fail some times cause precision loss
 				// example: expected 17938716660384.098 to be equal to 17938716660384.1
 				if(Math.abs(val - value) < 1) return;
 			}
-			if(val !== value) throw new Error(`expected ${value} to be equal to ${val}`);
+			if(val !== value){
+				let str;
+				try{
+					str = `expected ${value} to be equal to ${val}`;
+				}catch{
+					const str1 = JSON.stringify(value).slice(0, 20);
+					const str2 = JSON.stringify(val).slice(0, 20);
+
+					str = `expected ${
+						str1 + (str1.length === 20 ? '...' : '')
+					} to be equal to ${
+						str2 + (str2.length === 20 ? '...' : '')
+					}`;
+				}
+
+				throw new Error(str);
+			}
 		},
 		toNotThrowError(){
 			try{
