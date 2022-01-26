@@ -102,7 +102,7 @@ If you want me to add a language, contact me on [Discord](https://discord.gg/zrE
 'ja' => '日本'    // Japanese
 ```
 
-You can add a language dynamically by using the `addLanguage` method. [here](https://github.com/Fabricio-191/ms/blob/b300a76258022859dd50bf8145762b3053af1d36/docs/Add language.md) is the documentation.
+You can add a language dynamically by using the `addLanguage` method. [here](https://github.com/Fabricio-191/ms/blob/master/docs/AddLanguage.md) is the documentation.
 
 ## To-Do
 
@@ -114,15 +114,6 @@ You can add a language dynamically by using the `addLanguage` method. [here](htt
 ```js
 ms('h') // 3600000
 ms('min') // 60000
-```
-
-* Add support for numbers as text (maybe the next century, cause this gets complicated with multiple languages)
-
-```js
-ms('one hour') // 3600000
-ms('two minutes') // 120000
-ms('one hour and a half') // 5400000
-ms('one hour and a quarter') // 4500000
 ```
 
 <details>
