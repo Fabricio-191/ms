@@ -102,7 +102,7 @@ If you want me to add a language, contact me on [Discord](https://discord.gg/zrE
 'ja' => '日本'    // Japanese
 ```
 
-You can add a language dynamically by using the `addLanguage` method. [here]() is the documentation.
+You can add a language dynamically by using the `addLanguage` method. [here](https://github.com/Fabricio-191/ms/blob/b300a76258022859dd50bf8145762b3053af1d36/docs/Add language.md) is the documentation.
 
 ## To-Do
 
