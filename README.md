@@ -1,6 +1,6 @@
 <a href="https://www.buymeacoffee.com/Fabricio191" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="135"></a>
-![CI](https://github.com/Fabricio-191/ms/workflows/CI/badge.svg)
 [![Discord](https://img.shields.io/discord/555535212461948936?style=for-the-badge&color=7289da)](https://discord.gg/zrESMn6)
+[![Issues](https://img.shields.io/github/issues/Fabricio-191/ms?style=for-the-badge)](https://github.com/Fabricio-191/ms/issues)
 
 # @fabricio-191/ms
 
@@ -92,14 +92,14 @@ ms(4100940000, { format: 'WDHM', length: 4 }); // 6w 5d 11h 9m
 ms(10, { format: 'HS' }); // 0s (too small)
 ```
 
-The default format is `YMoDHMSMs` (without weeks)
-
 ## Supported languages
+
+If you want me to add a language, contact me on [Discord](https://discord.gg/zrESMn6) (Fabricio-191#8051) or in [github](https://github.com/Fabricio-191/ms/pulls).
 
 ```js
 'en' => 'English'
-'es' => 'Spanish'
-'ja' => 'Japanese'
+'es' => 'Español' // Spanish
+'ja' => '日本'    // Japanese
 ```
 
 You can add a language dynamically by using the `addLanguage` method. [here](https://github.com/Fabricio-191/ms/blob/master/docs/AddLanguage.md) is the documentation.

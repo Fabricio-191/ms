@@ -8,13 +8,13 @@ declare module '@fabricio-191/ms' {
 
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	type language = 'en' | 'es' | 'ja' | (string & {});
-	
+
 	interface notations {
-		all: string[];
-		singular: string;
-		shortSingular: string;
-		plural?: string;
-		shortPlural?: string;
+		all: string[],
+		singular: string,
+		shortSingular: string,
+		plural?: string,
+		shortPlural?: string,
 	}
 
 	interface LANGUAGE {
