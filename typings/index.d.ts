@@ -19,14 +19,14 @@ declare module '@fabricio-191/ms' {
 
 	interface LANGUAGE {
 		REGEX?: RegExp;
-		YEAR: notations;
-		MONTH: notations;
-		WEEK: notations;
-		DAY: notations;
-		HOUR: notations;
-		MINUTE: notations;
-		SECOND: notations;
-		MS: notations;
+		Y: notations;
+		Mo: notations;
+		W: notations;
+		D: notations;
+		H: notations;
+		M: notations;
+		S: notations;
+		Ms: notations;
 	}
 
 	interface FormatOptions {
