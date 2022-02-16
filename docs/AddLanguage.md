@@ -5,11 +5,22 @@ If this happens, you can contact me on [Discord](https://discord.gg/zrESMn6) (Fa
 
 Also if you add a language correctly you should equally contact me so i can add it permanently.
 
+## Keys
+
+* `Y`: year
+* `Mo`: month
+* `W`: week
+* `D`: day
+* `H`: hour
+* `M`: minute
+* `S`: second
+* `Ms`: milisecond
+
 ## Rules
 
 ```js
-// DAY would be a "key"
-DAY: { // the rest are the "notations"
+// D would be a "key"
+D: { // the rest are the "notations"
     all: [
         'दिन',
         'दिनों'
@@ -20,7 +31,7 @@ DAY: { // the rest are the "notations"
 ```
 
 * Language name must be a string
-* All keys must be present in the language `[YEAR, MONTH, WEEK, DAY, HOUR, MINUTE, SECOND, MILISECOND]`
+* All keys must be present in the language
 * Notations must have:
   * The `all` property containing an array of all the posible ways to write the unit
   * The `single` property containing the common write to write the unit in singular
@@ -36,7 +47,7 @@ const ms = require('@fabricio-191/ms');
 
 // i don't talk hindi, this was made with google translator, and probably has errors
 ms.addLanguage('hindi', {
-    YEAR: {
+    Y: {
         all: [
             'साल',
             'वर्ष'
@@ -46,7 +57,7 @@ ms.addLanguage('hindi', {
         plural: 'वर्ष',
         shortPlural: 'वर्ष'
     },
-    MONTH: {
+    Mo: {
         all: [
             'महीना',
             'महीने'
@@ -56,7 +67,7 @@ ms.addLanguage('hindi', {
         plural: 'महीने',
         shortPlural: 'महीने',
     },
-    WEEK: {
+    W: {
         all: [
             'हफ्ता',
             'सप्ताह'
@@ -66,7 +77,7 @@ ms.addLanguage('hindi', {
         plural: 'सप्ताह',
         shortPlural: 'सप्ताह',
     },
-    DAY: {
+    D: {
         all: [
             'दिन',
             'दिनों'
@@ -74,12 +85,12 @@ ms.addLanguage('hindi', {
         singular: 'दिन',
         shortSingular: 'दिन',
     },
-    HOUR: {
+    H: {
         all: [ 'घंटा' ],
         singular: 'घंटा',
         shortSingular: 'घंटा',
     },
-    MINUTE: {
+    M: {
         all: [
             'मिनट',
             'मिनटों'
@@ -89,7 +100,7 @@ ms.addLanguage('hindi', {
         plural: 'मिनटों',
         shortPlural: 'मिनटों',
     },
-    SECOND: {
+    S: {
         all: [
             'सेकंड',
             'सेकंड्स'
@@ -97,7 +108,7 @@ ms.addLanguage('hindi', {
         singular: 'सेकंड',
         shortSingular: 'सेकंड',
     },
-    MS: {
+    Ms: {
         all: [
             'मिलिसेकंड',
             'मिलिसेकंड्स'
@@ -120,7 +131,7 @@ It's already used inside the addLanguage function.
 
 ```js
 ms.checkLanguage({
-    YEAR: {
+    Y: {
         all: [
             'साल',
             'वर्ष'
