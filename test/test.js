@@ -189,7 +189,7 @@ describe('parse', () => {
 			format = format.replace(/sep/g, random(separators));
 
 
-			return { str, result };
+			return { str: format, result };
 		}
 
 		for(let i = 0; i < 1000; i++){

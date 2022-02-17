@@ -37,6 +37,10 @@ new Suite(`vercel/ms        ${require('ms/package.json').version}`)
 	.add('formatting', () => {
 		for(const { num } of testBatchForVercel){
 			vercelMS(num);
+		}
+	})
+	.add('formatting long', () => {
+		for(const { num } of testBatchForVercel){
 			vercelMS(num, { long: true });
 		}
 	})
@@ -52,6 +56,10 @@ new Suite(`@fabricio-191/ms ${require('../package.json').version}`)
 	.add('formatting', () => {
 		for(const { num } of testBatchForVercel){
 			ms(num, { length: 1, language: 'en' });
+		}
+	})
+	.add('formatting long', () => {
+		for(const { num } of testBatchForVercel){
 			ms(num, { length: 1, language: 'en', long: true });
 		}
 	})
@@ -62,7 +70,6 @@ new Suite(`@fabricio-191/ms ${require('../package.json').version}`)
 	})
 	.add('full formatting', () => {
 		for(const { num, opts } of testBatch){
-			ms(num, opts);
 			ms(num, opts);
 		}
 	})
