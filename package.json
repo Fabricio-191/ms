@@ -4,10 +4,11 @@
 	"typings": "./typings/index.d.ts",
 	"scripts": {
 		"lint": "eslint . --fix",
-		"test": "mocha test/test.js"
+		"test": "mocha test/test.js && node test/benchmark.js"
 	},
 	"devDependencies": {
 		"babel-eslint": "^10.1.0",
+		"benchmark": "^2.1.4",
 		"eslint": "^7.22.0",
 		"mocha": "^9.2.0"
 	},

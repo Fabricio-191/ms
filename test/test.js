@@ -153,14 +153,50 @@ describe('parse', () => {
 		}
 	});
 
-	describe('24-hour time notation', () => {
-		it('hh:mm:ss.sss');
-		it('hh:mm:ss');
-		it('hh:mm');
-		it('Thhmmss.sss');
-		it('Thhmmss');
-		it('Thhmm');
-		it('Thh');
+	it('24-hour time notation', () => {
+		const separators = ['.', ',', '-', ':', ' ', ''];
+		const formats = [
+			'hhsepmmsepss.sss',
+			'hhsepmmsepss',
+			'hhsepmm',
+			'hh',
+		];
+
+		function make(){
+			let format = random(['T', '', '']) + random(formats);
+			let result = 0;
+
+			if(format.includes('hh')){
+				const num = random(24);
+				format = format.replace('hh', random(24));
+				result += num * 3600000;
+			}
+			if(format.includes('mm')){
+				const num = random(60);
+				format = format.replace('mm', random(60));
+				result += num * 60000;
+			}
+			if(format.includes('sss')){
+				const num = random(1000);
+				format = format.replace('sss', random(1000));
+				result += num;
+			}
+			if(format.includes('ss')){
+				const num = random(60);
+				format = format.replace('ss', random(60));
+				result += num * 1000;
+			}
+			format = format.replace(/sep/g, random(separators));
+
+
+			return { str, result };
+		}
+
+		for(let i = 0; i < 1000; i++){
+			const { str, result } = make();
+
+			expect(ms.parseClock(str), result);
+		}
 	});
 });
 
