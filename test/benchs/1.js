@@ -1,9 +1,9 @@
 /* eslint-disable no-invalid-this */
 /* eslint-disable no-console */
 // @ts-ignore
-const ms = require('../'), vercelMS = require('ms');
+const ms = require('../../'), vercelMS = require('ms');
 const { Suite } = require('benchmark');
-const { createFormatArgs } = require('./utils.js');
+const { createFormatArgs } = require('../utils.js');
 
 const testBatchForVercel = [];
 while(testBatchForVercel.length !== 5000){
@@ -47,7 +47,7 @@ new Suite(`vercel/ms        ${require('ms/package.json').version}`)
 	.on('start', initialize)
 	.run();
 
-new Suite(`@fabricio-191/ms ${require('../package.json').version}`)
+new Suite(`@fabricio-191/ms ${require('../../package.json').version}`)
 	.add('parsing', () => {
 		for(const { formatted } of testBatchForVercel){
 			ms(formatted);

@@ -1,4 +1,4 @@
-const LANGUAGES = require('../lib/languages.json');
+const LANGUAGES = require('../lib/languages');
 const LANGS = Object.keys(LANGUAGES);
 const TIMES = {
 	Y:  1000 * 60 * 60 * 24 * 365.25, // .2425
@@ -56,7 +56,7 @@ module.exports = {
 };
 
 const assert = require('assert');
-function expect(value, expectedValue, str){
+function expect(value, expectedValue){
 	if(typeof expectedValue === 'number' && typeof value === 'number'){
 		if(Math.abs(expectedValue - value) < 1) return;
 	}

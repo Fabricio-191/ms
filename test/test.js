@@ -75,11 +75,9 @@ describe('parse', () => {
 			for(const key in TIMES){
 				for(const notation of LANGUAGES[lang][key].all){
 					for(const num of numsToTest){
-						const str = num + random(['', ' ']) + notation;
 						expect(
-							ms(str, lang),
-							TIMES[key] * num,
-							str
+							ms(num + random(['', ' ']) + notation, lang),
+							TIMES[key] * num
 						);
 					}
 				}
@@ -153,7 +151,10 @@ describe('parse', () => {
 		}
 	});
 
-	it('24-hour time notation', () => {
+	it('24-hour time notation');
+
+	/*
+	, () => {
 		const separators = ['.', ',', '-', ':', ' ', ''];
 		const formats = [
 			'hhsepmmsepss.sss',
@@ -195,9 +196,11 @@ describe('parse', () => {
 		for(let i = 0; i < 1000; i++){
 			const { str, result } = make();
 
+			console.log(str, result)
 			expect(ms.parseClock(str), result);
 		}
-	});
+	}
+	*/
 });
 
 describe('format', () => {

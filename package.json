@@ -4,7 +4,7 @@
 	"typings": "./typings/index.d.ts",
 	"scripts": {
 		"lint": "eslint . --fix",
-		"test": "mocha test/test.js && node test/benchmark.js"
+		"test": "mocha test/test.js && node test/benchs/1.js"
 	},
 	"devDependencies": {
 		"babel-eslint": "^10.1.0",

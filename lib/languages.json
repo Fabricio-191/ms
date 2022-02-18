@@ -1,12 +1,6 @@
 {
 	"en": {
-		"firstLetter": {
-			"y": "Y",
-			"w": "W",
-			"d": "D",
-			"h": "H",
-			"s": "S"
-		},
+		"dialect": "a-z",
 		"Y": {
 			"all": [
 				"years",
@@ -102,11 +96,7 @@
 		}
 	},
 	"es": {
-		"firstLetter": {
-			"a": "Y",
-			"d": "D",
-			"h": "H"
-		},
+		"dialect": "a-zñ",
 		"Y": {
 			"all": [
 				"años",
@@ -197,9 +187,7 @@
 		}
 	},
 	"ja": {
-		"firstLetter": {
-			"ミ": "Ms"
-		},
+		"dialect": "\u3000-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u4E00-\u9FAF",
 		"Y": {
 			"all": [
 				"とし",
