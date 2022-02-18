@@ -120,6 +120,7 @@ const language = {
 		s: 'S',
 	},
 	dict: {},
+	dict2: {},
 	Y: {
 		all: [
 			'years',
@@ -218,6 +219,7 @@ const language = {
 for(const key in TIMES){
 	for(const notation of language[key].all){
 		language.dict[notation] = key;
+		language.dict2[notation] = TIMES[key];
 	}
 }
 
@@ -235,31 +237,36 @@ for(const key in TIMES){
 }
 
 new Suite('Notation to time methods')
-	.add('1 (hardcoded) (vercel/ms method)', () => {
+	.add('1 (actual method)', () => {
+		for(const { notation, value } of allNotations){
+			assert.equal(value, language.dict2[notation]);
+		}
+	})
+	.add('2 (hardcoded) (vercel/ms method)', () => {
 		for(const { notation, value } of allNotations){
 			assert.equal(value, TIMES[language.determine3(notation)]);
 		}
 	})
-	.add('2 (actual method)', () => {
+	.add('3', () => {
 		for(const { notation, value } of allNotations){
 			assert.equal(value, TIMES[language.dict[notation]]);
 		}
 	})
-	.add('3 (hardcoded)', () => {
+	.add('4 (hardcoded)', () => {
 		for(const { notation, value } of allNotations){
 			assert.equal(value, TIMES[
 				language.determine2(notation)
 			]);
 		}
 	})
-	.add('4 (hardcoded)', () => {
+	.add('5 (hardcoded)', () => {
 		for(const { notation, value } of allNotations){
 			assert.equal(value, TIMES[
 				language.determine(notation)
 			]);
 		}
 	})
-	.add('5', () => {
+	.add('6', () => {
 		for(const { notation, value } of allNotations){
 			if('firstLetter' in language && notation[0] in language.firstLetter){
 				assert.equal(value, TIMES[language.firstLetter[notation[0]]]);
@@ -271,7 +278,7 @@ new Suite('Notation to time methods')
 			}
 		}
 	})
-	.add('6', () => {
+	.add('7', () => {
 		for(const { notation, value } of allNotations){
 			for(const key in language.first){
 				if(language.first[key].some(x => notation.startsWith(x))){
@@ -281,7 +288,7 @@ new Suite('Notation to time methods')
 			}
 		}
 	})
-	.add('7 (previous method)', () => {
+	.add('8 (previous method)', () => {
 		for(const { notation, value } of allNotations){
 			for(const key in TIMES){
 				if(language[key].all.includes(notation)){

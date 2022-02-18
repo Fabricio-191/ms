@@ -15,7 +15,7 @@ And also for converting milliseconds into an human readable format.
 + Can parse multiple units
 + Formatting has more options
 + Does not round while formatting
-- It's way slower than ms
+- When formatting, it's waaayyyy slower than ms
 ```
 
 ## Parse
