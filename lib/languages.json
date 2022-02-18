@@ -187,7 +187,7 @@
 		}
 	},
 	"ja": {
-		"dialect": "\u3000-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u4E00-\u9FAF",
+		"dialect": "\u3000-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF",
 		"Y": {
 			"all": [
 				"とし",
@@ -230,8 +230,8 @@
 		"H": {
 			"all": [
 				"じかん",
-				"時間",
 				"じ",
+				"時間",
 				"時"
 			],
 			"singular": "時間",

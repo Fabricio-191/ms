@@ -10,7 +10,6 @@ And also for converting milliseconds into an human readable format.
 ### Differences with [ms](https://www.npmjs.com/package/ms)
 
 ```diff
-+ Can parse 'hh:mm:ss' and 'mm:ss' formats
 + Can parse multiple languages
 + Can parse multiple units
 + Formatting has more options
@@ -41,8 +40,9 @@ ms('-.5 mins');      // -30000
 ms('- 2m 30s');      // -150000
 ms('-3 days');       // -259200000
 
-ms('2:09:00');       // 7740000 (hh:mm:ss)
-ms('3:10');          // 190000  (mm:ss)
+ms.clock('2:09:00');       // 7740000  (hh:mm:ss)
+ms.clock('3:10');          // 11400000 (hh:mm)
+ms.clock('3:10', true);    // 190000   (mm:ss)
 
 // english is the default language
 ms('1 day', 'es');   // null (wrong language)
@@ -103,18 +103,6 @@ The default format is `YMoDHMSMs` (without weeks)
 ```
 
 You can add a language dynamically by using the `addLanguage` method. [here](https://github.com/Fabricio-191/ms/blob/master/docs/AddLanguage.md) is the documentation.
-
-## To-Do
-
-* Advanced number parsing (tried but gets complicated)
-* Make parsing more strict
-* Add popular languages (chinese/mandarin, hindi, french, arabic, russian, portuguese, turkish, korean)
-* Add support for parsing without integer:
-
-```js
-ms('h') // 3600000
-ms('min') // 60000
-```
 
 <details>
 <summary>Extra</summary>

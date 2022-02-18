@@ -6,6 +6,7 @@ const ms = require('../');
 const vercelMS = require('ms');
 const {
 	createFormatArgs,
+	createClockArgs,
 	expect, random,
 	LANGUAGES, TIMES,
 } = require('./utils.js');
@@ -151,56 +152,13 @@ describe('parse', () => {
 		}
 	});
 
-	it('24-hour time notation');
-
-	/*
-	, () => {
-		const separators = ['.', ',', '-', ':', ' ', ''];
-		const formats = [
-			'hhsepmmsepss.sss',
-			'hhsepmmsepss',
-			'hhsepmm',
-			'hh',
-		];
-
-		function make(){
-			let format = random(['T', '', '']) + random(formats);
-			let result = 0;
-
-			if(format.includes('hh')){
-				const num = random(24);
-				format = format.replace('hh', random(24));
-				result += num * 3600000;
-			}
-			if(format.includes('mm')){
-				const num = random(60);
-				format = format.replace('mm', random(60));
-				result += num * 60000;
-			}
-			if(format.includes('sss')){
-				const num = random(1000);
-				format = format.replace('sss', random(1000));
-				result += num;
-			}
-			if(format.includes('ss')){
-				const num = random(60);
-				format = format.replace('ss', random(60));
-				result += num * 1000;
-			}
-			format = format.replace(/sep/g, random(separators));
-
-
-			return { str: format, result };
-		}
-
+	it('24-hour time notation', () => {
 		for(let i = 0; i < 1000; i++){
-			const { str, result } = make();
+			const { args, result } = createClockArgs();
 
-			console.log(str, result)
-			expect(ms.parseClock(str), result);
+			expect(ms.clock(...args), result);
 		}
-	}
-	*/
+	});
 });
 
 describe('format', () => {

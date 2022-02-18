@@ -1,4 +1,4 @@
-const LANGUAGES = require('../lib/languages');
+const LANGUAGES = require('../lib/languages.json');
 const LANGS = Object.keys(LANGUAGES);
 const TIMES = {
 	Y:  1000 * 60 * 60 * 24 * 365.25, // .2425
@@ -49,10 +49,9 @@ function createFormatArgs(opts = {}){
 
 module.exports = {
 	createFormatArgs,
-	expect,
-	random,
-	LANGUAGES,
-	TIMES,
+	createClockArgs,
+	expect, random,
+	LANGUAGES, TIMES,
 };
 
 const assert = require('assert');
@@ -78,4 +77,41 @@ function random(thing, fixed = 0){
 		return parseFloat((Math.random() * thing).toFixed(fixed)); // 0 to thing (float)
 	}
 	return Math.floor(Math.random() * thing); // 0 to thing-1
+}
+
+const separators = ['-', ':'];
+const formats = [
+	'hhsepmmsepss.sss',
+	'hhsepmmsepss',
+	'hhsepmm.mmm',
+	'hhsepmm',
+	'mmsepss.sss',
+	'mmsepss',
+];
+
+function createClockArgs(){
+	let result = 0;
+	let format = random(formats)
+		.replace(/sep/g, random(separators));
+
+	const n = (max, digits, key, val) => {
+		if(!format.includes(key)) return;
+
+		const num = random(max)
+			.toString()
+			.padStart(digits, '0');
+
+		format = format.replace(key, num);
+		result += parseFloat(num) * val;
+	};
+
+	const minutes = format.includes('ss') && !format.includes('hh');
+
+	n(24, 2, 'hh', 3600000);
+	n(1000, 3, 'mmm', 60);
+	n(1000, 3, 'sss', 1);
+	n(60, 2, 'mm', 60000);
+	n(60, 2, 'ss', 1000);
+
+	return { args: [format, minutes], result };
 }

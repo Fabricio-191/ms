@@ -3,7 +3,7 @@
 // @ts-ignore
 const ms = require('../../'), vercelMS = require('ms');
 const { Suite } = require('benchmark');
-const { createFormatArgs } = require('../utils.js');
+const { createFormatArgs, createClockArgs } = require('../utils.js');
 
 const testBatchForVercel = [];
 while(testBatchForVercel.length !== 5000){
@@ -19,11 +19,16 @@ while(testBatchForVercel.length !== 5000){
 }
 
 const testBatch = [];
-while(testBatch.length !== 5000){
+for(let i = 0; i < 5000; i++){
 	const { num, options } = createFormatArgs();
 	const formatted = ms(num, options);
 
 	testBatch.push({ formatted, num, options });
+}
+
+const clocks = [];
+for(let i = 0; i < 5000; i++){
+	clocks.push(createClockArgs().args);
 }
 
 console.log(`Node.js version: ${process.version}\n`);
@@ -34,6 +39,16 @@ new Suite(`vercel/ms        ${require('ms/package.json').version}`)
 			vercelMS(formatted);
 		}
 	})
+	.add('formatting', () => {
+		for(const { num } of testBatchForVercel){
+			vercelMS(num);
+		}
+	})
+	.add('formatting long', () => {
+		for(const { num } of testBatchForVercel){
+			vercelMS(num, { long: true });
+		}
+	})
 	.on('start', initialize)
 	.run();
 
@@ -41,6 +56,31 @@ new Suite(`@fabricio-191/ms ${require('../../package.json').version}`)
 	.add('parsing', () => {
 		for(const { formatted } of testBatchForVercel){
 			ms(formatted);
+		}
+	})
+	.add('formatting', () => {
+		for(const { num } of testBatchForVercel){
+			ms(num, { length: 1, language: 'en' });
+		}
+	})
+	.add('formatting long', () => {
+		for(const { num } of testBatchForVercel){
+			ms(num, { length: 1, language: 'en', long: true });
+		}
+	})
+	.add('full parsing', () => {
+		for(const { formatted } of testBatch){
+			ms(formatted);
+		}
+	})
+	.add('full formatting', () => {
+		for(const { num, opts } of testBatch){
+			ms(num, opts);
+		}
+	})
+	.add('clock', () => {
+		for(const args of clocks){
+			ms.clock(...args);
 		}
 	})
 	.on('start', initialize)
