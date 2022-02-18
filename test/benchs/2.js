@@ -234,7 +234,7 @@ for(const key in TIMES){
 	}
 }
 
-new Suite('')
+new Suite('Notation to time methods')
 	.add('1 (hardcoded) (vercel/ms method)', () => {
 		for(const { notation, value } of allNotations){
 			assert.equal(value, TIMES[language.determine3(notation)]);
