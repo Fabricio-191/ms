@@ -21,27 +21,26 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-    - name: "Run test (without dependencies)"
+    - name: Run test (without dependencies)
       run: npm test
 
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      node-version: 17.x
 
     steps:
     - uses: actions/checkout@v2
-    - name: Use Node.js ${{ node-version }}
+    - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: ${{ node-version }}
+        node-version: 17.x
         cache: 'npm'
-    - name: "Install dependencies"
+    - name: Install dependencies
       run: npm i
-    - name: "Run eslint"
+    - name: Run eslint
       run: npm run lint
-    - name: "Run mocha tests"
+    - name: Run mocha tests
       run: npm run mocha
-    - name: "Run benchs"
+    - name: Run benchs
       run: npm run bench && npm run bench
