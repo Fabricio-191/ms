@@ -1,17 +1,9 @@
+// @ts-ignore
+const { TIMES } = require('../');
 const LANGUAGES = require('../lib/languages.json');
 const LANGS = Object.keys(LANGUAGES);
 
 // #region format args
-const TIMES = {
-	Y:  1000 * 60 * 60 * 24 * 365.25, // .2425
-	Mo: 1000 * 60 * 60 * 24 * 30, // .4167
-	W:  1000 * 60 * 60 * 24 * 7,
-	D:  1000 * 60 * 60 * 24,
-	H:  1000 * 60 * 60,
-	M:  1000 * 60,
-	S:  1000,
-	Ms: 1,
-};
 const MAXS = {
 	Y: 100,
 	Mo: 12,
