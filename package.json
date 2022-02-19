@@ -1,15 +1,20 @@
 {
 	"name": "@fabricio-191/ms",
-	"version": "1.3.2-0",
+	"version": "1.5.0",
 	"typings": "./typings/index.d.ts",
 	"scripts": {
 		"lint": "eslint . --fix",
-		"test": "mocha test/tests.js"
+		"mocha": "mocha test/mocha.js",
+		"bench": "node test/benchs/1.js",
+		"test": "node test/test.js"
 	},
 	"devDependencies": {
-		"babel-eslint": "^10.1.0",
-		"eslint": "^7.22.0",
-		"mocha": "^9.2.0"
+		"@babel/core": "^7.17.5",
+		"@babel/eslint-parser": "^7.17.0",
+		"benchmark": "^2.1.4",
+		"eslint": "^7.32.0",
+		"mocha": "^9.2.0",
+		"ms": "^2.1.3"
 	},
 	"type": "commonjs",
 	"module": "./lib/index.js",

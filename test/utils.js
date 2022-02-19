@@ -1,24 +1,9 @@
+// @ts-ignore
+const { TIMES } = require('../');
 const LANGUAGES = require('../lib/languages.json');
-const TIMES = {
-	YEAR: 31557600000,
-	MONTH: 2629800000,
-	WEEK: 604800000,
-	DAY: 86400000,
-	HOUR: 3600000,
-	MINUTE: 60000,
-	SECOND: 1000,
-	MS: 1,
-};
-const FORMAT_TIMES = {
-	Y: 31557600000,
-	Mo: 2629800000,
-	W: 604800000,
-	D: 86400000,
-	H: 3600000,
-	M: 60000,
-	S: 1000,
-	Ms: 1,
-};
+const LANGS = Object.keys(LANGUAGES);
+
+// #region format args
 const MAXS = {
 	Y: 100,
 	Mo: 12,
@@ -29,13 +14,12 @@ const MAXS = {
 	S: 60,
 	Ms: 1000,
 };
-const LANGS = Object.keys(LANGUAGES);
 
 function createFormatArgs(opts = {}){
 	const format = [];
 
 	while(format.length === 0){
-		for(const key in FORMAT_TIMES){
+		for(const key in TIMES){
 			if(random(1, 1) < 0.3) format.push(key);
 		}
 	}
@@ -44,8 +28,7 @@ function createFormatArgs(opts = {}){
 
 	let num = 0;
 	for(let y = 0; y < length && y < format.length; y++){
-		const key = format[y];
-		num += random(MAXS[key]) * FORMAT_TIMES[key];
+		num += random(MAXS[format[y]]) * TIMES[format[y]];
 	}
 
 	const options = Object.assign({
@@ -57,63 +40,64 @@ function createFormatArgs(opts = {}){
 
 	return { num, options };
 }
+// #endregion
+
+// #region clock args
+const separators = ['-', ':'];
+const formats = [
+	'hhsepmmsepss.sss',
+	'hhsepmmsepss',
+	'hhsepmm.mmm',
+	'hhsepmm',
+	'mmsepss.sss',
+	'mmsepss',
+];
+
+function createClockArgs(){
+	let result = 0;
+	let format = random(formats)
+		.replace(/sep/g, random(separators));
+
+	const n = (max, digits, key, val) => {
+		if(!format.includes(key)) return;
+
+		let num = random(max).toString();
+
+		// padStart polyfill
+		while(num.length !== digits){
+			num = '0' + num;
+		}
+
+		format = format.replace(key, num);
+		result += parseFloat(num) * val;
+	};
+
+	const minutes = format.includes('ss') && !format.includes('hh');
+
+	n(24, 2, 'hh', 3600000);
+	n(1000, 3, 'mmm', 60);
+	n(1000, 3, 'sss', 1);
+	n(60, 2, 'mm', 60000);
+	n(60, 2, 'ss', 1000);
+
+	return { args: [format, minutes], result };
+}
+// #endregion
 
 module.exports = {
 	createFormatArgs,
-	expect,
-	random,
-	LANGUAGES,
-	TIMES,
-	TIMES_KEYS: Object.keys(TIMES),
+	createClockArgs,
+	expect, random,
+	LANGUAGES, TIMES,
 };
 
-function expect(value){
-	return {
-		toBe(val){
-			if(
-				typeof value === 'function' &&
-				typeof val !== 'function'
-			) value = value();
-			if(typeof val === 'number' && typeof value === 'number'){
-				// decimal comparision may fail some times cause precision loss
-				// example: expected 17938716660384.098 to be equal to 17938716660384.1
-				if(Math.abs(val - value) < 1) return;
-			}
-			if(val !== value){
-				let str;
-				try{
-					str = `expected ${value} to be equal to ${val}`;
-				}catch{
-					const str1 = JSON.stringify(value).slice(0, 20);
-					const str2 = JSON.stringify(val).slice(0, 20);
+const assert = require('assert');
+function expect(value, expectedValue){
+	if(typeof expectedValue === 'number' && typeof value === 'number'){
+		if(Math.abs(expectedValue - value) < 1) return;
+	}
 
-					str = `expected ${
-						str1 + (str1.length === 20 ? '...' : '')
-					} to be equal to ${
-						str2 + (str2.length === 20 ? '...' : '')
-					}`;
-				}
-
-				throw new Error(str);
-			}
-		},
-		toNotThrowError(){
-			try{
-				value();
-			}catch(e){
-				throw Error('expected fn not to throw an exception');
-			}
-		},
-		toThrowError(){
-			try{
-				value();
-			}catch(e){
-				return;
-			}
-
-			throw Error('expected fn to throw an exception');
-		},
-	};
+	assert.strictEqual(value, expectedValue);
 }
 
 function random(thing, fixed = 0){

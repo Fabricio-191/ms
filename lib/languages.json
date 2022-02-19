@@ -1,6 +1,7 @@
 {
 	"en": {
-		"YEAR": {
+		"dialect": "a-z",
+		"Y": {
 			"all": [
 				"years",
 				"year",
@@ -12,7 +13,7 @@
 			"singular": "year",
 			"shortSingular": "y"
 		},
-		"MONTH": {
+		"Mo": {
 			"all": [
 				"months",
 				"month",
@@ -23,7 +24,7 @@
 			"singular": "month",
 			"shortSingular": "mo"
 		},
-		"WEEK": {
+		"W": {
 			"all": [
 				"weeks",
 				"week",
@@ -33,7 +34,7 @@
 			"singular": "week",
 			"shortSingular": "w"
 		},
-		"DAY": {
+		"D": {
 			"all": [
 				"days",
 				"day",
@@ -43,7 +44,7 @@
 			"singular": "day",
 			"shortSingular": "d"
 		},
-		"HOUR": {
+		"H": {
 			"all": [
 				"hours",
 				"hour",
@@ -55,7 +56,7 @@
 			"singular": "hour",
 			"shortSingular": "h"
 		},
-		"MINUTE": {
+		"M": {
 			"all": [
 				"minutes",
 				"minute",
@@ -67,21 +68,19 @@
 			"singular": "minute",
 			"shortSingular": "m"
 		},
-		"SECOND": {
+		"S": {
 			"all": [
 				"seconds",
 				"second",
 				"secs",
-				"segs",
 				"sec",
-				"seg",
 				"s"
 			],
 			"plural": "seconds",
 			"singular": "second",
 			"shortSingular": "s"
 		},
-		"MS": {
+		"Ms": {
 			"all": [
 				"milliseconds",
 				"millisecond",
@@ -97,7 +96,8 @@
 		}
 	},
 	"es": {
-		"YEAR": {
+		"dialect": "a-zñ",
+		"Y": {
 			"all": [
 				"años",
 				"año"
@@ -107,7 +107,7 @@
 			"shortPlural": "años",
 			"shortSingular": "año"
 		},
-		"MONTH": {
+		"Mo": {
 			"all": [
 				"meses",
 				"mes"
@@ -117,7 +117,7 @@
 			"shortPlural": "meses",
 			"shortSingular": "mes"
 		},
-		"WEEK": {
+		"W": {
 			"all": [
 				"semanas",
 				"semana",
@@ -127,7 +127,7 @@
 			"singular": "semana",
 			"shortSingular": "sem"
 		},
-		"DAY": {
+		"D": {
 			"all": [
 				"dias",
 				"dia",
@@ -137,7 +137,7 @@
 			"singular": "dia",
 			"shortSingular": "d"
 		},
-		"HOUR": {
+		"H": {
 			"all": [
 				"horas",
 				"hora",
@@ -149,7 +149,7 @@
 			"singular": "hora",
 			"shortSingular": "h"
 		},
-		"MINUTE": {
+		"M": {
 			"all": [
 				"minutos",
 				"minuto",
@@ -161,13 +161,11 @@
 			"singular": "minuto",
 			"shortSingular": "m"
 		},
-		"SECOND": {
+		"S": {
 			"all": [
 				"segundos",
 				"segundo",
-				"secs",
 				"segs",
-				"sec",
 				"seg",
 				"s"
 			],
@@ -175,14 +173,12 @@
 			"singular": "segundo",
 			"shortSingular": "s"
 		},
-		"MS": {
+		"Ms": {
 			"all": [
 				"milisegundos",
 				"milisegundo",
 				"msegs",
-				"msecs",
 				"mseg",
-				"msec",
 				"ms"
 			],
 			"plural": "milisegundos",
@@ -191,7 +187,8 @@
 		}
 	},
 	"ja": {
-		"YEAR": {
+		"dialect": "\u3000-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF",
+		"Y": {
 			"all": [
 				"とし",
 				"年"
@@ -199,9 +196,9 @@
 			"singular": "年",
 			"shortSingular": "年"
 		},
-		"MONTH": {
+		"Mo": {
 			"all": [
-				"箇月 かげつ",
+				"箇月かげつ",
 				"げっかん",
 				"月間",
 				"ヶ月",
@@ -211,7 +208,7 @@
 			"singular": "ヶ月",
 			"shortSingular": "ヶ月"
 		},
-		"WEEK": {
+		"W": {
 			"all": [
 				"ウィーク",
 				"しゅう",
@@ -221,7 +218,7 @@
 			"singular": "週間",
 			"shortSingular": "週間"
 		},
-		"DAY": {
+		"D": {
 			"all": [
 				"日々",
 				"ひ",
@@ -230,17 +227,17 @@
 			"singular": "日",
 			"shortSingular": "日"
 		},
-		"HOUR": {
+		"H": {
 			"all": [
 				"じかん",
-				"時間",
 				"じ",
+				"時間",
 				"時"
 			],
 			"singular": "時間",
 			"shortSingular": "時間"
 		},
-		"MINUTE": {
+		"M": {
 			"all": [
 				"ぶん",
 				"分"
@@ -248,7 +245,7 @@
 			"singular": "分",
 			"shortSingular": "分"
 		},
-		"SECOND": {
+		"S": {
 			"all": [
 				"びょう",
 				"秒"
@@ -256,7 +253,7 @@
 			"singular": "秒",
 			"shortSingular": "秒"
 		},
-		"MS": {
+		"Ms": {
 			"all": [
 				"ミリセコンド",
 				"ミリセカンド",

@@ -5,28 +5,42 @@ declare module '@fabricio-191/ms' {
 	// type FORMAT = Permute<[ 'Y', 'Mo', 'W', 'D', 'H', 'M', 'S', 'Ms' ]>;
 
 	type FORMAT = Exclude<`${'Y'|''}${'Mo'|''}${'W'|''}${'D'|''}${'H'|''}${'M'|''}${'S'|''}${'Ms'|''}`, ''>;
+	type KEY = 'Y' | 'Mo' | 'W' | 'D' | 'H' | 'M' | 'S' | 'Ms';
 
 	// eslint-disable-next-line @typescript-eslint/ban-types
-	type language = 'en' | 'es' | 'ja' | (string & {});
+	type langs = 'en' | 'es' | 'ja' | (string & {});
 
+	type TIMES = {
+		[key in KEY]: number;
+	}
+	
 	interface notations {
-		all: string[],
-		singular: string,
-		shortSingular: string,
-		plural?: string,
-		shortPlural?: string,
+		all: string[];
+		singular: string;
+		shortSingular: string;
+		plural?: string;
+		shortPlural?: string;
+	}
+
+	type dictionary = {
+		[key: string]: number;
 	}
 
 	interface LANGUAGE {
+		dict?: dictionary;
 		REGEX?: RegExp;
-		YEAR: notations;
-		MONTH: notations;
-		WEEK: notations;
-		DAY: notations;
-		HOUR: notations;
-		MINUTE: notations;
-		SECOND: notations;
-		MS: notations;
+		Y: notations;
+		Mo: notations;
+		W: notations;
+		D: notations;
+		H: notations;
+		M: notations;
+		S: notations;
+		Ms: notations;
+	}
+
+	type LANGUAGES = {
+		[key in langs]: LANGUAGE;
 	}
 
 	interface FormatOptions {
@@ -53,12 +67,12 @@ declare module '@fabricio-191/ms' {
 	 * @param languages The languages to use to try to parse in the string
 	 * @returns The time in miliseconds
 	 */
-	function ms(string: string, languages?: language | language[] | 'all'): number | null;
+	function ms(string: string, languages?: langs | langs[] | 'all'): number | null;
 
 	export default ms;
-	export function addLanguage(name: language, data: LANGUAGE): void;
+	export function addLanguage(name: stringz, data: LANGUAGE): void;
 	export function checkLanguage(data: LANGUAGE): void;
-	export const languages: {
-		[key in language]: LANGUAGE;
-	};
+	export function clock(str: string, minutes: boolean): number | null;
+	export const LANGUAGES: LANGUAGES;
+	export const TIMES: TIMES;
 }

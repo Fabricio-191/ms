@@ -1,6 +1,6 @@
 <a href="https://www.buymeacoffee.com/Fabricio191" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="135"></a>
 [![Discord](https://img.shields.io/discord/555535212461948936?style=for-the-badge&color=7289da)](https://discord.gg/zrESMn6)
-[![Issues](https://img.shields.io/github/issues/Fabricio-191/ms?style=for-the-badge)](https://github.com/Fabricio-191/ms/issues)
+[![Tests](https://github.com/Fabricio-191/ms/actions/workflows/node.js.yml/badge.svg)](https://github.com/Fabricio-191/ms/actions/workflows/node.js.yml)
 
 # @fabricio-191/ms
 
@@ -10,12 +10,11 @@ And also for converting milliseconds into an human readable format.
 ### Differences with [ms](https://www.npmjs.com/package/ms)
 
 ```diff
-+ Can parse 'hh:mm:ss' and 'mm:ss' formats
 + Can parse multiple languages
 + Can parse multiple units
 + Formatting has more options
 + Does not round while formatting
-- It's way slower than ms
+- When formatting, it's way slower than ms
 ```
 
 ## Parse
@@ -41,8 +40,9 @@ ms('-.5 mins');      // -30000
 ms('- 2m 30s');      // -150000
 ms('-3 days');       // -259200000
 
-ms('2:09:00');       // 7740000 (hh:mm:ss)
-ms('3:10');          // 190000  (mm:ss)
+ms.clock('2:09:00');       // 7740000  (hh:mm:ss)
+ms.clock('3:10');          // 11400000 (hh:mm)
+ms.clock('3:10', true);    // 190000   (mm:ss)
 
 // english is the default language
 ms('1 day', 'es');   // null (wrong language)
@@ -92,41 +92,29 @@ ms(4100940000, { format: 'WDHM', length: 4 }); // 6w 5d 11h 9m
 ms(10, { format: 'HS' }); // 0s (too small)
 ```
 
-## Supported languages
+The default format is `YMoDHMSMs` (without weeks)
 
-If you want me to add a language, contact me on [Discord](https://discord.gg/zrESMn6) (Fabricio-191#8051) or in [github](https://github.com/Fabricio-191/ms/pulls).
+## Supported languages
 
 ```js
 'en' => 'English'
-'es' => 'Español' // Spanish
-'ja' => '日本'    // Japanese
+'es' => 'Spanish'
+'ja' => 'Japanese'
 ```
 
 You can add a language dynamically by using the `addLanguage` method. [here](https://github.com/Fabricio-191/ms/blob/master/docs/AddLanguage.md) is the documentation.
-
-## To-Do
-
-* Advanced number parsing (tried but gets complicated)
-* Make parsing more strict
-* Add popular languages (chinese/mandarin, hindi, french, arabic, russian, portuguese, turkish, korean)
-* Add support for parsing without integer:
-
-```js
-ms('h') // 3600000
-ms('min') // 60000
-```
 
 <details>
 <summary>Extra</summary>
 Execute this, it looks nice
 
 ```js
-const ms = require('@fabricio-191/ms'), years = ms('1970 years');
+const ms = require('@fabricio-191/ms'), start = ms('1970 years 1 month');
 
 setInterval(() => {
   process.stdout.clearLine(0);
   process.stdout.cursorTo(0);
-  process.stdout.write(ms(Date.now() + years, { length: 8 }));
+  process.stdout.write(ms(Date.now() + start, { length: 8 }));
   process.stdout.cursorTo(31);
 }, 1);
 ```

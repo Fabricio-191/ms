@@ -1,0 +1,9 @@
+.npmignore
+.eslintrc.json
+.github
+package-lock.json
+node_modules/
+
+esm/
+test/
+docs/
