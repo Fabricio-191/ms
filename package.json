@@ -4,8 +4,9 @@
 	"typings": "./typings/index.d.ts",
 	"scripts": {
 		"lint": "eslint . --fix",
-		"test": "mocha test/test.js",
-		"bench": "node test/benchs/1.js && node test/benchs/1.js"
+		"mocha": "mocha test/mocha.js",
+		"bench": "node test/benchs/1.js",
+		"test": "mocha test/test.js"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.17.5",
