@@ -11,7 +11,7 @@ for(let i = 0; i < 1000; i++){
 
 const NEGATIVE_REGEX = /^\s*-/;
 
-const REGEX1 = /(\d+)(?<sep>:|-)(?:(\d\d)\k<sep>)?(\d\d(?:\.\d+)?)( PM)?/;
+const REGEX1 = /(\d+)(?<sep>:|-)(?:(\d{2})\k<sep>)?(\d{2}(?:\.\d+)?)( PM)?/;
 function parseClock1(str, minutes = false){
 	const match = str.match(REGEX1);
 	if(match === null) return;
@@ -35,8 +35,8 @@ function parseClock1(str, minutes = false){
 	return NEGATIVE_REGEX.test(str) ? -value : value;
 }
 
-const REGEX2 = /(\d+):(?:(\d\d):)?(\d\d(?:\.\d+)?)( PM)?/;
-const REGEX23 = /(\d+)-(?:(\d\d)-)?(\d\d(?:\.\d+)?)( PM)?/;
+const REGEX2 = /(\d+):(?:(\d{2}):)?(\d{2}(?:\.\d+)?)( PM)?/;
+const REGEX23 = /(\d+)-(?:(\d{2})-)?(\d{2}(?:\.\d+)?)( PM)?/;
 function parseClock2(str, minutes = false){
 	const match = str.match(REGEX2) || str.match(REGEX23);
 	if(match === null) return;
