@@ -1,6 +1,6 @@
 .npmignore
 .eslintrc.json
-
+.github
 package-lock.json
 node_modules/
 

@@ -1,6 +1,6 @@
 <a href="https://www.buymeacoffee.com/Fabricio191" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="135"></a>
-![CI](https://github.com/Fabricio-191/ms/workflows/CI/badge.svg)
 [![Discord](https://img.shields.io/discord/555535212461948936?style=for-the-badge&color=7289da)](https://discord.gg/zrESMn6)
+[![Tests](https://github.com/Fabricio-191/ms/actions/workflows/node.js.yml/badge.svg)](https://github.com/Fabricio-191/ms/actions/workflows/node.js.yml)
 
 # @fabricio-191/ms
 
