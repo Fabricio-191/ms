@@ -1,7 +1,5 @@
 /* eslint-disable switch-colon-spacing */
 /* eslint-disable default-case */
-/* eslint-disable no-invalid-this */
-/* eslint-disable no-console */
 // @ts-ignore
 const { Suite } = require('benchmark');
 const assert = require('assert');

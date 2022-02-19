@@ -1,5 +1,3 @@
-/* eslint-disable no-invalid-this */
-/* eslint-disable no-console */
 // @ts-ignore
 const ms = require('../../'), vercelMS = require('ms');
 const { Suite } = require('benchmark');
