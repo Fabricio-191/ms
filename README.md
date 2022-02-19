@@ -14,7 +14,7 @@ And also for converting milliseconds into an human readable format.
 + Can parse multiple units
 + Formatting has more options
 + Does not round while formatting
-- When formatting, it's waaayyyy slower than ms
+- When formatting, it's way slower than ms
 ```
 
 ## Parse
@@ -109,12 +109,12 @@ You can add a language dynamically by using the `addLanguage` method. [here](htt
 Execute this, it looks nice
 
 ```js
-const ms = require('@fabricio-191/ms'), years = ms('1970 years');
+const ms = require('@fabricio-191/ms'), start = ms('1970 years 1 month');
 
 setInterval(() => {
   process.stdout.clearLine(0);
   process.stdout.cursorTo(0);
-  process.stdout.write(ms(Date.now() + years, { length: 8 }));
+  process.stdout.write(ms(Date.now() + start, { length: 8 }));
   process.stdout.cursorTo(31);
 }, 1);
 ```

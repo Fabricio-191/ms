@@ -1,5 +1,7 @@
 const LANGUAGES = require('../lib/languages.json');
 const LANGS = Object.keys(LANGUAGES);
+
+// #region format args
 const TIMES = {
 	Y:  1000 * 60 * 60 * 24 * 365.25, // .2425
 	Mo: 1000 * 60 * 60 * 24 * 30, // .4167
@@ -46,39 +48,9 @@ function createFormatArgs(opts = {}){
 
 	return { num, options };
 }
+// #endregion
 
-module.exports = {
-	createFormatArgs,
-	createClockArgs,
-	expect, random,
-	LANGUAGES, TIMES,
-};
-
-const assert = require('assert');
-function expect(value, expectedValue){
-	if(typeof expectedValue === 'number' && typeof value === 'number'){
-		if(Math.abs(expectedValue - value) < 1) return;
-	}
-
-	assert.strictEqual(value, expectedValue);
-}
-
-function random(thing, fixed = 0){
-	if(Array.isArray(thing)){
-		return thing[Math.floor(Math.random() * thing.length)]; // random array element
-	}
-	if(typeof thing === 'object'){
-		return random(Object.keys(thing)); // random key of the object
-	}
-	if(thing === true){
-		return Math.random() > 0.5; // true or false
-	}
-	if(fixed !== 0){
-		return parseFloat((Math.random() * thing).toFixed(fixed)); // 0 to thing (float)
-	}
-	return Math.floor(Math.random() * thing); // 0 to thing-1
-}
-
+// #region clock args
 const separators = ['-', ':'];
 const formats = [
 	'hhsepmmsepss.sss',
@@ -114,4 +86,37 @@ function createClockArgs(){
 	n(60, 2, 'ss', 1000);
 
 	return { args: [format, minutes], result };
+}
+// #endregion
+
+module.exports = {
+	createFormatArgs,
+	createClockArgs,
+	expect, random,
+	LANGUAGES, TIMES,
+};
+
+const assert = require('assert');
+function expect(value, expectedValue){
+	if(typeof expectedValue === 'number' && typeof value === 'number'){
+		if(Math.abs(expectedValue - value) < 1) return;
+	}
+
+	assert.strictEqual(value, expectedValue);
+}
+
+function random(thing, fixed = 0){
+	if(Array.isArray(thing)){
+		return thing[Math.floor(Math.random() * thing.length)]; // random array element
+	}
+	if(typeof thing === 'object'){
+		return random(Object.keys(thing)); // random key of the object
+	}
+	if(thing === true){
+		return Math.random() > 0.5; // true or false
+	}
+	if(fixed !== 0){
+		return parseFloat((Math.random() * thing).toFixed(fixed)); // 0 to thing (float)
+	}
+	return Math.floor(Math.random() * thing); // 0 to thing-1
 }
