@@ -2,7 +2,7 @@
 /* eslint-env mocha */
 
 // @ts-ignore
-const ms = require('../typings');
+const ms = require('../');
 const vercelMS = require('ms');
 const {
 	createFormatArgs,
