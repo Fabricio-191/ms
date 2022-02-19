@@ -1,13 +1,13 @@
-name: Test
+name: Tests
 
 on:
   push:
-    branches: [ update ]
+    branches: [ master, update ]
   pull_request:
-    branches: [ update ]
+    branches: [ master, update ]
 
 jobs:
-  mocha tests, lint and benchmarks:
+  lint-mocha-benchmarks:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
