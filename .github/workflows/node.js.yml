@@ -7,24 +7,7 @@ on:
     branches: [ update ]
 
 jobs:
-  engines-test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [6.x, 7.x, 8.x, 9.x, 10.x, 11.x, 12.x, 14.x, 15.x, 16.x, 17.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Run test (without dependencies)
-      run: npm test
-
-  test:
+  mocha tests, lint and benchmarks:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -44,3 +27,20 @@ jobs:
       run: npm run mocha
     - name: Run benchs
       run: npm run bench && npm run bench
+
+  engines-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [6.x, 7.x, 8.x, 9.x, 10.x, 11.x, 12.x, 14.x, 15.x, 16.x, 17.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Run test (without dependencies)
+      run: npm test
