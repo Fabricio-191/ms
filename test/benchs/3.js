@@ -60,15 +60,15 @@ function parseClock2(str, minutes = false){
 	return NEGATIVE_REGEX.test(str) ? -value : value;
 }
 
-new Suite('Notation to time methods')
+new Suite('parseClock')
 	.add('1', () => {
 		for(const { args, result } of testBatch){
-			assert(parseClock1(...args), result);
+			assert.equal(parseClock1(...args), result);
 		}
 	})
 	.add('2', () => {
 		for(const { args, result } of testBatch){
-			assert(parseClock2(...args), result);
+			assert.equal(parseClock2(...args), result);
 		}
 	})
 	.on('start', initialize)

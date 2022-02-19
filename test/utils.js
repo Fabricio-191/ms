@@ -61,9 +61,12 @@ function createClockArgs(){
 	const n = (max, digits, key, val) => {
 		if(!format.includes(key)) return;
 
-		const num = random(max)
-			.toString()
-			.padStart(digits, '0');
+		let num = random(max).toString();
+
+		// padStart polyfill
+		while(num.length !== digits){
+			num = '0' + num;
+		}
 
 		format = format.replace(key, num);
 		result += parseFloat(num) * val;
