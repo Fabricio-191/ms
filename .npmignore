@@ -1,9 +1,10 @@
-.npmignore
-.eslintrc.json
 .github
+.eslintrc.json
+.npmignore
+.gitignore
 package-lock.json
-node_modules/
+README.md
 
-esm/
+node_modules/
 test/
 docs/

@@ -53,32 +53,37 @@ new Suite(`vercel/ms        ${require('ms/package.json').version}`)
 new Suite(`@fabricio-191/ms ${require('../../package.json').version}`)
 	.add('parsing', () => {
 		for(const { formatted } of testBatchForVercel){
-			ms(formatted);
+			ms.parse(formatted);
+		}
+	})
+	.add('simple formatting', () => {
+		for(const { num } of testBatchForVercel){
+			ms.format.simple(num);
 		}
 	})
 	.add('formatting', () => {
 		for(const { num } of testBatchForVercel){
-			ms(num, { length: 1, language: 'en' });
+			ms.format(num, { length: 1, language: 'en' });
 		}
 	})
 	.add('formatting long', () => {
 		for(const { num } of testBatchForVercel){
-			ms(num, { length: 1, language: 'en', long: true });
+			ms.format(num, { length: 1, language: 'en', long: true });
 		}
 	})
 	.add('full parsing', () => {
 		for(const { formatted } of testBatch){
-			ms(formatted);
+			ms.parse(formatted);
 		}
 	})
 	.add('full formatting', () => {
 		for(const { num, opts } of testBatch){
-			ms(num, opts);
+			ms.format(num, opts);
 		}
 	})
 	.add('clock', () => {
 		for(const args of clocks){
-			ms.clock(...args);
+			ms.parse.clock(...args);
 		}
 	})
 	.on('start', initialize)

@@ -1,12 +1,15 @@
 {
 	"name": "@fabricio-191/ms",
-	"version": "1.5.0",
+	"version": "1.5.1",
 	"typings": "./typings/index.d.ts",
 	"scripts": {
 		"lint": "eslint . --fix",
 		"mocha": "mocha test/mocha.js",
 		"bench": "node test/benchs/1.js",
 		"test": "node test/test.js"
+	},
+	"engines": {
+		"node": ">=6"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.17.5",
