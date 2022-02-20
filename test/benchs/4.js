@@ -1,44 +1,13 @@
 /* eslint-disable no-unused-expressions */
 /* eslint-disable default-case */
 const { Suite } = require('benchmark');
-const testBatch = [];
-
-function abc(obj1, obj2){
-	// con un array
-	const keys = Object.keys(obj1);
-
-	for(const key in obj2){
-		if(keys.includes(key)){
-			keys.splice(keys.indexOf(key), 1);
-		}else{
-			keys.push(key);
-		}
-	}
-
-	return keys;
-}
-
-function abc1(obj1, obj2){
-	// con un set
-	const keys = new Set(Object.keys(obj1));
-
-	for(const key in obj2){
-		if(keys.has(key)){
-			keys.delete(key);
-		}else{
-			keys.add(key);
-		}
-	}
-
-	return Array.from(keys);
-}
 
 new Suite('')
 	.add('1', () => {
-		abc({ a: 1, b: 2 }, { a: 1, c: 3 });
+		
 	})
 	.add('2', () => {
-		abc1({ a: 1, b: 2 }, { a: 1, c: 3 });
+		
 	})
 	.on('start', initialize)
 	.run();

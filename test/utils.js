@@ -1,6 +1,5 @@
 // @ts-ignore
-const { TIMES } = require('../');
-const LANGUAGES = require('../lib/languages.json');
+const { TIMES, LANGUAGES } = require('../');
 const LANGS = Object.keys(LANGUAGES);
 
 // #region format args
