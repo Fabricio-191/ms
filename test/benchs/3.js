@@ -43,16 +43,37 @@ function parseClock2(str, minutes = false){
 	let value = 0;
 
 	if(match[2]){
-		value +=
-			parseInt(match[1]) * TIMES.H +
-			parseInt(match[2]) * TIMES.M +
-			parseFloat(match[3]) * TIMES.S;
+		value += parseInt(match[1]) * TIMES.H +
+				 parseInt(match[2]) * TIMES.M +
+			   parseFloat(match[3]) * TIMES.S;
 	}else if(minutes){
-		value += parseInt(match[1]) * TIMES.M;
-		value += parseFloat(match[3]) * TIMES.S;
+		value += parseInt(match[1]) * TIMES.M +
+			   parseFloat(match[3]) * TIMES.S;
 	}else{
-		value += parseInt(match[1]) * TIMES.H;
-		value += parseFloat(match[3]) * TIMES.M;
+		value += parseInt(match[1]) * TIMES.H +
+			   parseFloat(match[3]) * TIMES.M;
+	}
+
+	if(match[4]) value += TIMES.H * 12;
+
+	return NEGATIVE_REGEX.test(str) ? -value : value;
+}
+
+function parseClock3(str, minutes = false){
+	const match = str.match(REGEX2) || str.match(REGEX23);
+	if(match === null) return;
+	let value = 0;
+
+	if(match[2]){
+		value += parseInt(match[1]) * TIMES.H +
+				 parseInt(match[2]) * TIMES.M +
+			   parseFloat(match[3]) * TIMES.S;
+	}else if(minutes){
+		value += parseInt(match[1]) * TIMES.M +
+			   parseFloat(match[3]) * TIMES.S;
+	}else{
+		value += parseInt(match[1]) * TIMES.H +
+			   parseFloat(match[3]) * TIMES.M;
 	}
 
 	if(match[4]) value += TIMES.H * 12;
@@ -69,6 +90,11 @@ new Suite('parseClock')
 	.add('2', () => {
 		for(const { args, result } of testBatch){
 			assert.equal(parseClock2(...args), result);
+		}
+	})
+	.add('3', () => {
+		for(const { args, result } of testBatch){
+			assert.equal(parseClock3(...args), result);
 		}
 	})
 	.on('start', initialize)
