@@ -9,7 +9,7 @@ while(testBatchForVercel.length !== 5000){
 		language: 'en',
 		length: 1,
 	});
-	const formatted = ms(num, options);
+	const formatted = ms.format(num, options);
 	// eslint-disable-next-line no-undefined
 	if(vercelMS(formatted) === undefined) continue;
 
@@ -19,7 +19,7 @@ while(testBatchForVercel.length !== 5000){
 const testBatch = [];
 for(let i = 0; i < 5000; i++){
 	const { num, options } = createFormatArgs();
-	const formatted = ms(num, options);
+	const formatted = ms.format(num, options);
 
 	testBatch.push({ formatted, num, options });
 }
