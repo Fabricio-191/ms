@@ -1,7 +1,7 @@
 // @ts-ignore
 const ms = require('../../'), vercelMS = require('ms');
 const { Suite } = require('benchmark');
-const { createFormatArgs, createClockArgs } = require('../utils.js');
+const { createFormatArgs, createClockArgs, initializeBench } = require('../utils.js');
 
 const testBatchForVercel = [];
 while(testBatchForVercel.length !== 5000){
@@ -47,7 +47,7 @@ new Suite(`vercel/ms        ${require('ms/package.json').version}`)
 			vercelMS(num, { long: true });
 		}
 	})
-	.on('start', initialize)
+	.on('start', initializeBench)
 	.run();
 
 new Suite(`@fabricio-191/ms ${require('../../package.json').version}`)
@@ -86,45 +86,5 @@ new Suite(`@fabricio-191/ms ${require('../../package.json').version}`)
 			ms.parse.clock(...args);
 		}
 	})
-	.on('start', initialize)
+	.on('start', initializeBench)
 	.run();
-
-function initialize(){
-	console.log(this.name);
-
-	this.on('error', event => {
-		throw event.target.error;
-	});
-	this.on('complete', function(){
-		const benchs = [];
-
-		for(let i = 0; i < this.length; i++){
-			benchs.push({
-				name: this[i].name,
-				hz: this[i].hz.toFixed(this[i].hz < 100 ? 2 : 0),
-				runs: this[i].stats.sample.length,
-				tolerance: this[i].stats.rme,
-			});
-		}
-
-		function getPad(arr, key){
-			return arr.reduce((acc, curr) => {
-				if(curr[key].length > acc) return curr[key].length;
-				return acc;
-			}, 0);
-		}
-
-		const namePad = getPad(benchs, 'name');
-		const hzPad = getPad(benchs, 'hz');
-
-		for(const bench of benchs){
-			console.log(
-				bench.name.padEnd(namePad, ' ') +
-					' x ' + bench.hz.padStart(hzPad, ' ') +
-					' ops/sec \xb1' + bench.tolerance.toFixed(2) +
-					'% (' + bench.runs + ' runs sampled)'
-			);
-		}
-		console.log();
-	});
-}

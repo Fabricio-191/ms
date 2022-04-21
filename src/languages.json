@@ -263,5 +263,72 @@
 			"singular": "ミリ秒",
 			"shortSingular": "ミリ秒"
 		}
+	},
+	"chinese": {
+		"dialect": "\u3000-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF",
+		"Y": {
+			"all": [
+				"年",
+				"年"
+			],
+			"singular": "年",
+			"shortSingular": "年"
+		},
+		"Mo": {
+			"all": [
+				"月",
+				"月"
+			],
+			"singular": "月",
+			"shortSingular": "月"
+		},
+		"W": {
+			"all": [
+				"周",
+				"周"
+			],
+			"singular": "周",
+			"shortSingular": "周"
+		},
+		"D": {
+			"all": [
+				"天",
+				"天"
+			],
+			"singular": "天",
+			"shortSingular": "天"
+		},
+		"H": {
+			"all": [
+				"小时",
+				"小时"
+			],
+			"singular": "小时",
+			"shortSingular": "小时"
+		},
+		"M": {
+			"all": [
+				"分",
+				"分"
+			],
+			"singular": "分",
+			"shortSingular": "分"
+		},
+		"S": {
+			"all": [
+				"秒",
+				"秒"
+			],
+			"singular": "秒",
+			"shortSingular": "秒"
+		},
+		"Ms": {
+			"all": [
+				"毫秒",
+				"毫秒"
+			],
+			"singular": "毫秒",
+			"shortSingular": "毫秒"
+		}
 	}
 }

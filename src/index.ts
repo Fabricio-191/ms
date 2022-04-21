@@ -1,11 +1,6 @@
-const { LANGUAGES, TIMES } = require('./utils.js');
-
-module.exports = {
-	TIMES,
-	LANGUAGES,
-	parse: require('./parse.js'),
-	format: require('./format.js'),
-};
+export { LANGUAGES, TIMES } from './utils';
+export * from './parse';
+export * from './format';
 
 // https://github.com/vercel/ms/issues
 // https://github.com/Fabricio-191/ms
@@ -15,10 +10,10 @@ module.exports = {
 // https://nodejs.org/api/assert.html
 
 // https://github.com/vercel/ms/issues/59
-// https://github.com/c0bra/text2num.js/blob/master/lib/text2num.js
 // https://github.com/sindresorhus/pretty-ms
-// https://github.com/Raul-Tech-Support/simple-duration-converter/blob/main/src/simple-duration.js
 // https://github.com/KartikeSingh/ms-prettify
+// https://github.com/c0bra/text2num.js/blob/master/lib/text2num.js
+// https://github.com/Raul-Tech-Support/simple-duration-converter/blob/main/src/simple-duration.js
 
 // Add popular languages (chinese/mandarin, hindi, french, arabic, russian, portuguese, turkish, korean)
 

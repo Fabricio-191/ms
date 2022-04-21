@@ -1,11 +1,11 @@
-const { LANGUAGES, TIMES } = require('./utils.js');
+import { LANGUAGES, TIMES } from './utils';
 const NEGATIVE_REGEX = /^\s*-/;
 
-function parse(str, languages){
+export default function parse(str: string, languages: string[]): number | null {
 	if(typeof str !== 'string' || str === '') return null;
 	languages = parseLanguages(languages);
 
-	const matches = [];
+	const matches: string[] = [];
 	let value = 0;
 
 	for(const lang of languages){
@@ -34,8 +34,8 @@ function parse(str, languages){
 
 const REGEX1 = /(\d+):(?:(\d{2}):)?(\d{2}(?:\.\d+)?)( PM)?/;
 const REGEX2 = /(\d+)-(?:(\d{2})-)?(\d{2}(?:\.\d+)?)( PM)?/;
-function parseClock(str, minutes = false){
-	const match = str.match(REGEX1) || str.match(REGEX2);
+function parseClock(str: string, minutes = false){
+	const match = (str.match(REGEX1) || str.match(REGEX2)) as [string, string, string | undefined, string, string | undefined];
 	if(match === null) return;
 	let value = 0;
 
@@ -56,8 +56,7 @@ function parseClock(str, minutes = false){
 	return NEGATIVE_REGEX.test(str) ? -value : value;
 }
 
-module.exports = parse;
-module.exports.clock = parseClock;
+export const clock = parseClock;
 
 const ALL_LANGUAGES = Object.keys(LANGUAGES);
 

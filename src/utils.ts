@@ -1,5 +1,10 @@
-const LANGUAGES = require('./languages.json');
-const TIMES = {
+import { readFileSync } from 'fs';
+
+export const LANGUAGES = JSON.parse(
+	readFileSync(__dirname + './languages.json').toString()
+);
+
+export const TIMES = {
 	Y:  1000 * 60 * 60 * 24 * 365.25, // 365.2425
 	Mo: 1000 * 60 * 60 * 24 * 30,
 	W:  1000 * 60 * 60 * 24 * 7,
@@ -10,8 +15,32 @@ const TIMES = {
 	Ms: 1,
 };
 
+export interface Notations {
+	all: string[];
+	singular: string;
+	shortSingular: string;
+	plural?: string;
+	shortPlural?: string;
+}
+
+export interface LANGUAGE {
+	dialect?: string;
+	dict?: {
+		[key: string]: number;
+	};
+	REGEX?: RegExp;
+	Y: Notations;
+	Mo: Notations;
+	W: Notations;
+	D: Notations;
+	H: Notations;
+	M: Notations;
+	S: Notations;
+	Ms: Notations;
+}
+
 for(const lang in LANGUAGES) prepareLanguage(LANGUAGES[lang]);
-function prepareLanguage(language){
+function prepareLanguage(language: LANGUAGE){
 	const allNotations = [];
 
 	for(const key in TIMES){
@@ -30,7 +59,7 @@ function prepareLanguage(language){
 	}
 }
 
-function checkLanguage(language){
+export function checkLanguage(language: LANGUAGE){
 	if(typeof language !== 'object') throw new Error('language must be an object');
 	if(language === null) throw new Error('language must not be null');
 	if(Array.isArray(language)) throw new Error('language must not be an array');
@@ -40,29 +69,29 @@ function checkLanguage(language){
 		if(!(key in language)) throw new Error(`does not have "${key}" key`);
 		if(typeof language[key] !== 'object') throw new Error(`"${key}" must be an object`);
 
-		const notations = language[key];
+		const Notations = language[key];
 
-		if(!('all' in notations)){
+		if(!('all' in Notations)){
 			throw new Error(`'${key}' does not have an 'all' property `);
-		}else if(!Array.isArray(notations.all)){
+		}else if(!Array.isArray(Notations.all)){
 			throw new Error(`'${key}', 'all' property is not an array`);
-		}else if(!('singular' in notations)){
+		}else if(!('singular' in Notations)){
 			throw new Error(`'${key}' does not have singular notation`);
-		}else if(!('shortSingular' in notations)){
+		}else if(!('shortSingular' in Notations)){
 			throw new Error(`'${key}' does not have short singular notation`);
 		}
 
 		for(const k of ['singular', 'shortSingular', 'plural', 'shortPlural']){
-			if(k in notations){
-				if(!notations.all.includes(notations[k])){
-					throw new Error(`${notations[k]} notation is not in notations all in '${key}'`);
-				}else if(typeof notations[k] !== 'string'){
+			if(k in Notations){
+				if(!Notations.all.includes(Notations[k])){
+					throw new Error(`${Notations[k]} notation is not in Notations all in '${key}'`);
+				}else if(typeof Notations[k] !== 'string'){
 					throw new Error(`${k} notation is not a string in '${key}'`);
 				}
 			}
 		}
 
-		allNotations.push(...notations.all);
+		allNotations.push(...Notations.all);
 	}
 
 	for(let i = 0; i < allNotations.length; i++){
@@ -72,7 +101,7 @@ function checkLanguage(language){
 	}
 }
 
-function addLanguage(name, language){
+export function addLanguage(name: string, language: LANGUAGE){
 	if(typeof name !== 'string' || name === ''){
 		throw new Error('Language name must be a non-empty string.');
 	}else if(name in LANGUAGES){
@@ -84,13 +113,6 @@ function addLanguage(name, language){
 
 	LANGUAGES[name] = language;
 }
-
-module.exports = {
-	LANGUAGES,
-	TIMES,
-	addLanguage,
-	checkLanguage,
-};
 
 /*
 const https = require('https');
