@@ -1,9 +1,9 @@
 /* eslint-disable switch-colon-spacing */
 /* eslint-disable default-case */
 // @ts-ignore
-const { Suite } = require('benchmark');
-const { initializeBench } = require('../utils.js');
-const assert = require('assert');
+import { Suite } from 'benchmark';
+import { createBench } from '../utils';
+import { strictEqual } from 'assert';
 
 const TIMES = {
 	Y:  1000 * 60 * 60 * 24 * 365.25, // 365.2425
@@ -27,7 +27,7 @@ const language = {
 		Ms: ['ms', 'mil'],
 		M: ['m'],
 	},
-	determine(str){
+	determine(str: string): string {
 		if(str[0] === 'y') return 'Y';
 		if(str[0] === 'w') return 'W';
 		if(str[0] === 'd') return 'D';
@@ -41,8 +41,10 @@ const language = {
 
 			return 'M';
 		}
+
+		throw 'asd';
 	},
-	determine2(str){
+	determine2(str: string): string {
 		switch(str[0]){
 			case 'y': return 'Y';
 			case 'w': return 'W';
@@ -61,8 +63,10 @@ const language = {
 				return 'M';
 			}
 		}
+
+		throw 'asd';
 	},
-	determine3(str){
+	determine3(str: string): string {
 		switch(str){
 			case 'years':
 			case 'year':
@@ -110,6 +114,8 @@ const language = {
 			case 'ms':
 				return 'Ms';
 		}
+		
+		throw 'asd';
 	},
 	firstLetter: {
 		y: 'Y',
@@ -224,7 +230,10 @@ for(const key in TIMES){
 	}
 }
 
-const allNotations = [];
+const allNotations: {
+	notation: string;
+	value: number;
+}[] = [];
 
 for(const key in TIMES){
 	const notations = language[key];
@@ -237,48 +246,48 @@ for(const key in TIMES){
 	}
 }
 
-new Suite('Notation to time methods')
+createBench('Notation to time methods')
 	.add('1 (actual method)', () => {
 		for(const { notation, value } of allNotations){
-			assert.equal(value, language.dict2[notation]);
+			strictEqual(value, language.dict2[notation]);
 		}
 	})
 	.add('2', () => {
 		for(const { notation, value } of allNotations){
-			assert.equal(value, language.dict3.get(notation));
+			strictEqual(value, language.dict3.get(notation));
 		}
 	})
 	.add('3 (hardcoded) (vercel/ms method)', () => {
 		for(const { notation, value } of allNotations){
-			assert.equal(value, TIMES[language.determine3(notation)]);
+			strictEqual(value, TIMES[language.determine3(notation)]);
 		}
 	})
 	.add('4', () => {
 		for(const { notation, value } of allNotations){
-			assert.equal(value, TIMES[language.dict[notation]]);
+			strictEqual(value, TIMES[language.dict[notation]]);
 		}
 	})
 	.add('5 (hardcoded)', () => {
 		for(const { notation, value } of allNotations){
-			assert.equal(value, TIMES[
+			strictEqual(value, TIMES[
 				language.determine2(notation)
 			]);
 		}
 	})
 	.add('6 (hardcoded)', () => {
 		for(const { notation, value } of allNotations){
-			assert.equal(value, TIMES[
+			strictEqual(value, TIMES[
 				language.determine(notation)
 			]);
 		}
 	})
 	.add('7', () => {
 		for(const { notation, value } of allNotations){
-			if('firstLetter' in language && notation[0] in language.firstLetter){
-				assert.equal(value, TIMES[language.firstLetter[notation[0]]]);
+			if('firstLetter' in language && (notation[0] as string) in language.firstLetter){
+				strictEqual(value, TIMES[language.firstLetter[notation[0] as string]]);
 			}else for(const key in TIMES){
 				if(language[key].all.includes(notation)){
-					assert.equal(value, TIMES[key]);
+					strictEqual(value, TIMES[key]);
 					break;
 				}
 			}
@@ -287,8 +296,8 @@ new Suite('Notation to time methods')
 	.add('8', () => {
 		for(const { notation, value } of allNotations){
 			for(const key in language.first){
-				if(language.first[key].some(x => notation.startsWith(x))){
-					assert.equal(value, TIMES[key]);
+				if(language.first[key].some((x: string) => notation.startsWith(x))){
+					strictEqual(value, TIMES[key]);
 					break;
 				}
 			}
@@ -298,11 +307,10 @@ new Suite('Notation to time methods')
 		for(const { notation, value } of allNotations){
 			for(const key in TIMES){
 				if(language[key].all.includes(notation)){
-					assert.equal(value, TIMES[key]);
+					strictEqual(value, TIMES[key]);
 					break;
 				}
 			}
 		}
 	})
-	.on('start', initializeBench)
 	.run();

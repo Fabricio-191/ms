@@ -1,9 +1,12 @@
 // @ts-ignore
-const ms = require('../../'), vercelMS = require('ms');
-const { Suite } = require('benchmark');
-const { createFormatArgs, createClockArgs, initializeBench } = require('../utils.js');
+import ms from '../src/index';
+import * as vercelMS from 'ms';
+import { createFormatArgs, createClockArgs, createBench } from './utils.js';
 
-const testBatchForVercel = [];
+const testBatchForVercel: {
+	formatted: string;
+	num: number;
+}[] = [];
 while(testBatchForVercel.length !== 5000){
 	const { num, options } = createFormatArgs({
 		language: 'en',
@@ -16,22 +19,26 @@ while(testBatchForVercel.length !== 5000){
 	testBatchForVercel.push({ formatted, num });
 }
 
-const testBatch = [];
+const testBatch: {
+	formatted: string;
+	num: number;
+	opts: unknown;
+}[] = [];
 for(let i = 0; i < 5000; i++){
 	const { num, options } = createFormatArgs();
 	const formatted = ms.format(num, options);
 
-	testBatch.push({ formatted, num, options });
+	testBatch.push({ formatted, num, opts: options });
 }
 
-const clocks = [];
+const clocks: Array<string | boolean>[] = [];
 for(let i = 0; i < 5000; i++){
 	clocks.push(createClockArgs().args);
 }
 
 console.log(`Node.js version: ${process.version}\n`);
 
-new Suite(`vercel/ms        ${require('ms/package.json').version}`)
+createBench(`vercel/ms        ${require('ms/package.json').version}`)
 	.add('parsing', () => {
 		for(const { formatted } of testBatchForVercel){
 			vercelMS(formatted);
@@ -47,10 +54,9 @@ new Suite(`vercel/ms        ${require('ms/package.json').version}`)
 			vercelMS(num, { long: true });
 		}
 	})
-	.on('start', initializeBench)
 	.run();
 
-new Suite(`@fabricio-191/ms ${require('../../package.json').version}`)
+createBench(`@fabricio-191/ms ${require('../../package.json').version}`)
 	.add('parsing', () => {
 		for(const { formatted } of testBatchForVercel){
 			ms.parse(formatted);
@@ -86,5 +92,4 @@ new Suite(`@fabricio-191/ms ${require('../../package.json').version}`)
 			ms.parse.clock(...args);
 		}
 	})
-	.on('start', initializeBench)
 	.run();

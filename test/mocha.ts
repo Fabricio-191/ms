@@ -1,8 +1,8 @@
 /* eslint-env mocha */
 
 // @ts-ignore
-const ms = require('../');
-const vercelMS = require('ms');
+import ms from '../';
+import vercelMS from 'ms';
 const {
 	createFormatArgs,
 	createClockArgs,

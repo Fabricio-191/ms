@@ -1,12 +1,12 @@
 // Same tests as mocha.js but without dependencies
 // @ts-ignore
 const ms = require('../');
-const {
+import {
 	createFormatArgs,
 	createClockArgs,
 	expect, random,
 	LANGUAGES, TIMES,
-} = require('./utils.js');
+} from './utils';
 
 for(const lang in LANGUAGES){
 	ms.checkLanguage(LANGUAGES[lang]);
@@ -47,7 +47,7 @@ expect(ms('1    s'), null);
 expect(ms('1\ts'), null);
 expect(ms('1\ns'), null);
 
-function testNums(numsToTest){
+function testNums(numsToTest: string[]){
 	for(const lang in LANGUAGES){
 		for(const key in TIMES){
 			for(const notation of LANGUAGES[lang][key].all){
@@ -67,7 +67,7 @@ testNums(['30.3', '2.1']);
 testNums(['-100', '-1', '-1.5']);
 testNums(['.5', '-.5']);
 
-function createString(lang){
+function createString(lang: string){
 	let str = '', result = 0;
 
 	while(str.length === 0){

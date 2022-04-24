@@ -1,11 +1,7 @@
-const { Suite } = require('benchmark');
-const assert = require('assert');
-const {
-	createClockArgs, TIMES,
-	initializeBench,
-} = require('../utils.js');
+import { createBench, createClockArgs, TIMES, type ClockArgs } from '../utils';
+import { strictEqual } from 'assert';
 
-const testBatch = [];
+const testBatch: ClockArgs[] = [];
 for(let i = 0; i < 1000; i++){
 	testBatch.push(createClockArgs());
 }
@@ -13,7 +9,7 @@ for(let i = 0; i < 1000; i++){
 const NEGATIVE_REGEX = /^\s*-/;
 
 const REGEX1 = /(\d+)(?<sep>:|-)(?:(\d{2})\k<sep>)?(\d{2}(?:\.\d+)?)( PM)?/;
-function parseClock1(str, minutes = false){
+function parseClock1(str: string, minutes = false){
 	const match = str.match(REGEX1);
 	if(match === null) return;
 	let value = 0;
@@ -38,7 +34,7 @@ function parseClock1(str, minutes = false){
 
 const REGEX2 = /(\d+):(?:(\d{2}):)?(\d{2}(?:\.\d+)?)( PM)?/;
 const REGEX23 = /(\d+)-(?:(\d{2})-)?(\d{2}(?:\.\d+)?)( PM)?/;
-function parseClock2(str, minutes = false){
+function parseClock2(str: string, minutes = false){
 	const match = str.match(REGEX2) || str.match(REGEX23);
 	if(match === null) return;
 	let value = 0;
@@ -60,7 +56,7 @@ function parseClock2(str, minutes = false){
 	return NEGATIVE_REGEX.test(str) ? -value : value;
 }
 
-function parseClock3(str, minutes = false){
+function parseClock3(str: string, minutes = false){
 	const match = str.match(REGEX2) || str.match(REGEX23);
 	if(match === null) return;
 	let value = 0;
@@ -82,21 +78,20 @@ function parseClock3(str, minutes = false){
 	return NEGATIVE_REGEX.test(str) ? -value : value;
 }
 
-new Suite('parseClock')
+createBench('parseClock')
 	.add('1', () => {
 		for(const { args, result } of testBatch){
-			assert.equal(parseClock1(...args), result);
+			strictEqual(parseClock1(...args), result);
 		}
 	})
 	.add('2', () => {
 		for(const { args, result } of testBatch){
-			assert.equal(parseClock2(...args), result);
+			strictEqual(parseClock2(...args), result);
 		}
 	})
 	.add('3', () => {
 		for(const { args, result } of testBatch){
-			assert.equal(parseClock3(...args), result);
+			strictEqual(parseClock3(...args), result);
 		}
 	})
-	.on('start', initializeBench)
 	.run();

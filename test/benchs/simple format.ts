@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-expressions */
 /* eslint-disable default-case */
 // @ts-ignore
-const { LANGUAGES, TIMES, initializeBench } = require('../utils.js');
-const { Suite } = require('benchmark');
+import { LANGUAGES, TIMES, createBench } from '../utils';
 
 function getNotation1(notations, long, singular){
 	if(long){
@@ -91,14 +90,14 @@ function simpleFormat2(miliseconds, long = false, lang = 'en'){
 	}
 }
 
-function a(miliseconds){
+function a(miliseconds: number){
 	for(const key in TIMES){
 		if(miliseconds >= TIMES[key]) return key;
 	}
 	return 'Ms';
 }
 
-function simpleFormat3(miliseconds, long = false, lang = 'en'){
+function simpleFormat3(miliseconds: number, long = false, lang = 'en'){
 	if(!Number.isFinite(miliseconds)) return null;
 	if(miliseconds < 0){
 		return '-' + simpleFormat1(-miliseconds, long, lang);
@@ -111,17 +110,22 @@ function simpleFormat3(miliseconds, long = false, lang = 'en'){
 	const num = Math.round(miliseconds / TIMES[key]);
 	return num + getNotation1(LANGUAGES[lang][key], long, num === 1);
 }
-const testBatch = [];
+const testBatch: {
+	num: number;
+	result: string;
+}[] = [];
 
 const TIMESV = Object.values(TIMES);
 for(let i = 0; i < 50000; i++){
-	const num = TIMESV[Math.floor(Math.random() * TIMESV.length)] * Math.round(Math.random() * 10);
+	const num = TIMESV[
+		Math.floor(Math.random() * TIMESV.length)
+	] as number * Math.round(Math.random() * 10);
 	const result = simpleFormat1(num);
 
 	testBatch.push({ num, result });
 }
 
-new Suite('')
+createBench('')
 	.add('1', () => {
 		for(const { num } of testBatch){
 			simpleFormat1(num);
