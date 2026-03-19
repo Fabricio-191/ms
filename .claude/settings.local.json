@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm test:*)",
+      "Bash(find f:/Programacion/@fabricio-191/ms/test f:/Programacion/@fabricio-191/ms/temp -not -path */node_modules/* -type f)",
+      "Bash(node -e \"const g = require\\(''globals''\\); console.log\\(Object.keys\\(g\\).filter\\(k => k.includes\\(''node''\\)\\)\\)\")"
+    ]
+  }
+}

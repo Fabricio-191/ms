@@ -1,121 +1,87 @@
-import { LANGUAGES, TIMES, type Notations } from './utils';
+import { Language, TIMES, type Unit } from './languages/core.ts';
+import { LANGUAGES } from './languages/languages.ts';
 
-function getNotation(notations: Notations, long: boolean, singular: boolean){
-	if(long){
-		if(singular) return ' ' + notations.singular;
-
-		return ' ' + (notations.plural || notations.singular);
-	}
-	if(singular) return notations.shortSingular;
-
-	return notations.shortPlural || notations.shortSingular;
-}
-
-export default function format(miliseconds: number, options: RawOptions): string | null {
-	if(!Number.isFinite(miliseconds)) return null;
+export function format(miliseconds: number, options: Options = {}): string | null {
+	if (typeof miliseconds !== 'number' || !Number.isFinite(miliseconds)) return null;
 	const parsedOptions = parseFormatOptions(options);
 
-	let str = '';
-	if(miliseconds < 0){
-		str += '- ';
-		miliseconds = -miliseconds;
+	let remaining = Math.abs(miliseconds);
+	let str = miliseconds < 0 ? '- ' : '';
+
+	const lang = parsedOptions.language;
+
+	for (const unit of parsedOptions.format) {
+		const value = Math.floor(remaining / TIMES[unit]);
+		if (value === 0) continue;
+
+		remaining -= value * TIMES[unit];
+
+		str += `${value}${lang.getNotation(unit, parsedOptions.long, value === 1)} `;
+
+		parsedOptions.length -= 1;
+		if (parsedOptions.length === 0) break;
 	}
 
-	const lang = LANGUAGES[parsedOptions.language];
+	if (str === '' || str === '- ') // if the input is 0 or if it's too small to be represented in the specified format, return '0' with the smallest unit in the format
+		return `0${lang.getNotation(parsedOptions.format.at(-1)!, parsedOptions.long, false)}`;
 
-	for(const key of parsedOptions.format){
-		const value = Math.floor(miliseconds / TIMES[key]);
-		if(value === 0) continue;
-
-		miliseconds -= value * TIMES[key];
-
-		str += value + getNotation(lang[key], parsedOptions.long, value === 1) + ' ';
-
-		if(--parsedOptions.length === 0) break;
-	}
-
-	if(str === '') return '0' + getNotation(
-		lang[parsedOptions.format[parsedOptions.format.length - 1] as string],
-		parsedOptions.long, false
-	);
-
-	if(str[str.length - 1] === ' '){
-		return str.slice(0, -1);
-	}
-	// console.log(new Intl.ListFormat('es').format(['a', 'b', 'c']));
-
-	return str;
+	return str.trimEnd();
 }
 
-function simpleFormat(miliseconds: number, long = false, lang = 'en'): string | null {
-	if(!Number.isFinite(miliseconds)) return null;
-	if(miliseconds < 0){
-		return '-' + simpleFormat(-miliseconds, long, lang);
-	}
-	if(!(lang in LANGUAGES)){
-		throw new Error('Language not found');
-	}
+const FORMATS_REGEX = /Mo|Ms|Y|W|D|H|M|S/gu;
+const VALID_FORMAT = /^Y?(?:Mo)?W?D?H?M?S?(?:Ms)?$/u;
 
-	for(const key in TIMES){
-		const num = Math.round(miliseconds / TIMES[key]);
-		if(num !== 0){
-			return num + getNotation(LANGUAGES[lang][key], long, num === 1);
-		}
-	}
-
-	return null;
-}
-
-export const simple = simpleFormat;
-
-const FORMATS_REGEX = /Mo|Ms|Y|W|D|H|M|S/g;
-const VALID_FORMAT = /^Y?(?:Mo)?W?D?H?M?S?(?:Ms)?$/;
-
-interface RawOptions {
+interface Options {
 	long?: boolean;
 	length?: number;
-	language?: string;
+	language?: Language;
 	format?: string;
 }
 
-interface Options {
+interface ParsedOptions {
 	long: boolean;
 	length: number;
-	language: string;
-	format: string[];
+	language: Language;
+	format: Unit[];
 }
 
-const DEFAULT_FORMAT_OPTS: Required<RawOptions> = {
-	language: 'en',
+const DEFAULT_FORMAT_OPTS: Required<Options> = {
+	language: LANGUAGES['en']!,
 	long: false,
 	format: 'YMoDHMSMs',
 	length: 3,
 };
 
-function parseFormatOptions(options: RawOptions = {}){
-	if(typeof options !== 'object') throw Error('Options should be an object');
+function parseFormatOptions(options: Options = {}): ParsedOptions {
+	if (
+		typeof options !== 'object' ||
+		Array.isArray(options)
+	) throw Error('Options should be an object');
 
-	const parsedOptions: {
-		[key in keyof Options]: key extends keyof RawOptions ?
-			Exclude<RawOptions[key], undefined> | Options[key] :
-			never;
-	} = Object.assign({}, DEFAULT_FORMAT_OPTS, options);
+	const parsedOptions = { ...DEFAULT_FORMAT_OPTS, ...options };
 
-	if(typeof parsedOptions.long !== 'boolean'){
-		throw Error("'long' should be a boolean");
-	}else if(typeof parsedOptions.length !== 'number' || parsedOptions.length < 1 || parsedOptions.length > 8){
-		throw Error("'length' should be a number between 1 and 8");
-	}else if(typeof parsedOptions.language !== 'string'){
-		throw Error("'language' should be a string");
-	}else if(!LANGUAGES[parsedOptions.language]){
-		throw Error(`invalid language '${parsedOptions.language}'`);
-	}else if(typeof parsedOptions.format !== 'string' || parsedOptions.format === ''){
-		throw Error("'format' should be a non-empty string");
-	}else if(!VALID_FORMAT.test(parsedOptions.format)){
+	if (typeof parsedOptions.long !== 'boolean')
+		throw Error('\'long\' should be a boolean');
+
+	else if (typeof parsedOptions.length !== 'number' || parsedOptions.length < 1 || parsedOptions.length > 8)
+		throw Error('\'length\' should be a number between 1 and 8');
+
+	else if (typeof parsedOptions.format !== 'string' || parsedOptions.format === '')
+		throw Error('\'format\' should be a non-empty string');
+
+	else if (!VALID_FORMAT.test(parsedOptions.format))
 		throw Error('invalid format');
-	}
 
-	parsedOptions.format = parsedOptions.format.match(FORMATS_REGEX) as string[];
+	else if (!(parsedOptions.language instanceof Language))
+		throw Error('\'language\' should be a Language instance');
 
-	return parsedOptions as Options;
+	const formatKeys = parsedOptions.format.match(FORMATS_REGEX) as Unit[];
+	const language = parsedOptions.language;
+
+	return {
+		format: formatKeys,
+		language,
+		length: parsedOptions.length,
+		long: parsedOptions.long,
+	};
 }

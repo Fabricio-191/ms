@@ -1,6 +1,17 @@
-export { LANGUAGES, TIMES } from './utils';
-export * from './parse';
-export * from './format';
+export {
+	Language,
+	Notations,
+	TIMES,
+	type LanguageData,
+	type NotationsData,
+	type Unit,
+} from './languages/core.ts';
+export { LANGUAGES } from './languages/languages.ts';
+export { parse, parse as parseTime } from './parse.ts';
+export { parseClock, parseClock as clock } from './clock.ts';
+export { format, format as formatTime } from './format.ts';
+export { buildFastParse } from './fast/parse.ts';
+export { buildFastFormat } from './fast/format.ts';
 
 // https://github.com/vercel/ms/issues
 // https://github.com/Fabricio-191/ms

@@ -1,76 +1,31 @@
-import { LANGUAGES, TIMES } from './utils';
-const NEGATIVE_REGEX = /^\s*-/;
+import { Language } from './languages/core.ts';
+import { LANGUAGES } from './languages/languages.ts';
 
-export default function parse(str: string, languages: string[]): number | null {
-	if(typeof str !== 'string' || str === '') return null;
-	languages = parseLanguages(languages);
+export const NEGATIVE_REGEX = /^\s*-/u;
 
-	const matches: string[] = [];
-	let value = 0;
+export function parse(str: string, languages: Language | Language[] = LANGUAGES['en']!): number | null {
+	if (typeof str !== 'string' || str === '') return null;
+	// eslint-disable-next-line no-param-reassign
+	if (languages instanceof Language) languages = [ languages ];
+	if (
+		!Array.isArray(languages) ||
+		languages.length === 0 ||
+		languages.some(language => !(language instanceof Language))
+	)
+		throw Error('`languages` should be a Language or Language[] (with at least one Language instance)');
 
-	for(const lang of languages){
-		const language = LANGUAGES[lang];
+	const { value, matches_qty } = languages.map(lang => lang.parse(str))
+		.reduce((acc, res) => {
+			if (res.matches_qty > acc.matches_qty) return res;
+			return acc;
+		}, { value: 0, matches_qty: 0 });
 
-		do{
-			const match = language.REGEX.exec(str);
-			if(match === null || matches.includes(match[0])) continue;
-			matches.push(match[0]);
+	if (matches_qty === 0) {
+		if (Number.isNaN(Number(str))) return null;
 
-			value += parseFloat(match[1]) * language.dict[match[2]];
-		}while(language.REGEX.lastIndex);
-
-		// if(matches.length) break;
-	}
-
-	if(matches.length === 0){
-		// @ts-ignore
-		if(isNaN(str)) return null;
-
+		// parse as ms
 		return Number(str);
 	}
 
 	return NEGATIVE_REGEX.test(str) ? -value : value;
-}
-
-const REGEX1 = /(\d+):(?:(\d{2}):)?(\d{2}(?:\.\d+)?)( PM)?/;
-const REGEX2 = /(\d+)-(?:(\d{2})-)?(\d{2}(?:\.\d+)?)( PM)?/;
-function parseClock(str: string, minutes = false){
-	const match = (str.match(REGEX1) || str.match(REGEX2)) as [string, string, string | undefined, string, string | undefined];
-	if(match === null) return;
-	let value = 0;
-
-	if(match[2]){
-		value += parseInt(match[1]) * TIMES.H +
-				 parseInt(match[2]) * TIMES.M +
-			   parseFloat(match[3]) * TIMES.S;
-	}else if(minutes){
-		value += parseInt(match[1]) * TIMES.M +
-			   parseFloat(match[3]) * TIMES.S;
-	}else{
-		value += parseInt(match[1]) * TIMES.H +
-			   parseFloat(match[3]) * TIMES.M;
-	}
-
-	if(match[4]) value += TIMES.H * 12;
-
-	return NEGATIVE_REGEX.test(str) ? -value : value;
-}
-
-export const clock = parseClock;
-
-const ALL_LANGUAGES = Object.keys(LANGUAGES);
-
-function parseLanguages(languages = ['en']){
-	if(typeof languages === 'string'){
-		languages = languages === 'all' ? ALL_LANGUAGES : [languages];
-	}else if(!Array.isArray(languages)){
-		throw Error("'languages' should be an array or a string");
-	}
-
-	for(const lang of languages){
-		if(typeof lang !== 'string') throw Error('All languages should be strings');
-		if(!(lang in LANGUAGES)) throw Error(`Invalid language '${lang}'`);
-	}
-
-	return languages;
 }
