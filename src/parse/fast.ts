@@ -1,4 +1,4 @@
-import { TIMES, UNIT_KEYS, type Language } from '../languages/core.ts';
+import { TIMES, UNITS, type Language } from '../core/index.ts';
 
 type FastParseFunction = (str: string) => number | null;
 
@@ -9,7 +9,7 @@ function escapeString(value: string): string {
 function createSwitchBody(language: Language): string {
 	let body = '';
 
-	for (const unit of UNIT_KEYS) {
+	for (const unit of UNITS) {
 		const multiplier = TIMES[unit];
 		const notations = language.units[unit].all;
 		for (const notation of notations)

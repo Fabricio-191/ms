@@ -1,6 +1,6 @@
-import { Language } from './core.ts';
+import { Language } from './index.ts';
 
-export const LANGUAGES: Record<string, Language> = {
+export const LANGUAGES = Object.freeze({
 	en: new Language('en', {
 		dialect: 'a-z',
 		Y: {
@@ -266,4 +266,6 @@ export const LANGUAGES: Record<string, Language> = {
 			shortSingular: 'ミリ秒',
 		},
 	}),
-} as const;
+});
+
+export type LanguageKey = keyof typeof LANGUAGES;

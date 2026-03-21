@@ -1,5 +1,4 @@
-import { TIMES } from './languages/core.ts';
-import { NEGATIVE_REGEX } from './parse.ts';
+import { NEGATIVE_REGEX, TIMES } from './core/index.ts';
 
 // hh:mm:ss, hh-mm-ss, mm:ss, mm-ss, hh:mm, hh-mm
 const REGEX1 = /(?<hh>\d+:)?(?<mm>\d{2}):(?<ss>\d{2}(?:\.\d+)?)(?<pm> PM)?/u;

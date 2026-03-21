@@ -1,4 +1,4 @@
-export const TIMES = {
+export const TIMES = Object.freeze({
 	Y: 1000 * 60 * 60 * 24 * 365.25, // 365.2425
 	Mo: 1000 * 60 * 60 * 24 * 30,
 	W: 1000 * 60 * 60 * 24 * 7,
@@ -7,11 +7,11 @@ export const TIMES = {
 	M: 1000 * 60,
 	S: 1000,
 	Ms: 1,
-} as const;
+});
 
 export type Unit = keyof typeof TIMES;
 
-export const UNIT_KEYS = Object.keys(TIMES) as Unit[];
+export const UNITS = Object.keys(TIMES) as Unit[];
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -30,7 +30,7 @@ export interface NotationsData {
 }
 
 export interface LanguageData {
-	dialect?: string;
+	dialect: string;
 	Y: NotationsData;
 	Mo: NotationsData;
 	W: NotationsData;
@@ -122,24 +122,8 @@ export class Language {
 	public readonly REGEX: RegExp;
 
 	public constructor(name: string, data: LanguageData) {
-		if (typeof name !== 'string' || name === '')
-			throw new Error('language name should be a non-empty string');
-
-		if (!isPlainObject(data))
-			throw new Error('language should be a non-null object');
-
-		const rawData = data as Record<string, unknown>;
-
-		if ('dialect' in rawData && rawData['dialect'] !== undefined && typeof rawData['dialect'] !== 'string')
-			throw new Error('language dialect should be a string when provided');
-
 		this.name = name;
-		this.dialect = data.dialect ?? 'a-z';
-
-		for (const key of UNIT_KEYS) {
-			if (!(key in data))
-				throw new Error(`language does not contain '${key}' notations`);
-		}
+		this.dialect = data.dialect;
 
 		this.units = {
 			Y: new Notations(data.Y, 'Y'),
@@ -152,15 +136,9 @@ export class Language {
 			Ms: new Notations(data.Ms, 'Ms'),
 		};
 
-		for (const key of UNIT_KEYS) {
-			for (const notation of this.units[key].all) {
-				const normalizedNotation = notation.toLowerCase();
-
-				if (normalizedNotation in this.dict)
-					throw new Error(`notation '${notation}' repeated in language '${name}'`);
-
-				this.dict[normalizedNotation] = TIMES[key];
-			}
+		for (const key of UNITS) {
+			for (const notation of this.units[key].all)
+				this.dict[notation.toLowerCase()] = TIMES[key];
 		}
 
 		const escapedNotations = Object.keys(this.dict)
@@ -168,18 +146,17 @@ export class Language {
 			.map(escapeRegex)
 			.join('|');
 
-		this.REGEX = RegExp(`(\\d*\\.?\\d+) {0,3}(${escapedNotations})(?![${this.dialect}])`, 'giu');
+		this.REGEX = RegExp(`(?<value>\\d*\\.?\\d+) {0,3}(?<unit>${escapedNotations})(?![${this.dialect}])`, 'giu');
 	}
 
 	public parse(str: string): { value: number; matches_qty: number } {
 		let final_value = 0;
 		let matches_qty = 0;
 
-		this.REGEX.lastIndex = 0;
+		const matches = str.matchAll(this.REGEX);
 
-		for (let match = this.REGEX.exec(str); match !== null; match = this.REGEX.exec(str)) {
-			const value = match[1]!;
-			const unit = match[2]!.toLowerCase();
+		for (const match of matches) {
+			const { value, unit } = match.groups as { value: string; unit: string };
 
 			final_value += parseFloat(value) * this.dict[unit]!;
 			matches_qty += 1;
@@ -195,3 +172,5 @@ export class Language {
 		return this.units[unit].getNotation(long, singular);
 	}
 }
+
+export const NEGATIVE_REGEX = /^\s*-/u;

@@ -1,8 +1,8 @@
-import { TIMES, type Unit, type Language } from '../languages/core.ts';
+import { TIMES, type Unit, type Language } from '../core/index.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
-const UNIT_KEYS = Object.keys(TIMES) as Unit[];
+const UNITS = Object.keys(TIMES) as Unit[];
 
 function escapeString(value: string): string {
 	return value.replace(/\\/gu, '\\\\').replace(/'/gu, '\\x27');
@@ -11,7 +11,7 @@ function escapeString(value: string): string {
 function createBranches(language: Language): string {
 	let branches = '';
 
-	for (const unit of UNIT_KEYS) {
+	for (const unit of UNITS) {
 		const unitValue = TIMES[unit];
 		const longSingular = escapeString(language.getNotation(unit, true, true));
 		const longPlural = escapeString(language.getNotation(unit, true, false));
@@ -37,7 +37,7 @@ function createBranches(language: Language): string {
 		`;
 	}
 
-	const smallestUnit = UNIT_KEYS.at(-1)!;
+	const smallestUnit = UNITS.at(-1)!;
 	const zeroLong = escapeString(language.getNotation(smallestUnit, true, false));
 	const zeroShort = escapeString(language.getNotation(smallestUnit, false, false));
 

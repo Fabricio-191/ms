@@ -1,5 +1,5 @@
-import { Language, TIMES, type Unit } from './languages/core.ts';
-import { LANGUAGES } from './languages/languages.ts';
+import { Language, TIMES, type Unit } from '../core/index.ts';
+import { LANGUAGES } from '../core/languages.ts';
 
 export function format(miliseconds: number, options: Options = {}): string | null {
 	if (typeof miliseconds !== 'number' || !Number.isFinite(miliseconds)) return null;
@@ -30,12 +30,13 @@ export function format(miliseconds: number, options: Options = {}): string | nul
 
 const FORMATS_REGEX = /Mo|Ms|Y|W|D|H|M|S/gu;
 const VALID_FORMAT = /^Y?(?:Mo)?W?D?H?M?S?(?:Ms)?$/u;
+type ValidFormat = `${'Y' | ''}${'Mo' | ''}${'W' | ''}${'D' | ''}${'H' | ''}${'M' | ''}${'S' | ''}${'Ms' | ''}`;
 
 interface Options {
 	long?: boolean;
 	length?: number;
 	language?: Language;
-	format?: string;
+	format?: ValidFormat;
 }
 
 interface ParsedOptions {
@@ -46,7 +47,7 @@ interface ParsedOptions {
 }
 
 const DEFAULT_FORMAT_OPTS: Required<Options> = {
-	language: LANGUAGES['en']!,
+	language: LANGUAGES.en,
 	long: false,
 	format: 'YMoDHMSMs',
 	length: 3,

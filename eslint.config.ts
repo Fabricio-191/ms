@@ -30,6 +30,7 @@ export default [
 	tseslint.configs.eslintRecommended,
 	{
 		rules: {
+			'no-undef': 'off', // TypeScript handles this via projectService
 			camelcase: [ 'error' ],
 			'one-var': 'off',
 			'capitalized-comments': 'off',
@@ -73,39 +74,6 @@ export default [
 			'@typescript-eslint/no-base-to-string': [ 'error', { checkUnknown: false } ],
 		},
 	},
-	{
-		files: [ 'test/**/*.{js,cjs,mjs}' ],
-		languageOptions: {
-			globals: {
-				console: 'readonly',
-				process: 'readonly',
-				require: 'readonly',
-				module: 'writable',
-				exports: 'writable',
-				__dirname: 'readonly',
-				__filename: 'readonly',
-				describe: 'readonly',
-				it: 'readonly',
-				expect: 'readonly',
-			},
-		},
-		rules: {
-			'no-undef': 'off',
-			'func-names': 'off',
-			'require-unicode-regexp': 'off',
-			'@typescript-eslint/explicit-function-return-type': 'off',
-			'@typescript-eslint/explicit-module-boundary-types': 'off',
-			'@typescript-eslint/no-require-imports': 'off',
-			'@typescript-eslint/no-invalid-this': 'off',
-			'@typescript-eslint/no-unnecessary-condition': 'off',
-			'@typescript-eslint/no-shadow': 'off',
-			'@typescript-eslint/no-unsafe-argument': 'off',
-			'@typescript-eslint/no-unsafe-assignment': 'off',
-			'@typescript-eslint/no-unsafe-call': 'off',
-			'@typescript-eslint/no-unsafe-member-access': 'off',
-			'@typescript-eslint/no-unsafe-return': 'off',
-		},
-	},
 	stylistic.configs.recommended,
 	{
 		rules: {
@@ -118,7 +86,6 @@ export default [
 			'@stylistic/quote-props': [ 'error', 'as-needed' ],
 			'@stylistic/indent': [ 'error', 'tab', { SwitchCase: 1 } ],
 			'@stylistic/no-tabs': 'off',
-			'@stylistic/linebreak-style': [ 'error', 'windows' ],
 			'@stylistic/comma-dangle': [ 'error', 'always-multiline' ],
 			'@stylistic/quotes': [ 'error', 'single' ],
 			'@stylistic/dot-location': [ 'error', 'property' ],
@@ -165,5 +132,5 @@ export default [
 					multilineDetection: 'brackets',
 				} ],
 		},
-	},
+	}
 ];

@@ -20,7 +20,7 @@
 		"prepare": "npm run transpile",
 		"transpile": "tsup",
 		"test": "npm run transpile && node --experimental-vm-modules node_modules/jest/bin/jest.js",
-		"bench": "npm run transpile && node test/bench/index.js",
+		"bench": "npm run transpile && tsx test/benchmarks.ts",
 		"build": "npm run lint && npm run check:types && npm run transpile"
 	},
 	"engines": {
@@ -38,6 +38,7 @@
 		"jest": "^30.0.0",
 		"jiti": "^2.6.1",
 		"ms": "^2.1.3",
+		"ts-jest": "^29.4.6",
 		"tsup": "^8.5.1",
 		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
