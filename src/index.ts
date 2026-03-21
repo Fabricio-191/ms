@@ -13,11 +13,18 @@ export { parseClock, parseClock as clock } from './clock.ts';
 export { format, format as formatTime } from './format/normal.ts';
 export { buildFastParse } from './parse/fast.ts';
 export {
-	buildFastParseV3_3 as buildFastParse3_3,
-	buildFastParseV3_4 as buildFastParse3_4,
-	buildFastParseV3_5 as buildFastParse3_5,
-	buildFastParseV3_6 as buildFastParse3_6,
-} from './old/experimental.ts';
+	buildFastParseV0,
+	buildFastParseV1,
+	buildFastParseV2,
+	buildFastParseV3,
+	buildFastParseV4,
+	buildFastParseV5,
+	buildFastParseV6,
+	buildFastParseV7,
+	buildFastParseV8,
+	buildFastFormatV1,
+	buildFastFormatV2,
+} from './old/index.ts';
 export { buildFastFormat } from './format/fast.ts';
 
 // https://github.com/vercel/ms/issues

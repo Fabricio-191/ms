@@ -1,14 +1,14 @@
 /**
  * Parse v3a - Char-by-char scan with inline charCode ranges
- * 
+ *
  * Strategy: Replace Unicode property test (`/\p{L}/u`) with pre-computed charCode ranges.
- * 
+ *
  * At build time, collects all character codes used in any notation of the language
  * and compacts them into ranges (e.g., `a-z` becomes single range check).
  * Generates inline charCode boundary check.
- * 
+ *
  * This eliminates the function call overhead of `/\p{L}/u.test()`.
- * 
+ *
  * Still uses `s.slice(_w0, i)` to extract notation strings for switch comparison.
  */
 import type { Language } from '../../core/index.ts';

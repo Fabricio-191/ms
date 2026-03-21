@@ -30,6 +30,7 @@ export default [
 	tseslint.configs.eslintRecommended,
 	{
 		rules: {
+			'max-depth': 'off',
 			'no-undef': 'off', // TypeScript handles this via projectService
 			camelcase: [ 'error' ],
 			'one-var': 'off',

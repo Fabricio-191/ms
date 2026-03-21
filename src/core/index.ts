@@ -1,5 +1,13 @@
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function escapeRegex(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
 export const TIMES = Object.freeze({
-	Y: 1000 * 60 * 60 * 24 * 365.25, // 365.2425
+	Y: 1000 * 60 * 60 * 24 * 365.25,
 	Mo: 1000 * 60 * 60 * 24 * 30,
 	W: 1000 * 60 * 60 * 24 * 7,
 	D: 1000 * 60 * 60 * 24,
@@ -12,14 +20,6 @@ export const TIMES = Object.freeze({
 export type Unit = keyof typeof TIMES;
 
 export const UNITS = Object.keys(TIMES) as Unit[];
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-}
 
 export interface NotationsData {
 	all: string[];
@@ -48,57 +48,13 @@ export class Notations {
 	public shortPlural?: string;
 
 	public constructor(data: NotationsData, unit = 'unknown') {
-		if (!isPlainObject(data))
-			throw new Error(`'${unit}' notations should be an object`);
-
-		if (!Array.isArray(data.all))
-			throw new Error(`'${unit}'.all should be an array`);
-
-		if (data.all.length === 0)
-			throw new Error(`'${unit}'.all should contain at least one notation`);
-
-		for (const notation of data.all) {
-			if (typeof notation !== 'string' || notation === '')
-				throw new Error(`'${unit}'.all should only contain non-empty strings`);
-		}
-
-		if (typeof data.singular !== 'string' || data.singular === '')
-			throw new Error(`'${unit}'.singular should be a non-empty string`);
-
-		const allNotations = new Set(data.all.map(item => item.toLowerCase()));
-		if (allNotations.size !== data.all.length)
-			throw new Error(`'${unit}'.all contains repeated notations`);
-
-		if (!allNotations.has(data.singular.toLowerCase()))
-			throw new Error(`'${unit}'.singular should be included in '${unit}'.all`);
-
-		for (const key of [ 'plural', 'shortPlural', 'shortSingular' ]) {
-			const value = data[key];
-			if (value === undefined) continue;
-
-			if (typeof value !== 'string' || value === '')
-				throw new Error(`'${unit}'.${key} should be a non-empty string`);
-
-			if (!allNotations.has(value.toLowerCase()))
-				throw new Error(`'${unit}'.${key} should be included in '${unit}'.all`);
-		}
+		checkNotationsData(data, unit);
 
 		this.all = data.all;
 		this.singular = data.singular;
 		if (data.shortSingular !== undefined) this.shortSingular = data.shortSingular;
 		if (data.plural !== undefined) this.plural = data.plural;
 		if (data.shortPlural !== undefined) this.shortPlural = data.shortPlural;
-	}
-
-	public getNotation(long: boolean, singular: boolean): string {
-		if (long) {
-			if (singular) return ` ${this.singular}`;
-
-			return ` ${this.plural ?? this.singular}`;
-		}
-		if (singular) return this.shortSingular ?? this.singular;
-
-		return this.shortPlural ?? this.shortSingular ?? this.plural ?? this.singular;
 	}
 }
 
@@ -120,6 +76,8 @@ export class Language {
 	public readonly REGEX: RegExp;
 
 	public constructor(name: string, data: LanguageData) {
+		checkLanguageData(data);
+
 		this.name = name;
 
 		this.units = {
@@ -146,26 +104,65 @@ export class Language {
 		this.REGEX = RegExp(`(?<value>\\d*\\.?\\d+) {0,3}(?<unit>${escapedNotations})(?!\\p{L})`, 'giu');
 	}
 
-	public parse(str: string): { value: number; matches_qty: number } {
-		let final_value = 0;
-		let matches_qty = 0;
+	public getNotation(unit: Unit, long: boolean, singular: boolean): string {
+		const notations = this.units[unit];
 
-		const matches = str.matchAll(this.REGEX);
+		if (long) {
+			if (singular) return ` ${notations.singular}`;
 
-		for (const match of matches) {
-			const { value, unit } = match.groups as { value: string; unit: string };
-
-			final_value += parseFloat(value) * this.dict[unit.toLowerCase()]!;
-			matches_qty += 1;
+			return ` ${notations.plural ?? notations.singular}`;
 		}
+		if (singular) return notations.shortSingular ?? notations.singular;
 
-		return {
-			matches_qty,
-			value: final_value,
-		};
+		return notations.shortPlural ?? notations.shortSingular ?? notations.plural ?? notations.singular;
+	}
+}
+
+function checkNotationsData(data: unknown, unit: string): void {
+	if (!isPlainObject(data))
+		throw new Error(`'${unit}' notations should be an object`);
+
+	if (!Array.isArray(data['all']))
+		throw new Error(`'${unit}'.all should be an array`);
+
+	if (data['all'].length === 0)
+		throw new Error(`'${unit}'.all should contain at least one notation`);
+
+	for (const notation of data['all']) {
+		if (typeof notation !== 'string' || notation === '')
+			throw new Error(`'${unit}'.all should only contain non-empty strings`);
 	}
 
-	public getNotation(unit: Unit, long: boolean, singular: boolean): string {
-		return this.units[unit].getNotation(long, singular);
+	if (typeof data['singular'] !== 'string' || data['singular'] === '')
+		throw new Error(`'${unit}'.singular should be a non-empty string`);
+
+	const allNotations = new Set(data['all'].map((item: string) => item.toLowerCase()));
+	if (allNotations.size !== data['all'].length)
+		throw new Error(`'${unit}'.all contains repeated notations`);
+
+	if (!allNotations.has(data['singular'].toLowerCase()))
+		throw new Error(`'${unit}'.singular should be included in '${unit}'.all`);
+
+	for (const key of [ 'plural', 'shortPlural', 'shortSingular' ]) {
+		const value = data[key];
+		if (value === undefined) continue;
+
+		if (typeof value !== 'string' || value === '')
+			throw new Error(`'${unit}'.${key} should be a non-empty string`);
+
+		if (!allNotations.has(value.toLowerCase()))
+			throw new Error(`'${unit}'.${key} should be included in '${unit}'.all`);
+	}
+}
+
+function checkLanguageData(data: unknown): asserts data is LanguageData {
+	if (!isPlainObject(data))
+		throw new Error('Language data should be an object');
+
+	for (const unit of UNITS) {
+		if (!(unit in data))
+			throw new Error(`Language data should contain '${unit}' unit`);
+
+		checkNotationsData(data[unit], unit);
 	}
 }

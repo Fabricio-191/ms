@@ -136,8 +136,10 @@ export const BENCH_PARSE_SAMPLES: string[] = ((): string[] => {
 		const upperSample = baseSample.toUpperCase();
 		const mixedSample = baseSample.split('').map(c => randomBool() ? c.toUpperCase() : c.toLowerCase()).join('');
 		// Only add if vercel/ms also accepts them
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (vercelMS(upperSample) !== undefined && parse(upperSample, LANGUAGES.en) !== null)
 			samples.push(upperSample);
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (vercelMS(mixedSample) !== undefined && parse(mixedSample, LANGUAGES.en) !== null)
 			samples.push(mixedSample);
 	}
@@ -145,8 +147,9 @@ export const BENCH_PARSE_SAMPLES: string[] = ((): string[] => {
 	// Add spacing variations
 	for (let i = 0; i < 500; i++) {
 		const baseSample = randomFromArr(samples);
-		const variants = [` ${baseSample}`, `${baseSample} `, `  ${baseSample}  `];
+		const variants = [ ` ${baseSample}`, `${baseSample} `, `  ${baseSample}  ` ];
 		for (const variant of variants) {
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			if (vercelMS(variant) !== undefined && parse(variant, LANGUAGES.en) !== null)
 				samples.push(variant);
 		}
@@ -180,8 +183,8 @@ export const BENCH_PARSE_FAILURES: string[] = [
 	'.ms',
 	// Invalid units
 	'1xyz',
-	'1seconds',  // partial match
-	'1s 2x',  // valid + invalid
+	'1seconds', // partial match
+	'1s 2x', // valid + invalid
 	// Empty/whitespace
 	'   ',
 	'\t\n',
@@ -191,7 +194,7 @@ export const BENCH_PARSE_FAILURES: string[] = [
 	'null',
 	'undefined',
 	// Out of valid range
-	'1' + '0'.repeat(20),  // huge number string
+	`1${'0'.repeat(20)}`, // huge number string
 ];
 
 // Valid format samples - mix of positive, negative, small, large values
@@ -222,7 +225,7 @@ export const BENCH_FORMAT_SAMPLES: number[] = ((): number[] => {
 
 	// Edge cases
 	samples.push(0, 1, -1, 0.001, -0.001, 999, -999, 1000, -1000);
-	samples.push(Number.MAX_SAFE_INTEGER / 1000);  // large but valid
+	samples.push(Number.MAX_SAFE_INTEGER / 1000); // large but valid
 	samples.push(-Number.MAX_SAFE_INTEGER / 1000);
 
 	// Validate all samples
@@ -238,7 +241,7 @@ export const BENCH_FORMAT_SAMPLES: number[] = ((): number[] => {
 })();
 
 // Invalid format samples - should return null
-export const BENCH_FORMAT_FAILURES: (number | string)[] = [
+export const BENCH_FORMAT_FAILURES: Array<number | string> = [
 	// Invalid numbers
 	NaN,
 	Infinity,

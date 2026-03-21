@@ -1,16 +1,16 @@
 /**
  * Parse v3c - Length-based dispatch
- * 
+ *
  * Strategy: Check notation length first, then dispatch to appropriate handler.
- * 
+ *
  * Groups notations by their length at build time:
  * - Length 1: Direct charCode switch (no slice needed)
  * - Length 2: Check first char, then second char (no slice needed)
  * - Length 3+: Use `slice` + `switch` (acceptable overhead for longer strings)
- * 
+ *
  * Rationale: Most common notations are short (s, m, h, d, w, y, ms).
  * Avoiding `slice` for short notations should improve performance.
- * 
+ *
  * Result: Slower than v3b! The extra check for length adds overhead.
  */
 import type { Language } from '../../core/index.ts';

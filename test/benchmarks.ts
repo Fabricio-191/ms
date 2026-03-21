@@ -3,158 +3,136 @@ import { createRequire } from 'node:module';
 import { Bench } from 'tinybench';
 import vercelMS from 'ms';
 
-import { buildFastParse, buildFastParse3_3, buildFastParse3_4, buildFastParse3_5, buildFastParse3_6, buildFastFormat, format, LANGUAGES, parse } from '../lib/esm/index.js';
-import { BENCH_PARSE_SAMPLES, BENCH_PARSE_FAILURES, BENCH_FORMAT_SAMPLES, BENCH_FORMAT_FAILURES } from './generators.ts';
+import {
+	buildFastParse,
+	buildFastParseV0,
+	buildFastParseV1,
+	buildFastParseV2,
+	buildFastParseV3,
+	buildFastParseV4,
+	buildFastParseV5,
+	buildFastParseV6,
+	buildFastParseV7,
+	buildFastParseV8,
+	buildFastFormat,
+	buildFastFormatV1,
+	buildFastFormatV2,
+	format,
+	LANGUAGES,
+	parse,
+} from '../lib/esm/index.js';
+import { BENCH_PARSE_SAMPLES, BENCH_PARSE_FAILURES, BENCH_FORMAT_SAMPLES } from './generators.ts';
 
 const require = createRequire(import.meta.url);
 
 const localPkg = require('../package.json') as { version: string };
 const vercelPkg = require('ms/package.json') as { version: string };
 
-console.log();
-console.log(`Node.js version: ${process.version}`);
-console.log(`@fabricio-191/ms: ${localPkg.version}`);
-console.log(`vercel/ms: ${vercelPkg.version}`);
-console.log();
+console.log(`Node.js: ${process.version} | @fabricio-191/ms: ${localPkg.version} | vercel/ms: ${vercelPkg.version}\n`);
+
+// Build all parse variants
+const parseVariants = {
+	current: buildFastParse(LANGUAGES.en),
+	v0: buildFastParseV0(LANGUAGES.en),
+	v1: buildFastParseV1(LANGUAGES.en),
+	v2: buildFastParseV2(LANGUAGES.en),
+	v3: buildFastParseV3(LANGUAGES.en),
+	v4: buildFastParseV4(LANGUAGES.en),
+	v5: buildFastParseV5(LANGUAGES.en),
+	v6: buildFastParseV6(LANGUAGES.en),
+	v7: buildFastParseV7(LANGUAGES.en),
+	v8: buildFastParseV8(LANGUAGES.en),
+};
+
+// Build all format variants
+const formatVariants = {
+	current: buildFastFormat(LANGUAGES.en),
+	v1: buildFastFormatV1(LANGUAGES.en),
+	v2: buildFastFormatV2(LANGUAGES.en),
+};
 
 // Parse benchmark - valid inputs
-const fastParseEn = buildFastParse(LANGUAGES.en);
-const fastParse33 = buildFastParse3_3(LANGUAGES.en);
-const fastParse34 = buildFastParse3_4(LANGUAGES.en);
-const fastParse35 = buildFastParse3_5(LANGUAGES.en);
-const fastParse36 = buildFastParse3_6(LANGUAGES.en);
+const parseValidBench = new Bench({ time: 5_000, iterations: 10 });
 
-const parseBench = new Bench({ time: 5_000, iterations: 10 });
+parseValidBench
+	.add('vercel/ms', () => { for (const s of BENCH_PARSE_SAMPLES) vercelMS(s); })
+	.add('parse', () => { for (const s of BENCH_PARSE_SAMPLES) parse(s, LANGUAGES.en); })
+	.add('current (v9 combined)', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.current(s); })
+	.add('v0 trie toLowerCase', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v0(s); })
+	.add('v1 regex', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v1(s); })
+	.add('v2 isLetter', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v2(s); })
+	.add('v3 charCode', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v3(s); })
+	.add('v4 length', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v4(s); })
+	.add('v5 string switch', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v5(s); })
+	.add('v6 inline check', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v6(s); })
+	.add('v7 bitwise', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v7(s); })
+	.add('v8 case-insensitive', () => { for (const s of BENCH_PARSE_SAMPLES) parseVariants.v8(s); });
 
-parseBench
-	.add('vercel/ms (valid inputs)', () => {
-		for (const sample of BENCH_PARSE_SAMPLES)
-			vercelMS(sample);
-	})
-	.add('@fabricio-191/ms parse (valid inputs)', () => {
-		for (const sample of BENCH_PARSE_SAMPLES)
-			parse(sample, LANGUAGES.en);
-	})
-	.add('@fabricio-191/ms buildFastParse v3.1 trie (valid inputs)', () => {
-		for (const sample of BENCH_PARSE_SAMPLES)
-			fastParseEn(sample);
-	})
-	.add('@fabricio-191/ms buildFastParse v3.3 string switch (valid inputs)', () => {
-		for (const sample of BENCH_PARSE_SAMPLES)
-			fastParse33(sample);
-	})
-	.add('@fabricio-191/ms buildFastParse v3.4 inline check (valid inputs)', () => {
-		for (const sample of BENCH_PARSE_SAMPLES)
-			fastParse34(sample);
-	})
-	.add('@fabricio-191/ms buildFastParse v3.5 bitwise (valid inputs)', () => {
-		for (const sample of BENCH_PARSE_SAMPLES)
-			fastParse35(sample);
-	})
-	.add('@fabricio-191/ms buildFastParse v3.6 case-insensitive (valid inputs)', () => {
-		for (const sample of BENCH_PARSE_SAMPLES)
-			fastParse36(sample);
+// Parse benchmark - invalid inputs
+const parseInvalidBench = new Bench({ time: 3_000, iterations: 10 });
+
+parseInvalidBench
+	.add('parse', () => { for (const s of BENCH_PARSE_FAILURES) parse(s, LANGUAGES.en); })
+	.add('current (v9 combined)', () => { for (const s of BENCH_PARSE_FAILURES) parseVariants.current(s); })
+	.add('v0 trie toLowerCase', () => { for (const s of BENCH_PARSE_FAILURES) parseVariants.v0(s); })
+	.add('v8 case-insensitive', () => { for (const s of BENCH_PARSE_FAILURES) parseVariants.v8(s); });
+
+// Format benchmark
+const formatValidBench = new Bench({ time: 5_000, iterations: 10 });
+
+formatValidBench
+	.add('vercel/ms short', () => { for (const v of BENCH_FORMAT_SAMPLES) vercelMS(v); })
+	.add('vercel/ms long', () => { for (const v of BENCH_FORMAT_SAMPLES) vercelMS(v, { long: true }); })
+	.add('format short', () => { for (const v of BENCH_FORMAT_SAMPLES) format(v, { language: LANGUAGES.en, length: 1 }); })
+	.add('format long', () => { for (const v of BENCH_FORMAT_SAMPLES) format(v, { language: LANGUAGES.en, length: 1, long: true }); })
+	.add('current short', () => { for (const v of BENCH_FORMAT_SAMPLES) formatVariants.current(v); })
+	.add('current long', () => { for (const v of BENCH_FORMAT_SAMPLES) formatVariants.current(v, true); })
+	.add('v1 short', () => { for (const v of BENCH_FORMAT_SAMPLES) formatVariants.v1(v); })
+	.add('v2 short', () => { for (const v of BENCH_FORMAT_SAMPLES) formatVariants.v2(v); });
+
+function printResults(title: string, bench: Bench): void {
+	console.log(`\n=== ${title} ===\n`);
+
+	const results = bench.tasks.map(task => {
+		const result = task.result as { latency?: { mean?: number } } | undefined;
+		const mean = result?.latency?.mean ?? 0;
+		const ops = mean > 0 ? Math.round(1 / mean * 1000) : 0;
+		return { name: task.name, mean, ops };
 	});
 
-const parseFailureBench = new Bench({ time: 3_000, iterations: 10 });
+	const fastest = results.reduce((a, b) => a.mean > 0 && (b.mean === 0 || a.mean < b.mean) ? a : b);
 
-parseFailureBench
-	.add('vercel/ms (invalid inputs)', () => {
-		for (const sample of BENCH_PARSE_FAILURES)
-			vercelMS(sample);
-	})
-	.add('@fabricio-191/ms parse (invalid inputs)', () => {
-		for (const sample of BENCH_PARSE_FAILURES)
-			parse(sample, LANGUAGES.en);
-	})
-	.add('@fabricio-191/ms buildFastParse v3.1 trie (invalid inputs)', () => {
-		for (const sample of BENCH_PARSE_FAILURES)
-			fastParseEn(sample);
-	})
-	.add('@fabricio-191/ms buildFastParse v3.6 case-insensitive (invalid inputs)', () => {
-		for (const sample of BENCH_PARSE_FAILURES)
-			fastParse36(sample);
-	});
-
-// Format benchmark - valid inputs
-const fastFormatEn = buildFastFormat(LANGUAGES.en);
-
-const formatBench = new Bench({ time: 5_000, iterations: 10 });
-
-formatBench
-	.add('vercel/ms short (valid inputs)', () => {
-		for (const value of BENCH_FORMAT_SAMPLES)
-			vercelMS(value);
-	})
-	.add('@fabricio-191/ms format short (valid inputs)', () => {
-		for (const value of BENCH_FORMAT_SAMPLES)
-			format(value, { language: LANGUAGES.en, length: 1 });
-	})
-	.add('@fabricio-191/ms buildFastFormat short (valid inputs)', () => {
-		for (const value of BENCH_FORMAT_SAMPLES)
-			fastFormatEn(value);
-	})
-	.add('vercel/ms long (valid inputs)', () => {
-		for (const value of BENCH_FORMAT_SAMPLES)
-			vercelMS(value, { long: true });
-	})
-	.add('@fabricio-191/ms format long (valid inputs)', () => {
-		for (const value of BENCH_FORMAT_SAMPLES)
-			format(value, { language: LANGUAGES.en, length: 1, long: true });
-	})
-	.add('@fabricio-191/ms buildFastFormat long (valid inputs)', () => {
-		for (const value of BENCH_FORMAT_SAMPLES)
-			fastFormatEn(value, true);
-	});
-
-const formatFailureBench = new Bench({ time: 3_000, iterations: 10 });
-
-formatFailureBench
-	.add('@fabricio-191/ms format short (invalid inputs)', () => {
-		for (const value of BENCH_FORMAT_FAILURES)
-			format(value as number, { language: LANGUAGES.en, length: 1 });
-	})
-	.add('@fabricio-191/ms buildFastFormat short (invalid inputs)', () => {
-		for (const value of BENCH_FORMAT_FAILURES)
-			fastFormatEn(value as number);
-	});
+	console.log(`${'Method'.padEnd(24)} ${'ops/sec'.padStart(10)} ${'vs fastest'.padStart(12)}`);
+	console.log('─'.repeat(48));
+	for (const r of results) {
+		const vs = r.mean > 0 && fastest.mean > 0 ?
+			`${((fastest.ops / r.ops - 1) * 100).toFixed(0)}%` :
+			'—';
+		console.log(`${r.name.padEnd(24)} ${r.ops.toString().padStart(10)} ${vs.padStart(12)}`);
+	}
+}
 
 // Run benchmarks
-console.log('=== Parse Benchmark (valid inputs) ===\n');
+await parseValidBench.run();
+printResults('Parse (valid inputs)', parseValidBench);
 
-await parseBench.run();
+await parseInvalidBench.run();
+printResults('Parse (invalid inputs)', parseInvalidBench);
 
-console.table(parseBench.table());
-
-console.log('\n=== Parse Benchmark (invalid inputs) ===\n');
-
-await parseFailureBench.run();
-
-console.table(parseFailureBench.table());
-
-console.log('\n=== Format Benchmark (valid inputs) ===\n');
-
-await formatBench.run();
-
-console.table(formatBench.table());
-
-console.log('\n=== Format Benchmark (invalid inputs) ===\n');
-
-await formatFailureBench.run();
-
-console.table(formatFailureBench.table());
+await formatValidBench.run();
+printResults('Format', formatValidBench);
 
 // Summary
 console.log('\n=== Summary ===\n');
 
-const parseTasks = parseBench.tasks;
-const fastestParse = parseTasks.reduce((a, b) => {
-	const aMean = (a.result as { latency?: { mean?: number } })?.latency?.mean ?? Infinity;
-	const bMean = (b.result as { latency?: { mean?: number } })?.latency?.mean ?? Infinity;
-	return aMean < bMean ? a : b;
-});
+const parseValidTasks = parseValidBench.tasks;
+const fastestParse = parseValidTasks
+	.filter(t => t.name.startsWith('v') || t.name === 'current (v9 combined)')
+	.reduce((a, b) => {
+		const aMean = (a.result as { latency: { mean?: number } }).latency.mean ?? Infinity;
+		const bMean = (b.result as { latency: { mean?: number } }).latency.mean ?? Infinity;
+		return aMean < bMean ? a : b;
+	});
 
-console.log(`Fastest parse (valid inputs): ${fastestParse.name}`);
-const meanMs = (fastestParse.result as { latency?: { mean?: number } })?.latency?.mean ?? 0;
-console.log(`  Mean: ${meanMs.toFixed(4)}ms`);
-console.log(`  Ops/sec: ${(1 / meanMs * 1000).toFixed(0)}`);
+const fastestMean = (fastestParse.result as { latency: { mean?: number } }).latency.mean ?? 0;
+console.log(`Fastest parse: ${fastestParse.name} at ${(1 / fastestMean * 1000).toFixed(0)} ops/sec`);

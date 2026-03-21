@@ -1,9 +1,9 @@
 /**
  * Parse v1 - Regex-based with switch statement
- * 
+ *
  * Strategy: Pre-build a regex and switch statement at build time.
  * Uses regex.exec() in a loop to find number+notation matches.
- * 
+ *
  * This was the original "fast" implementation before trie optimization.
  * Kept for benchmarking comparison.
  */

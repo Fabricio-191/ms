@@ -11,11 +11,11 @@ function buildTrieString(dict: Record<string, number>): TrieNode {
 	const root: TrieNode = { children: new Map(), multiplier: null };
 	for (const [ notation, multiplier ] of Object.entries(dict)) {
 		let node = root;
-		for (let j = 0; j < notation.length; j++) {
-			const char = notation[j]!.toLowerCase();
-			if (!node.children.has(char))
-				node.children.set(char, { children: new Map(), multiplier: null });
-			node = node.children.get(char)!;
+		for (const char of notation) {
+			const lowerChar = char.toLowerCase();
+			if (!node.children.has(lowerChar))
+				node.children.set(lowerChar, { children: new Map(), multiplier: null });
+			node = node.children.get(lowerChar)!;
 		}
 		node.multiplier = multiplier;
 	}
@@ -25,8 +25,8 @@ function buildTrieString(dict: Record<string, number>): TrieNode {
 function buildLetterCheckString(dict: Record<string, number>): string {
 	const chars = new Set<string>();
 	for (const notation of Object.keys(dict)) {
-		for (let j = 0; j < notation.length; j++)
-			chars.add(notation[j]!.toLowerCase());
+		for (const char of notation)
+			chars.add(char.toLowerCase());
 	}
 
 	const sorted = [ ...chars ].sort();
@@ -48,7 +48,7 @@ function buildLetterCheckString(dict: Record<string, number>): string {
 	ranges.push([ lo, hi ]);
 
 	return ranges
-		.map(([ lo, hi ]) => lo === hi ? `c === '${lo}'` : `(c >= '${lo}' && c <= '${hi}')`)
+		.map(([ start, end ]) => start === end ? `c === '${start}'` : `(c >= '${start}' && c <= '${end}')`)
 		.join(' || ');
 }
 

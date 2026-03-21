@@ -1,12 +1,12 @@
 /**
  * Format v2 - Separate generated functions for short/long
- * 
+ *
  * Strategy: Generate separate functions for short and long format,
  * eliminating the runtime `long` parameter check inside the hot path.
- * 
+ *
  * Two generated functions: `formatShort` and `formatLong`
  * Wrapper returns `long ? formatLong(ms) : formatShort(ms)`
- * 
+ *
  * Result: Marginal improvement for short, slight regression for long.
  * V8 JIT optimizes the `long` branch well enough that separate functions
  * don't provide significant benefit.
@@ -100,7 +100,5 @@ export function buildFastFormat(language: Language): FastFormatFunction {
 	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	const formatLong = Function('miliseconds', longSource) as (ms: number) => string | null;
 
-	return (miliseconds: number, long = false): string | null => {
-		return long ? formatLong(miliseconds) : formatShort(miliseconds);
-	};
+	return (miliseconds: number, long = false): string | null => long ? formatLong(miliseconds) : formatShort(miliseconds);
 }

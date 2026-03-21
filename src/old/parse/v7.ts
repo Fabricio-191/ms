@@ -22,45 +22,9 @@ function buildTrie(dict: Record<string, number>): TrieNode {
 	return root;
 }
 
-// v3.4: Inlines the character boundary check directly into the generated code
-// Theory: Eliminates function call overhead for isNotationChar
-// Instead of `if (!isNotationChar(c))` we inline the check directly
-function generateTrieCodeInlined(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {
-	let code = '';
-
-	if (node.multiplier !== null) {
-		// Inline the boundary check instead of calling isNotationChar function
-		let check = 'i >= len';
-		if (ranges.length > 0) {
-			const parts = ranges.map(([ lo, hi ]) =>
-				lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`
-			);
-			check = `i >= len || !(${parts.join(' || ')})`;
-		}
-		code += `${indent}{ const c = s.charCodeAt(i); if (${check}) { value += parsedValue * ${node.multiplier}; matchCount++; break notationBlock; } }\n`;
-	}
-
-	if (node.children.size === 0) return code;
-
-	code += `${indent}switch (s.charCodeAt(i)) {\n`;
-	for (const [ cc, child ] of node.children) {
-		const char = String.fromCharCode(cc);
-		code += `${indent}\tcase ${cc}: // '${char}'\n`;
-		code += `${indent}\t\ti++;\n`;
-		code += generateTrieCodeInlined(child, `${indent}\t\t`, ranges);
-		code += `${indent}\t\tbreak;\n`;
-	}
-	code += `${indent}}\n`;
-
-	return code;
-}
-
-export function buildFastParse(language: Language): FastParseFunction {
-	const trie = buildTrie(language.dict);
-
-	// Collect character ranges for inlined boundary check
+function collectCharRanges(dict: Record<string, number>): Array<[number, number]> {
 	const codes = new Set<number>();
-	for (const notation of Object.keys(language.dict)) {
+	for (const notation of Object.keys(dict)) {
 		for (let j = 0; j < notation.length; j++)
 			codes.add(notation.charCodeAt(j));
 	}
@@ -82,14 +46,51 @@ export function buildFastParse(language: Language): FastParseFunction {
 		}
 	}
 	ranges.push([ lo, hi ]);
+	return ranges;
+}
 
-	const trieCode = generateTrieCodeInlined(trie, '\t\t\t\t\t\t', ranges);
+function buildLetterCheck(dict: Record<string, number>): string {
+	const ranges = collectCharRanges(dict);
+	return ranges
+		.map(([ lo, hi ]) => lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`)
+		.join(' || ');
+}
+
+function generateTrieCode(node: TrieNode, indent: string): string {
+	let code = '';
+
+	if (node.multiplier !== null)
+		code += `${indent}if (i >= len || !isNotationChar(s.charCodeAt(i))) { value += parsedValue * ${node.multiplier}; matchCount++; break notationBlock; }\n`;
+
+	if (node.children.size === 0) return code;
+
+	code += `${indent}switch (s.charCodeAt(i)) {\n`;
+	for (const [ cc, child ] of node.children) {
+		const char = String.fromCharCode(cc);
+		code += `${indent}\tcase ${cc}: // '${char}'\n`;
+		code += `${indent}\t\ti++;\n`;
+		code += generateTrieCode(child, `${indent}\t\t`);
+		code += `${indent}\t\tbreak;\n`;
+	}
+	code += `${indent}}\n`;
+
+	return code;
+}
+
+// v3.5: Uses bitwise operations for digit detection
+// Theory: ((cc - 48) >>> 0) < 10 is equivalent to cc >= 48 && cc <= 57
+// but might have different performance characteristics
+export function buildFastParse(language: Language): FastParseFunction {
+	const trie = buildTrie(language.dict);
+	const letterCheck = buildLetterCheck(language.dict);
+	const trieCode = generateTrieCode(trie, '\t\t\t\t\t\t');
 
 	const source = `
 		if (typeof str !== 'string' || str === '') return null;
 
 		const s = str.toLowerCase();
 		const len = s.length;
+		const isNotationChar = (c) => ${letterCheck};
 		let value = 0;
 		let matchCount = 0;
 		let i = 0;
@@ -97,13 +98,16 @@ export function buildFastParse(language: Language): FastParseFunction {
 		while (i < len) {
 			const cc = s.charCodeAt(i);
 
-			if ((cc >= 48 && cc <= 57) || cc === 46) {
+			// v3.5: Bitwise digit check - ((cc - 48) >>> 0) < 10
+			// For digits 0-9 (48-57): (cc - 48) gives 0-9, all < 10
+			// For non-digits: (cc - 48) gives values outside 0-9 range
+			if (((cc - 48) >>> 0) < 10 || cc === 46) {
 				const numStart = i;
 				let hasDot = cc === 46;
 				i++;
 				while (i < len) {
 					const c = s.charCodeAt(i);
-					if (c >= 48 && c <= 57) { i++; }
+					if (((c - 48) >>> 0) < 10) { i++; }
 					else if (c === 46 && !hasDot) { hasDot = true; i++; }
 					else { break; }
 				}
@@ -114,7 +118,7 @@ export function buildFastParse(language: Language): FastParseFunction {
 
 					notationBlock: if (i < len) {
 						const _c0 = s.charCodeAt(i);
-						if (_c0 === 32 || (_c0 >= 48 && _c0 <= 57) || _c0 === 46) break notationBlock;
+						if (_c0 === 32 || ((_c0 - 48) >>> 0) < 10 || _c0 === 46) break notationBlock;
 ${trieCode}                    }
 				}
 				continue;

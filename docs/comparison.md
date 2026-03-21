@@ -42,24 +42,26 @@ src/
   index.ts                    # Public API exports
   parse/
     normal.ts                 # Baseline parse (uses Language.REGEX)
-    fast.ts                   # Current: v3.1 trie (CHARDEST)
+    fast.ts                   # Current: v9 combined optimizations
   format/
     normal.ts                 # Baseline format (multi-unit output)
-    fast.ts                   # Current: v1 inlined branches
+    fast.ts                   # Current: inlined branches
   old/                        # Legacy implementations for benchmarking
+    index.ts                  # Exports all legacy versions
     parse/
-      fast-v1.ts              # v1: regex + switch
-      fast-v2.ts              # v2: isLetter scan
-      fast-v3a.ts             # v3a: charCode boundary
-      fast-v3c.ts             # v3c: length dispatch
-      fast3-3.ts              # v3.3: string switch
-      fast3-4.ts              # v3.4: inline check
-      fast3-5.ts              # v3.5: bitwise
-      fast3-6.ts              # v3.6: case-insensitive
+      v0.ts                   # trie with .toLowerCase()
+      v1.ts                   # regex + switch
+      v2.ts                   # isLetter scan with /\p{L}/u
+      v3.ts                   # charCode boundary
+      v4.ts                   # length dispatch
+      v5.ts                   # string switch
+      v6.ts                   # inline check
+      v7.ts                   # bitwise digit detection
+      v8.ts                   # case-insensitive without .toLowerCase()
+      v9.ts                   # combined all (same as current)
     format/
-      fast-v2.ts              # v2: separate functions
-      fast-v3.ts              # v3: inlined constants
-    experimental.ts           # Re-exports experimental versions
+      v1.ts                   # separate functions for short/long
+      v2.ts                   # inlined constants
 ```
 
 ---
@@ -71,423 +73,168 @@ Each benchmark runs for 5 seconds with at least 10 iterations.
 
 ### Parse — valid inputs
 
-| Method | Latency (ns) | ops/sec | vs vercel/ms |
-|---|---:|---:|---:|
-| `vercel/ms` | 1,941,094 | 524 | baseline |
-| `parse` | 7,235,421 | 139 | −73% |
-| **`buildFastParse` v3.1 (trie)** | **1,034,316** | **978** | **+87%** |
-| `buildFastParse` v3.3 (string switch) | 1,299,846 | 775 | +48% |
-| `buildFastParse` v3.4 (inline check) | 1,047,342 | 960 | +83% |
-| `buildFastParse` v3.5 (bitwise) | 1,112,599 | 905 | +73% |
-| `buildFastParse` v3.6 (case-insensitive) | 1,047,909 | 960 | +83% |
+| Method | ops/sec | vs vercel/ms |
+|---|---:|---:|
+| `vercel/ms` | 522 | baseline |
+| `parse` | 141 | −73% |
+| **`buildFastParse` (current/v9)** | **890** | **+70%** |
+| `buildFastParseV0` (trie toLowerCase) | 879 | +68% |
+| `buildFastParseV1` (regex) | 359 | −31% |
+| `buildFastParseV2` (isLetter) | 477 | −9% |
+| `buildFastParseV3` (charCode) | 767 | +47% |
+| `buildFastParseV4` (length) | 835 | +60% |
+| `buildFastParseV5` (string switch) | 733 | +40% |
+| `buildFastParseV6` (inline check) | 893 | +71% |
+| `buildFastParseV7` (bitwise) | 914 | +75% |
+| **`buildFastParseV8` (case-insensitive)** | **934** | **+79%** |
 
 ### Parse — invalid inputs
 
-| Method | Latency (ns) | ops/sec |
-|---|---:|---:|
-| `parse` | 10,450 | 98,036 |
-| `buildFastParse` v3.1 (trie) | 1,337 | 768,568 |
-| **`buildFastParse` v3.6 (case-insensitive)** | **1,261** | **810,053** |
+| Method | ops/sec |
+|---|---:|
+| `parse` | 90,087 |
+| `buildFastParse` (current/v9) | 761,701 |
+| `buildFastParseV0` (trie toLowerCase) | 729,007 |
+| **`buildFastParseV8` (case-insensitive)** | **802,770** |
 
 ### Format — valid inputs
 
-| Method | Latency (ns) | ops/sec | vs vercel/ms |
-|---|---:|---:|---:|
-| `vercel/ms` short | 227,034 | 4,473 | baseline |
-| `vercel/ms` long | 252,814 | 4,022 | baseline |
-| `format` short | 7,762,238 | 129 | −97% |
-| `format` long | 8,368,826 | 120 | −97% |
-| `buildFastFormat` short | 292,250 | 3,473 | −22% |
-| `buildFastFormat` long | 322,202 | 3,144 | −22% |
-
-### Format — invalid inputs
-
-| Method | Latency (ns) | ops/sec |
+| Method | ops/sec | vs vercel/ms |
 |---|---:|---:|
-| `format` short | 71.53 | 11,287,574 |
-| `buildFastFormat` short | 58.92 | 12,951,143 |
+| `vercel/ms` short | 4,329 | baseline |
+| `vercel/ms` long | 3,967 | baseline |
+| `format` short | 129 | −97% |
+| `format` long | 122 | −97% |
+| `buildFastFormat` (current) short | 3,266 | −25% |
+| `buildFastFormat` (current) long | 2,460 | −38% |
 
 ---
 
 ## Parse Implementation History
 
-This section documents all parse optimizations attempted. Each version builds on the previous one.
+### v0: Trie with .toLowerCase() (original current)
 
-### Baseline: `parse`
-
-**Strategy**: Uses the `Language.REGEX` pattern to find all notation matches, then sums the values.
+**Strategy**: Trie traversal with `.toLowerCase()` preprocessing.
 
 **How it works**:
-1. Runs `str.matchAll(language.REGEX)` to find all `number + notation` pairs
-2. For each match, looks up the notation in `language.dict` for the multiplier
-3. Sums all matched values
-4. Returns negative if string starts with `-`
+1. Builds a trie from all notations in lowercase
+2. Generates nested `switch` on charCode
+3. Pre-processes input with `.toLowerCase()`
 
-**Benchmark**: ~168 ops/sec (−74% vs vercel/ms)
-
-**Why slower**: The regex engine has overhead for each match, dictionary lookups, and multi-language support adds complexity.
+**Result**: Good performance but `.toLowerCase()` adds O(n) overhead.
 
 ---
 
-### Version 1: Pre-built regex + switch
+### v1: Pre-built regex + switch
 
-**Strategy**: Pre-build a regex and switch statement at build time, eliminating runtime dictionary lookups.
+**Strategy**: Pre-build regex and switch at build time.
 
-**How it works**:
-1. At build time, creates a RegExp from `language.REGEX.source`
-2. Generates a `switch` statement with all notation → multiplier mappings
-3. Uses `regex.exec()` in a loop to find matches
-4. Switch on the matched notation string to add the correct multiplier
+**Benchmark**: ~359 ops/sec
 
-```javascript
-// Generated switch example
-switch (match[2].toLowerCase()) {
-    case 'ms': value += parsedValue * 1; break;
-    case 's': case 'sec': case 'secs': value += parsedValue * 1000; break;
-    // ... all notations
-}
-```
-
-**Benchmark**: ~429 ops/sec (−34% vs vercel/ms)
-
-**Improvement**: +155% over baseline
-
-**Limitation**: Still uses regex engine for matching
+**Limitation**: Still uses regex engine for matching.
 
 ---
 
-### Version 2: Char-by-char scan + Unicode property test
+### v2: Char-by-char scan + Unicode property test
 
-**Strategy**: Eliminate regex entirely by scanning character-by-character. Use Unicode property test for notation boundary.
+**Strategy**: Eliminate regex, use `/\p{L}/u` for notation boundary.
 
-**How it works**:
-1. Manual character scanning loop with charCode checks for digits/decimal
-2. Uses `/\p{L}/u` regex to detect when we've finished reading letters
-3. Slice the notation string and use generated switch for multiplier lookup
+**Benchmark**: ~477 ops/sec
 
-**Key insight**: Numbers are detected with `cc >= 48 && cc <= 57` (digit charCodes) and `cc === 46` (decimal point). Notation ends when `/\p{L}/u.test(char)` becomes false.
-
-**Benchmark**: ~571 ops/sec (−12% vs vercel/ms)
-
-**Improvement**: +33% over v1
-
-**Limitation**: The `/\p{L}/u` test on each character has function call overhead
+**Limitation**: Unicode property test has function call overhead.
 
 ---
 
-### Version 3: CharCode ranges for notation boundary
+### v3: CharCode ranges for notation boundary
 
-**Strategy**: Replace Unicode property test with pre-computed charCode ranges for notation detection.
+**Strategy**: Pre-computed charCode ranges instead of Unicode test.
 
-**How it works**:
-1. At build time, collects all character codes used in any notation of the language
-2. Compacts into ranges (e.g., `a-z` becomes single range check)
-3. Generates inline charCode boundary check
+**Benchmark**: ~767 ops/sec
 
-```javascript
-// For English: letters are a, c-e, h-i, k-o, r-u, w, y
-// Generated: c === 97 || (c >= 99 && c <= 101) || ...
-const isNotationChar = (c) => c === 97 || (c >= 99 && c <= 101) || ...;
-```
-
-**Benchmark**: ~870 ops/sec (+34% vs vercel/ms)
-
-**Improvement**: +52% over v2
-
-**Limitation**: Still uses `s.slice(_w0, i)` to extract notation strings, then switch on the string
+**Improvement**: +61% over v2
 
 ---
 
-### Version 3.1: Trie traversal + nested switch
+### v4: Length-based dispatch
 
-**Strategy**: Trie-based traversal with nested `switch` on charCode. No string slicing or comparison.
+**Strategy**: Group notations by length, dispatch by length first.
 
-**How it works**:
-1. Builds a trie from all notations in the language dictionary
-2. Generates nested `switch` statements that traverse the trie by charCode
-3. Checks for terminal node BEFORE descending (handles prefixes like `mo` vs `month`)
-4. Uses pre-computed charCode ranges for notation boundary detection (from v3)
+**Benchmark**: ~835 ops/sec
 
-```javascript
-// Generated nested switch example
-switch (s.charCodeAt(i)) {
-    case 121: // 'y'
-        i++;
-        if (i >= len || !isNotationChar(s.charCodeAt(i))) {
-            value += parsedValue * 31557600000;
-            matchCount++;
-            break notationBlock;
-        }
-        switch (s.charCodeAt(i)) {
-            case 101: // 'e' -> 'ye...'
-                i++;
-                // ... continues for 'year', 'years'
-                break;
-            case 114: // 'r' -> 'yr'
-                // ...
-        }
-        break;
-    // ... all other starting characters
-}
-```
-
-**Benchmark**: ~1,042 ops/sec (+60% vs vercel/ms)
-
-**Improvement**: +20% over v3
-
-**Why fastest**: 
-- No string allocation (no `slice`)
-- No string comparison
-- Pure numeric operations (charCode comparisons)
-- Inline boundary check eliminates function calls
+**Limitation**: Extra length check adds overhead.
 
 ---
 
-### Version 3.2: Length-based dispatch
+### v5: String switches instead of charCode
 
-**Strategy**: Check notation length first, then dispatch to appropriate handler.
+**Strategy**: Use `s[i]` instead of `s.charCodeAt(i)`.
 
-**How it works**:
-1. Group notations by their length at build time
-2. First check the notation length, then dispatch:
-   - **Length 1**: Direct charCode switch (no slice needed)
-   - **Length 2**: Check first char, then second char (no slice needed)
-   - **Length 3+**: Use `slice` + `switch` (acceptable overhead for longer strings)
+**Benchmark**: ~733 ops/sec
 
-**Rationale**: Most common notations are short (`s`, `m`, `h`, `d`, `w`, `y`, `ms`). Avoiding `slice` for these should improve performance.
-
-**Benchmark**: ~969 ops/sec (+49% vs vercel/ms)
-
-**Result**: Slower than v3.1! The extra check for length adds overhead that negates the benefit.
+**Result**: Slower than charCode switches.
 
 ---
 
-### Version 3.3: String switches instead of charCode
+### v6: Inline boundary check
 
-**Strategy**: Use string comparison in switch statements instead of numeric charCode.
+**Strategy**: Inline `isNotationChar` check instead of function call.
 
-**How it works**:
-```javascript
-// v3.1: numeric switch
-switch (s.charCodeAt(i)) {
-    case 121: // 'y'
-        ...
-}
+**Benchmark**: ~893 ops/sec
 
-// v3.3: string switch
-switch (s[i]) {
-    case 'y':
-        ...
-}
-```
-
-**Rationale**: V8 might optimize string switches differently, and string comparison could be faster than calling `charCodeAt()`.
-
-**Benchmark**: ~908 ops/sec (+49% vs vercel/ms)
-
-**Result**: Slower than v3.1 (−6%). String switches have additional overhead compared to numeric switches, and `s[i]` creates a single-character string.
+**Result**: Similar to v0, JIT already inlines well.
 
 ---
 
-### Version 3.4: Inline boundary check
+### v7: Bitwise range checks
 
-**Strategy**: Inline the `isNotationChar` check directly instead of calling a function.
+**Strategy**: Use `(cc - 48) >>> 0 < 10` for digit detection.
 
-**How it works**:
-```javascript
-// v3.1: function call
-if (i >= len || !isNotationChar(s.charCodeAt(i))) { ... }
+**Benchmark**: ~914 ops/sec
 
-// v3.4: inlined
-if (i >= len || !(c >= 97 && c <= 122 || c >= 48 && c <= 57)) { ... }
-```
-
-**Rationale**: Function calls have overhead. Inlining should eliminate this.
-
-**Benchmark**: ~934 ops/sec (+53% vs vercel/ms)
-
-**Result**: Slower than v3.1 (−3%). V8's JIT already inlines small functions well. The expanded code might affect instruction cache.
+**Result**: Good, but not significantly faster than comparisons.
 
 ---
 
-### Version 3.5: Bitwise range checks
+### v8: Case-insensitive without .toLowerCase()
 
-**Strategy**: Use bitwise operations for digit detection.
+**Strategy**: Handle both uppercase and lowercase in the trie switch, avoiding `.toLowerCase()` entirely.
 
-**How it works**:
-```javascript
-// v3.1: two comparisons
-cc >= 48 && cc <= 57
+**Benchmark**: ~934 ops/sec (valid), ~802K ops/sec (invalid)
 
-// v3.5: one subtraction + comparison
-(cc - 48) >>> 0 < 10
-```
-
-**Rationale**: `(cc - 48) >>> 0 < 10` is one subtraction and one comparison vs two comparisons. The `>>> 0` converts to unsigned 32-bit, making negative numbers large (failing the `< 10` check).
-
-**Benchmark**: ~975 ops/sec (+60% vs vercel/ms)
-
-**Result**: Similar to v3.1 (+1%). The bitwise approach is not significantly faster than the two comparisons for this use case.
+**Why fastest**: Avoids the O(n) `.toLowerCase()` overhead. For invalid inputs, this is a big win since parsing fails early.
 
 ---
 
-### Version 3.6: Case-insensitive without `.toLowerCase()` — **FASTEST**
+### v9: Combined all optimizations (current)
 
-**Strategy**: Avoid `.toLowerCase()` by handling both cases in the trie switch.
+**Strategy**: Combines all optimizations:
+- Case-insensitive without `.toLowerCase()` (from v8)
+- Inline boundary check (from v6)
+- Bitwise digit detection (from v7)
 
-**How it works**:
-```javascript
-// v3.1: creates new string
-const s = str.toLowerCase();
+**Benchmark**: ~890 ops/sec (valid), ~761K ops/sec (invalid)
 
-// v3.6: work directly with original
-const s = str;  // No .toLowerCase()!
-switch (s.charCodeAt(i)) {
-    case 121:  // 'y'
-    case 89:   // 'Y'
-        // handle both cases
-}
-```
-
-**Rationale**: `.toLowerCase()` creates a new string and iterates over all characters. By handling both uppercase and lowercase in the switch, we avoid this allocation entirely.
-
-**Benchmark**: ~1,061 ops/sec (+74% vs vercel/ms)
-
-**Result**: **+10% faster than v3.1!** This is the fastest version.
-
-**Why it works**:
-- `.toLowerCase()` has O(n) overhead where n is string length
-- The trie only adds a few extra `case` statements for uppercase letters
-- No string allocation for the lowercase conversion
-- The boundary check also handles both cases
+**Result**: Slightly slower than v8 alone! The combined complexity doesn't help as much as the single biggest optimization (avoiding `.toLowerCase()`).
 
 ---
 
-## Current Benchmark Results
-
-**Change**: Replaced `/^\s*-/u.test(str)` with `str.trim().startsWith('-')`
-
-**Rationale**: The regex was called at the end of every parse. String methods are faster than regex for simple prefix checks.
-
-**Impact**:
-| Version | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| v1 | 419 | 429 | +2% |
-| v2 | 528 | 571 | +8% |
-| v3 | 759 | 870 | +15% |
-| v3.1 | 850 | 1,042 | +23% |
-| v3.2 | 743 | 969 | +30% |
-
-The improvement is more pronounced for faster implementations because the relative cost of the final check is higher when everything else is optimized.
-
----
-
-## Format Implementation History
-
-### Baseline: `format`
-
-**Strategy**: Loop through units in order, dividing remaining time by each unit's value.
-
-**How it works**:
-1. Takes remaining milliseconds and iterates through units (year → month → ... → millisecond)
-2. For each unit, divides and gets the value
-3. Looks up notation string from language dictionary
-4. Concatenates result
-
-**Benchmark**: ~252 ops/sec (−96% vs vercel/ms)
-
-**Why slow**: Multiple divisions, dictionary lookups for notation strings, multi-unit output overhead
-
----
-
-### Version 1: Code-gen with inlined branches
-
-**Strategy**: Generate a function with all branches inlined, notation strings as literals.
-
-**How it works**:
-1. At build time, generates a function with all unit thresholds inlined
-2. Each check: `if (remaining >= UNIT_VALUE) return prefix + value + notation`
-3. All notation strings inlined as string literals
-4. Single function with runtime `long` parameter check
-
-```javascript
-// Generated function example
-if (remaining >= 3600000) {
-    const value = Math.floor(remaining / 3600000);
-    return negativePrefix + value + (long ? ' hours' : 'h');
-}
-```
-
-**Benchmark**: ~4,662 ops/sec short, ~3,876 ops/sec long
-
-**Improvement**: +1,749% over baseline for short format
-
----
-
-### Version 2: Separate functions for short/long
-
-**Strategy**: Generate separate functions for short and long, eliminating runtime branching.
-
-**How it works**:
-- Two generated functions: `formatShort` and `formatLong`
-- Wrapper returns `long ? formatLong(ms) : formatShort(ms)`
-- No `if (long)` check inside the hot path
-
-**Benchmark**: ~4,634 ops/sec short, ~4,233 ops/sec long
-
-**Result**: Marginal improvement for short (+0.6%), significant improvement for long
-
-**Analysis**: The separate functions eliminate the branch prediction overhead. For long format, this matters more because the singular/plural check is also eliminated.
-
----
-
-### Version 3: Fully inlined constants
-
-**Strategy**: Fully inline all thresholds as numeric literals, eliminate `TIMES` object lookup.
-
-**How it works**:
-1. Pre-compute all threshold constants at module load time
-2. Generate code with numeric literals instead of `TIMES[unit]`
-3. Separate functions for short/long
-4. Inline singular/plural check in generated code
-
-**Benchmark**: ~4,692 ops/sec short, ~3,827 ops/sec long
-
-**Result**: Best for short format, similar to v1 for long
-
-**Analysis**: V8's JIT already inlines constant object property access. The explicit inlining provides minimal benefit for short, but the singular/plural inline logic helps long format.
-
----
-
-## Summary: What Worked and What Didn't
+## Summary
 
 ### Parse Optimizations
 
-| Approach | Result | Why |
-|----------|--------|-----|
-| Pre-built regex + switch | Good (+155%) | Eliminates dictionary lookups |
-| Char-by-char scan | Better (+33% more) | Eliminates regex engine overhead |
-| CharCode ranges | Even better (+52% more) | Eliminates Unicode property test |
-| Trie traversal (v3.1) | Great (+72% vs vercel) | Eliminates string allocation |
-| Length dispatch (v3.2) | Worse | Extra check overhead |
-| String switches (v3.3) | Neutral (+73%) | Similar to charCode switches |
-| Inline check (v3.4) | **Best for valid (+86%)** | V8 JIT handles inlined code well |
-| Bitwise ranges (v3.5) | Neutral (+73%) | Not faster than two comparisons |
-| Case-insensitive (v3.6) | Best for invalid | Eliminates `.toLowerCase()` allocation |
+| Approach | Result | Notes |
+|----------|--------|-------|
+| Pre-built regex + switch | +155% | Eliminates dictionary lookups |
+| Char-by-char scan | +33% more | Eliminates regex engine |
+| CharCode ranges | +52% more | Eliminates Unicode test |
+| Trie traversal | +87% | Eliminates string allocation |
+| Case-insensitive (v8) | **Best overall** | Avoids `.toLowerCase()` |
 
-**Key insights**:
-- V8's JIT handles small inline functions well (v3.4)
-- For valid inputs, v3.4 (inline check) is fastest
-- For invalid inputs, v3.6 (case-insensitive) is fastest
-- `.toLowerCase()` has significant overhead
-- Pure numeric operations on charCodes remain essential
+**Key insight**: The biggest win comes from avoiding `.toLowerCase()`. Combining all optimizations doesn't help as much as the single most impactful one.
 
 ### Format Optimizations
 
-| Approach | Result | Why |
-|----------|--------|-----|
-| Inline thresholds + notations | Great (+1749%) | Eliminates dictionary lookups |
+| Approach | Result | Notes |
+|----------|--------|-------|
+| Inline thresholds + notations | +1749% | Eliminates dictionary lookups |
 | Separate short/long functions | Better for long | Eliminates branch prediction |
-| Inlined numeric constants | Marginal | JIT already optimizes this |
-
-**Key insight**: The main win comes from eliminating dictionary lookups and generating code at build time. Further optimizations are marginal.

@@ -8,16 +8,15 @@ export default defineConfig([
 		dts: true,
 		outDir: 'lib/esm',
 		clean: true,
-		sourcemap: 'inline',
+		sourcemap: true,
 	},
 	{
-		minify: true,
 		entry: { index: 'src/index.ts' },
 		format: [ 'cjs' ],
 		dts: true,
 		outDir: 'lib/cjs',
 		clean: true,
-		sourcemap: 'inline',
+		sourcemap: true,
 		shims: true,
 	},
 ]);

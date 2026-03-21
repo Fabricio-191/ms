@@ -1,12 +1,12 @@
 /**
  * Parse v2 - Char-by-char scan with Unicode property test
- * 
+ *
  * Strategy: Eliminate regex entirely by scanning character-by-character.
  * Uses `/\p{L}/u` regex to detect when we've finished reading letters (notation boundary).
- * 
+ *
  * Key insight: Numbers are detected with charCode checks (cc >= 48 && cc <= 57).
  * Notation ends when `/\p{L}/u.test(char)` becomes false.
- * 
+ *
  * This was slower than expected due to Unicode property test overhead.
  */
 import type { Language } from '../../core/index.ts';

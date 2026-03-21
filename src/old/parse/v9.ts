@@ -7,12 +7,13 @@ interface TrieNode {
 	multiplier: number | null;
 }
 
-function buildTrie(dict: Record<string, number>): TrieNode {
+function buildTrieCaseInsensitive(dict: Record<string, number>): TrieNode {
 	const root: TrieNode = { children: new Map(), multiplier: null };
 	for (const [ notation, multiplier ] of Object.entries(dict)) {
 		let node = root;
-		for (let j = 0; j < notation.length; j++) {
-			const cc = notation.charCodeAt(j);
+		for (const char of notation) {
+			const lowerChar = char.toLowerCase();
+			const cc = lowerChar.charCodeAt(0);
 			if (!node.children.has(cc))
 				node.children.set(cc, { children: new Map(), multiplier: null });
 			node = node.children.get(cc)!;
@@ -22,11 +23,14 @@ function buildTrie(dict: Record<string, number>): TrieNode {
 	return root;
 }
 
-function collectCharRanges(dict: Record<string, number>): Array<[number, number]> {
+function collectCharRangesCaseInsensitive(dict: Record<string, number>): { letterCheck: string; ranges: Array<[number, number]> } {
 	const codes = new Set<number>();
 	for (const notation of Object.keys(dict)) {
-		for (let j = 0; j < notation.length; j++)
-			codes.add(notation.charCodeAt(j));
+		for (const char of notation) {
+			const cc = char.charCodeAt(0);
+			codes.add(cc);
+			if (cc >= 97 && cc <= 122) codes.add(cc - 32);
+		}
 	}
 
 	const sorted = [ ...codes ].sort((a, b) => a - b);
@@ -46,30 +50,48 @@ function collectCharRanges(dict: Record<string, number>): Array<[number, number]
 		}
 	}
 	ranges.push([ lo, hi ]);
-	return ranges;
-}
 
-function buildLetterCheck(dict: Record<string, number>): string {
-	const ranges = collectCharRanges(dict);
-	return ranges
-		.map(([ lo, hi ]) => lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`)
+	const letterCheck = ranges
+		.map(([ start, end ]) => start === end ? `c === ${start}` : `(c >= ${start} && c <= ${end})`)
 		.join(' || ');
+
+	return { letterCheck, ranges };
 }
 
-function generateTrieCode(node: TrieNode, indent: string): string {
+// v9: Combines all optimizations:
+// - Case-insensitive without .toLowerCase() (from v8)
+// - Inline boundary check (from v6)
+// - Bitwise digit check (from v7)
+function generateTrieCodeV9(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {
 	let code = '';
 
-	if (node.multiplier !== null)
-		code += `${indent}if (i >= len || !isNotationChar(s.charCodeAt(i))) { value += parsedValue * ${node.multiplier}; matchCount++; break notationBlock; }\n`;
+	if (node.multiplier !== null) {
+		let check = 'i >= len';
+		if (ranges.length > 0) {
+			const parts = ranges.map(([ lo, hi ]) =>
+				lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`);
+			check = `i >= len || !(${parts.join(' || ')})`;
+		}
+		code += `${indent}{ const c = s.charCodeAt(i); if (${check}) { value += parsedValue * ${node.multiplier}; matchCount++; break notationBlock; } }\n`;
+	}
 
 	if (node.children.size === 0) return code;
 
 	code += `${indent}switch (s.charCodeAt(i)) {\n`;
 	for (const [ cc, child ] of node.children) {
 		const char = String.fromCharCode(cc);
-		code += `${indent}\tcase ${cc}: // '${char}'\n`;
+		const upperChar = char.toUpperCase();
+		const upperCc = upperChar.charCodeAt(0);
+
+		if (cc === upperCc) {
+			code += `${indent}\tcase ${cc}: // '${char}'\n`;
+		}
+		else {
+			code += `${indent}\tcase ${cc}: // '${char}'\n`;
+			code += `${indent}\tcase ${upperCc}: // '${upperChar}'\n`;
+		}
 		code += `${indent}\t\ti++;\n`;
-		code += generateTrieCode(child, `${indent}\t\t`);
+		code += generateTrieCodeV9(child, `${indent}\t\t`, ranges);
 		code += `${indent}\t\tbreak;\n`;
 	}
 	code += `${indent}}\n`;
@@ -77,20 +99,17 @@ function generateTrieCode(node: TrieNode, indent: string): string {
 	return code;
 }
 
-// v3.5: Uses bitwise operations for digit detection
-// Theory: ((cc - 48) >>> 0) < 10 is equivalent to cc >= 48 && cc <= 57
-// but might have different performance characteristics
 export function buildFastParse(language: Language): FastParseFunction {
-	const trie = buildTrie(language.dict);
-	const letterCheck = buildLetterCheck(language.dict);
-	const trieCode = generateTrieCode(trie, '\t\t\t\t\t\t');
+	const trie = buildTrieCaseInsensitive(language.dict);
+	const { ranges } = collectCharRangesCaseInsensitive(language.dict);
+	const trieCode = generateTrieCodeV9(trie, '\t\t\t\t\t\t', ranges);
 
 	const source = `
 		if (typeof str !== 'string' || str === '') return null;
 
-		const s = str.toLowerCase();
+		// v9: No .toLowerCase() - work directly with original string
+		const s = str;
 		const len = s.length;
-		const isNotationChar = (c) => ${letterCheck};
 		let value = 0;
 		let matchCount = 0;
 		let i = 0;
@@ -98,9 +117,8 @@ export function buildFastParse(language: Language): FastParseFunction {
 		while (i < len) {
 			const cc = s.charCodeAt(i);
 
-			// v3.5: Bitwise digit check - ((cc - 48) >>> 0) < 10
-			// For digits 0-9 (48-57): (cc - 48) gives 0-9, all < 10
-			// For non-digits: (cc - 48) gives values outside 0-9 range
+			// v9: Bitwise digit check + case-insensitive
+			// Digits: 48-57, Dot: 46
 			if (((cc - 48) >>> 0) < 10 || cc === 46) {
 				const numStart = i;
 				let hasDot = cc === 46;
@@ -118,6 +136,7 @@ export function buildFastParse(language: Language): FastParseFunction {
 
 					notationBlock: if (i < len) {
 						const _c0 = s.charCodeAt(i);
+						// Check for space, digit, or dot (case-insensitive for digits not needed)
 						if (_c0 === 32 || ((_c0 - 48) >>> 0) < 10 || _c0 === 46) break notationBlock;
 ${trieCode}                    }
 				}
@@ -133,6 +152,7 @@ ${trieCode}                    }
 			return num;
 		}
 
+		// Negative check is case-insensitive
 		return str.trim().startsWith('-') ? -value : value;
 	`;
 

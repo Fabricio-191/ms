@@ -1,12 +1,12 @@
 /**
  * Format v3 - Fully inlined constants + separate functions
- * 
+ *
  * Strategy: Pre-compute all threshold constants at module load time
  * and inline them as numeric literals in the generated code.
  * Eliminates `TIMES` object lookup at runtime.
- * 
+ *
  * Separate functions for short/long format.
- * 
+ *
  * Result: Similar to v1 for short format, slightly better for long format.
  * V8's JIT already inlines constant object property access well.
  */
@@ -15,13 +15,13 @@ import { TIMES, type Language } from '../../core/index.ts';
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
 // Pre-computed constants for thresholds (avoids Object.keys at runtime)
-const YEAR_MS = TIMES.Y;      // 31557600000
-const MONTH_MS = TIMES.Mo;    // 2592000000
-const WEEK_MS = TIMES.W;      // 604800000
-const DAY_MS = TIMES.D;       // 86400000
-const HOUR_MS = TIMES.H;      // 3600000
-const MINUTE_MS = TIMES.M;    // 60000
-const SECOND_MS = TIMES.S;    // 1000
+const YEAR_MS = TIMES.Y; // 31557600000
+const MONTH_MS = TIMES.Mo; // 2592000000
+const WEEK_MS = TIMES.W; // 604800000
+const DAY_MS = TIMES.D; // 86400000
+const HOUR_MS = TIMES.H; // 3600000
+const MINUTE_MS = TIMES.M; // 60000
+const SECOND_MS = TIMES.S; // 1000
 
 function escapeString(value: string): string {
 	return value.replace(/\\/gu, '\\\\').replace(/'/gu, '\\x27');
@@ -105,7 +105,5 @@ export function buildFastFormat(language: Language): FastFormatFunction {
 	const formatShort = createInlinedShortFunction(language);
 	const formatLong = createInlinedLongFunction(language);
 
-	return (miliseconds: number, long = false): string | null => {
-		return long ? formatLong(miliseconds) : formatShort(miliseconds);
-	};
+	return (miliseconds: number, long = false): string | null => long ? formatLong(miliseconds) : formatShort(miliseconds);
 }

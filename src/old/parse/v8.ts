@@ -12,10 +12,10 @@ function buildTrieCaseInsensitive(dict: Record<string, number>): TrieNode {
 	const root: TrieNode = { children: new Map(), multiplier: null };
 	for (const [ notation, multiplier ] of Object.entries(dict)) {
 		let node = root;
-		for (let j = 0; j < notation.length; j++) {
+		for (const char of notation) {
 			// Convert to lowercase charCode
-			const char = notation[j]!.toLowerCase();
-			const cc = char.charCodeAt(0);
+			const lowerChar = char.toLowerCase();
+			const cc = lowerChar.charCodeAt(0);
 			if (!node.children.has(cc))
 				node.children.set(cc, { children: new Map(), multiplier: null });
 			node = node.children.get(cc)!;
@@ -44,12 +44,12 @@ function generateTrieCodeCaseInsensitive(node: TrieNode, indent: string): string
 		const upperCc = upperChar.charCodeAt(0);
 
 		// Add both lowercase and uppercase cases
-		if (cc !== upperCc) {
+		if (cc === upperCc) {
 			code += `${indent}\tcase ${cc}: // '${char}'\n`;
-			code += `${indent}\tcase ${upperCc}: // '${upperChar}'\n`;
 		}
 		else {
 			code += `${indent}\tcase ${cc}: // '${char}'\n`;
+			code += `${indent}\tcase ${upperCc}: // '${upperChar}'\n`;
 		}
 		code += `${indent}\t\ti++;\n`;
 		code += generateTrieCodeCaseInsensitive(child, `${indent}\t\t`);

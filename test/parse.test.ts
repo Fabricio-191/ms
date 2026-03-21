@@ -201,8 +201,13 @@ function testFastParse(name: string, builder: (lang: lib.Language) => (str: stri
 	});
 }
 
-testFastParse('buildFastParse v3.1 (trie)', lib.buildFastParse);
-testFastParse('buildFastParse v3.3 (string switch)', lib.buildFastParse3_3);
-testFastParse('buildFastParse v3.4 (inline check)', lib.buildFastParse3_4);
-testFastParse('buildFastParse v3.5 (bitwise)', lib.buildFastParse3_5);
-testFastParse('buildFastParse v3.6 (case-insensitive)', lib.buildFastParse3_6);
+testFastParse('buildFastParse current (v9 combined)', lib.buildFastParse);
+testFastParse('buildFastParse v0 (trie toLowerCase)', lib.buildFastParseV0);
+testFastParse('buildFastParse v1 (regex)', lib.buildFastParseV1);
+testFastParse('buildFastParse v2 (isLetter)', lib.buildFastParseV2);
+testFastParse('buildFastParse v3 (charCode)', lib.buildFastParseV3);
+testFastParse('buildFastParse v4 (length)', lib.buildFastParseV4);
+testFastParse('buildFastParse v5 (string switch)', lib.buildFastParseV5);
+testFastParse('buildFastParse v6 (inline check)', lib.buildFastParseV6);
+testFastParse('buildFastParse v7 (bitwise)', lib.buildFastParseV7);
+testFastParse('buildFastParse v8 (case-insensitive)', lib.buildFastParseV8);

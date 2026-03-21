@@ -1,29 +1,41 @@
 /**
  * Legacy implementations kept for benchmarking comparison.
- * 
+ *
  * These implementations represent earlier optimization attempts that were superseded
  * by faster versions. They are kept here to:
  * 1. Allow performance regression testing
  * 2. Serve as reference for future optimizations
  * 3. Document what didn't work as well
- * 
+ *
  * Parse versions:
- * - v1 (regex): Uses regex.exec() - simple but slow
- * - v2 (isLetter): Char scan with /\p{L}/u Unicode test
- * - v3a (charCode boundary): Inline charCode ranges, still uses slice
- * - v3c (length dispatch): Groups by length, extra check overhead
- * 
+ * - v0: trie with .toLowerCase() (original current)
+ * - v1: regex + switch
+ * - v2: isLetter scan with /\p{L}/u
+ * - v3: charCode boundary (was v3a)
+ * - v4: length dispatch (was v3c)
+ * - v5: string switch
+ * - v6: inline check
+ * - v7: bitwise digit detection
+ * - v8: case-insensitive without .toLowerCase()
+ * - v9: combined all optimizations (CURRENT)
+ *
  * Format versions:
- * - v2 (separate functions): Two functions for short/long
- * - v3 (inlined constants): Pre-computed threshold literals
+ * - v1: separate functions for short/long (was v2)
+ * - v2: inlined constants (was v3)
  */
 
 // Parse implementations
-export { buildFastParse as buildFastParseV1 } from './parse/fast-v1.js';
-export { buildFastParse as buildFastParseV2 } from './parse/fast-v2.js';
-export { buildFastParse as buildFastParseV3a } from './parse/fast-v3a.js';
-export { buildFastParse as buildFastParseV3c } from './parse/fast-v3c.js';
+export { buildFastParse as buildFastParseV0 } from './parse/v0.js';
+export { buildFastParse as buildFastParseV1 } from './parse/v1.js';
+export { buildFastParse as buildFastParseV2 } from './parse/v2.js';
+export { buildFastParse as buildFastParseV3 } from './parse/v3.js';
+export { buildFastParse as buildFastParseV4 } from './parse/v4.js';
+export { buildFastParse as buildFastParseV5 } from './parse/v5.js';
+export { buildFastParse as buildFastParseV6 } from './parse/v6.js';
+export { buildFastParse as buildFastParseV7 } from './parse/v7.js';
+export { buildFastParse as buildFastParseV8 } from './parse/v8.js';
+export { buildFastParse as buildFastParseV9 } from './parse/v9.js';
 
 // Format implementations
-export { buildFastFormat as buildFastFormatV2 } from './format/fast-v2.js';
-export { buildFastFormat as buildFastFormatV3 } from './format/fast-v3.js';
+export { buildFastFormat as buildFastFormatV1 } from './format/v1.js';
+export { buildFastFormat as buildFastFormatV2 } from './format/v2.js';
