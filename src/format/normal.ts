@@ -30,7 +30,7 @@ export function format(miliseconds: number, options: Options = {}): string | nul
 
 const FORMATS_REGEX = /Mo|Ms|Y|W|D|H|M|S/gu;
 const VALID_FORMAT = /^Y?(?:Mo)?W?D?H?M?S?(?:Ms)?$/u;
-type ValidFormat = `${'Y' | ''}${'Mo' | ''}${'W' | ''}${'D' | ''}${'H' | ''}${'M' | ''}${'S' | ''}${'Ms' | ''}`;
+export type ValidFormat = `${'Y' | ''}${'Mo' | ''}${'W' | ''}${'D' | ''}${'H' | ''}${'M' | ''}${'S' | ''}${'Ms' | ''}`;
 
 interface Options {
 	long?: boolean;

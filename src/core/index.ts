@@ -30,7 +30,6 @@ export interface NotationsData {
 }
 
 export interface LanguageData {
-	dialect: string;
 	Y: NotationsData;
 	Mo: NotationsData;
 	W: NotationsData;
@@ -105,7 +104,6 @@ export class Notations {
 
 export class Language {
 	public readonly name: string;
-	public readonly dialect: string;
 
 	public readonly units: {
 		Y: Notations;
@@ -123,7 +121,6 @@ export class Language {
 
 	public constructor(name: string, data: LanguageData) {
 		this.name = name;
-		this.dialect = data.dialect;
 
 		this.units = {
 			Y: new Notations(data.Y, 'Y'),
@@ -146,7 +143,7 @@ export class Language {
 			.map(escapeRegex)
 			.join('|');
 
-		this.REGEX = RegExp(`(?<value>\\d*\\.?\\d+) {0,3}(?<unit>${escapedNotations})(?![${this.dialect}])`, 'giu');
+		this.REGEX = RegExp(`(?<value>\\d*\\.?\\d+) {0,3}(?<unit>${escapedNotations})(?!\\p{L})`, 'giu');
 	}
 
 	public parse(str: string): { value: number; matches_qty: number } {
@@ -158,7 +155,7 @@ export class Language {
 		for (const match of matches) {
 			const { value, unit } = match.groups as { value: string; unit: string };
 
-			final_value += parseFloat(value) * this.dict[unit]!;
+			final_value += parseFloat(value) * this.dict[unit.toLowerCase()]!;
 			matches_qty += 1;
 		}
 

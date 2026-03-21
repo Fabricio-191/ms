@@ -1,8 +1,17 @@
 import { strictEqual, ok } from 'node:assert';
+import { expect } from '@jest/globals';
 import vercelMS from 'ms';
-import { TIMES, LANGUAGES, UNITS, parse, format, buildFastParse, buildFastFormat, type Language } from '../lib/cjs/index.cjs';
+import { TIMES, LANGUAGES, UNITS, parse, format, buildFastParse, buildFastFormat, type Language } from '../lib/esm/index.js';
+import type { ValidFormat } from '../src/format/normal.ts';
 
-// #region helpers (exported for inline test logic)
+// #region helpers
+
+export function check(value: unknown, expected: unknown): void {
+	if (typeof expected === 'number' && typeof value === 'number')
+		expect(Math.abs(expected - value)).toBeLessThan(1);
+	else
+		expect(value).toBe(expected);
+}
 
 export function randomFromArr<T>(arr: readonly T[]): T {
 	return arr[Math.floor(Math.random() * arr.length)] as T;
@@ -26,7 +35,7 @@ export interface FormatArgs {
 	options: {
 		language: Language;
 		long: boolean;
-		format: string;
+		format: ValidFormat;
 		length: number;
 	};
 }
@@ -36,49 +45,13 @@ export interface ClockArgs {
 	result: number;
 }
 
-export interface ParseNumSample {
-	input: string;
-	language: Language;
-	expected: number;
-}
-
-export interface ParseNotationSample {
-	str: string;
-	language: Language;
-	result: number;
-}
-
-export interface TestFixtures {
-	FORMAT_ARGS: FormatArgs[];
-	FORMAT_ARGS_VERCEL: FormatArgs[];
-	CLOCK_ARGS: ClockArgs[];
-	PARSE_NOTATION_SAMPLES: ParseNotationSample[];
-}
-
 // #endregion
 
-// #region exported generators
-
-export function generateParseNumSamples(nums: string[]): ParseNumSample[] {
-	const samples: ParseNumSample[] = [];
-	for (const language of Object.values(LANGUAGES)) {
-		for (const unit of Object.keys(TIMES) as Array<keyof typeof TIMES>) {
-			for (const notation of language.units[unit].all) {
-				for (const num of nums)
-					samples.push({ input: num + randomFromArr([ '', ' ' ]) + notation, language, expected: TIMES[unit] * Number(num) });
-			}
-		}
-	}
-	return samples;
-}
-
-// #endregion
-
-// #region internal creators
+// #region creators
 
 const MAXS: Record<keyof typeof TIMES, number> = { Y: 100, Mo: 12, W: 4, D: 7, H: 24, M: 60, S: 60, Ms: 1000 };
 
-function createFormatArgs(opts: Partial<FormatArgs['options']> = {}): FormatArgs {
+export function createFormatArgs(opts: Partial<FormatArgs['options']> = {}): FormatArgs {
 	const timeKeys: Array<keyof typeof TIMES> = [];
 	while (timeKeys.length === 0) {
 		for (const key in TIMES)
@@ -98,13 +71,13 @@ function createFormatArgs(opts: Partial<FormatArgs['options']> = {}): FormatArgs
 		options: {
 			language: opts.language ?? randomFromArr(Object.values(LANGUAGES)),
 			long: opts.long ?? randomBool(),
-			format: timeKeys.join(''),
+			format: timeKeys.join('') as ValidFormat,
 			length,
 		},
 	};
 }
 
-function createClockArgs(): ClockArgs {
+export function createClockArgs(): ClockArgs {
 	let result = 0;
 	const sep = randomFromArr([ '-', ':' ]);
 	let fmt = randomFromArr([
@@ -133,6 +106,10 @@ function createClockArgs(): ClockArgs {
 	return { args: [ fmt, minutes ], result };
 }
 
+// #endregion
+
+// #region bench datasets
+
 function createBenchFormatSamples(count = 10_000): number[] {
 	const maxValue = TIMES.Y * 10;
 	return Array.from({ length: count }, () => {
@@ -151,37 +128,6 @@ function createBenchNotationSamples(unitAliases: readonly string[], count = 10_0
 	}
 	return samples;
 }
-
-// #endregion
-
-// #region pre-baked datasets
-
-export const TEST_FIXTURES: TestFixtures = {
-	FORMAT_ARGS: Array.from({ length: 1000 }, () => createFormatArgs()),
-	FORMAT_ARGS_VERCEL: Array.from({ length: 1000 }, () => createFormatArgs({ language: LANGUAGES.en, length: 1 })),
-	CLOCK_ARGS: Array.from({ length: 1000 }, () => createClockArgs()),
-	PARSE_NOTATION_SAMPLES: (() => {
-		const samples: ParseNotationSample[] = [];
-		for (const language of Object.values(LANGUAGES)) {
-			for (let i = 0; i < 1000; i++) {
-				let result = 0, str = '';
-				while (str.length === 0) {
-					const selectedUnits = (Object.keys(TIMES) as Array<keyof typeof TIMES>)
-						.filter(() => randomNum(1, 1) < 0.3);
-					for (const unit of selectedUnits) {
-						const num = randomBool() ? randomNum(1000) : randomNum(1000, 1);
-						result += num * TIMES[unit];
-						str += `${num}${randomBool() ? ' ' : ''}${
-							randomFromArr(language.units[unit].all)
-						}${randomBool() ? ' ' : ''}`;
-					}
-				}
-				samples.push({ str, language, result });
-			}
-		}
-		return samples;
-	})(),
-};
 
 export const BENCH_PARSE_SAMPLES: string[] = ((): string[] => {
 	const fastParseEn = buildFastParse(LANGUAGES.en);
@@ -215,7 +161,5 @@ export const BENCH_FORMAT_SAMPLES: number[] = ((): number[] => {
 
 	return samples;
 })();
-
-export type { Language };
 
 // #endregion

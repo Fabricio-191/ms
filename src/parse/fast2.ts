@@ -15,7 +15,6 @@ function createSwitchCases(dict: Record<string, number>): string {
 
 // the user uses this function, to create the fast parse function for a specific language. it will be stored by the user, not us
 export function buildFastParse(language: Language): FastParseFunction {
-	const dialectRe = new RegExp(`[${language.dialect}]`, 'iu');
 	const switchCases = createSwitchCases(language.dict);
 
 	const source = `
@@ -84,5 +83,5 @@ export function buildFastParse(language: Language): FastParseFunction {
     `;
 
 	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-	return Function('dr', 'str', source).bind(null, dialectRe) as FastParseFunction;
+	return Function('dr', 'str', source).bind(null, /\p{L}/u) as FastParseFunction;
 }

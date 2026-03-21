@@ -2,7 +2,7 @@ import { Language } from './index.ts';
 
 export const LANGUAGES = Object.freeze({
 	en: new Language('en', {
-		dialect: 'a-z',
+		// dialect: 'a-z',
 		Y: {
 			all: [
 				'years',
@@ -98,7 +98,7 @@ export const LANGUAGES = Object.freeze({
 		},
 	}),
 	es: new Language('es', {
-		dialect: 'a-zñ',
+		// dialect: 'a-zñ',
 		Y: {
 			all: [
 				'años',
@@ -189,7 +189,7 @@ export const LANGUAGES = Object.freeze({
 		},
 	}),
 	ja: new Language('ja', {
-		dialect: '\u3000-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF',
+		// dialect: '\u3000-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF',
 		Y: {
 			all: [
 				'とし',
