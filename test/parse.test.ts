@@ -141,15 +141,68 @@ describe('parse', () => {
 	});
 });
 
-describe('fast parse', () => {
-	it('buildFastParse should work with a single language', () => {
-		const parseEn = lib.buildFastParse(lib.LANGUAGES.en);
-		const parseEs = lib.buildFastParse(lib.LANGUAGES.es);
+function testFastParse(name: string, builder: (lang: lib.Language) => (str: string) => number | null): void {
+	describe(name, () => {
+		const parseEn = builder(lib.LANGUAGES.en);
+		const parseEs = builder(lib.LANGUAGES.es);
+		const parseJa = builder(lib.LANGUAGES.ja);
 
-		check(parseEn('2h'), 7200000);
-		check(parseEn('2.5 hrs'), 9000000);
-		check(parseEn('2 horas'), null);
-		check(parseEs('2 horas'), 7200000);
-		check(parseEn('-.5m'), -30000);
+		it('basic cases', () => {
+			check(parseEn('2h'), 7200000);
+			check(parseEn('2.5 hrs'), 9000000);
+			check(parseEn('2 horas'), null);
+			check(parseEs('2 horas'), 7200000);
+			check(parseEn('-.5m'), -30000);
+			check(parseEn('100'), 100);
+			check(parseEn('-100'), -100);
+			check(parseEn(''), null);
+			// Japanese
+			check(parseJa('2時間'), 7200000);
+			check(parseJa('30分'), 1800000);
+		});
+
+		it('should work with integers', () => {
+			for (const { input, language, expected } of PARSE_NUM_INTEGERS)
+				check(builder(language)(input), expected);
+		});
+
+		it('should work with decimal numbers', () => {
+			for (const { input, language, expected } of PARSE_NUM_DECIMALS)
+				check(builder(language)(input), expected);
+		});
+
+		it('should work with negative numbers', () => {
+			for (const { input, language, expected } of PARSE_NUM_NEGATIVES)
+				check(builder(language)(input), expected);
+		});
+
+		it('should work with leading-dot decimals', () => {
+			for (const { input, language, expected } of PARSE_NUM_LEADING_DOT)
+				check(builder(language)(input), expected);
+		});
+
+		it('should give the same result as parse()', () => {
+			for (const { str, language, result } of PARSE_NOTATION_SAMPLES)
+				check(builder(language)(str), result);
+		});
+
+		it('should accept 0–3 spaces between number and unit', () => {
+			check(parseEn('1s'), 1000);
+			check(parseEn('1 s'), 1000);
+			check(parseEn('1  s'), 1000);
+			check(parseEn('1   s'), 1000);
+			check(parseEn('1    s'), null);
+		});
+
+		it('should be case-insensitive', () => {
+			check(parseEn('1.5H'), 5400000);
+			check(parseEn('20 mIlLiSeCoNdS'), 20);
+		});
 	});
-});
+}
+
+testFastParse('buildFastParse v3.1 (trie)', lib.buildFastParse);
+testFastParse('buildFastParse v3.3 (string switch)', lib.buildFastParse3_3);
+testFastParse('buildFastParse v3.4 (inline check)', lib.buildFastParse3_4);
+testFastParse('buildFastParse v3.5 (bitwise)', lib.buildFastParse3_5);
+testFastParse('buildFastParse v3.6 (case-insensitive)', lib.buildFastParse3_6);

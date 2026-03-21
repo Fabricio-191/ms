@@ -1,4 +1,4 @@
-import { Language, NEGATIVE_REGEX } from '../core/index.ts';
+import { Language } from '../core/index.ts';
 import { LANGUAGES } from '../core/languages.ts';
 
 export function parse(str: string, languages: Language | Language[] = LANGUAGES.en): number | null {
@@ -22,5 +22,5 @@ export function parse(str: string, languages: Language | Language[] = LANGUAGES.
 		return Number(str);
 	}
 
-	return NEGATIVE_REGEX.test(str) ? -value : value;
+	return str.trim().startsWith('-') ? -value : value;
 }

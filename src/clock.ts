@@ -1,4 +1,4 @@
-import { NEGATIVE_REGEX, TIMES } from './core/index.ts';
+import { TIMES } from './core/index.ts';
 
 // hh:mm:ss, hh-mm-ss, mm:ss, mm-ss, hh:mm, hh-mm
 const REGEX1 = /(?<hh>\d+:)?(?<mm>\d{2}):(?<ss>\d{2}(?:\.\d+)?)(?<pm> PM)?/u;
@@ -26,5 +26,5 @@ export function parseClock(str: string, interpretAsMinutes = false): number | nu
 	else // by default interpeted as hh:mm as it's more common
 		value += parseInt(mm, 10) * TIMES.H + parseFloat(ss) * TIMES.M;
 
-	return NEGATIVE_REGEX.test(str) ? -value : value;
+	return str.trim().startsWith('-') ? -value : value;
 }

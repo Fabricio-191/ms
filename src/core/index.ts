@@ -169,5 +169,3 @@ export class Language {
 		return this.units[unit].getNotation(long, singular);
 	}
 }
-
-export const NEGATIVE_REGEX = /^\s*-/u;

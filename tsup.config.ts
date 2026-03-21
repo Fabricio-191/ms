@@ -1,6 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig([
+	// https://github.com/egoist/tsup/issues/1286
 	{
 		entry: { index: 'src/index.ts' },
 		format: [ 'esm' ],
@@ -10,6 +11,7 @@ export default defineConfig([
 		sourcemap: 'inline',
 	},
 	{
+		minify: true,
 		entry: { index: 'src/index.ts' },
 		format: [ 'cjs' ],
 		dts: true,

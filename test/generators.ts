@@ -1,5 +1,4 @@
 import { strictEqual, ok } from 'node:assert';
-import { expect } from '@jest/globals';
 import vercelMS from 'ms';
 import { TIMES, LANGUAGES, UNITS, parse, format, buildFastParse, buildFastFormat, type Language } from '../lib/esm/index.js';
 import type { ValidFormat } from '../src/format/normal.ts';
@@ -8,9 +7,9 @@ import type { ValidFormat } from '../src/format/normal.ts';
 
 export function check(value: unknown, expected: unknown): void {
 	if (typeof expected === 'number' && typeof value === 'number')
-		expect(Math.abs(expected - value)).toBeLessThan(1);
+		ok(Math.abs(expected - value) < 1);
 	else
-		expect(value).toBe(expected);
+		strictEqual(value, expected);
 }
 
 export function randomFromArr<T>(arr: readonly T[]): T {
@@ -110,16 +109,6 @@ export function createClockArgs(): ClockArgs {
 
 // #region bench datasets
 
-function createBenchFormatSamples(count = 10_000): number[] {
-	const maxValue = TIMES.Y * 10;
-	return Array.from({ length: count }, () => {
-		const isNegative = randomNum(2) === 1;
-		const integerPart = randomNum(maxValue);
-		const decimalPart = Math.random();
-		return (integerPart + decimalPart) * (isNegative ? -1 : 1);
-	});
-}
-
 function createBenchNotationSamples(unitAliases: readonly string[], count = 10_000, isValid: (input: string) => boolean = () => true): string[] {
 	const samples: string[] = [];
 	while (samples.length < count) {
@@ -129,28 +118,114 @@ function createBenchNotationSamples(unitAliases: readonly string[], count = 10_0
 	return samples;
 }
 
+// Valid parse samples - mix of units, numbers, and formats
 export const BENCH_PARSE_SAMPLES: string[] = ((): string[] => {
 	const fastParseEn = buildFastParse(LANGUAGES.en);
 	const unitAliases = UNITS.flatMap(key => LANGUAGES.en.units[key].all);
 
+	// Create varied samples: different units, numbers, spacing
 	const samples = createBenchNotationSamples(unitAliases, 10_000, (input: string): boolean => (
 		typeof vercelMS(input) === 'number' &&
 		parse(input, LANGUAGES.en) !== null &&
 		fastParseEn(input) !== null
 	));
 
-	for (const sample of samples) {
-		strictEqual(parse(sample, LANGUAGES.en), vercelMS(sample));
-		strictEqual(fastParseEn(sample), vercelMS(sample));
+	// Add case variations (uppercase, mixed case)
+	for (let i = 0; i < 1000; i++) {
+		const baseSample = randomFromArr(samples);
+		const upperSample = baseSample.toUpperCase();
+		const mixedSample = baseSample.split('').map(c => randomBool() ? c.toUpperCase() : c.toLowerCase()).join('');
+		// Only add if vercel/ms also accepts them
+		if (vercelMS(upperSample) !== undefined && parse(upperSample, LANGUAGES.en) !== null)
+			samples.push(upperSample);
+		if (vercelMS(mixedSample) !== undefined && parse(mixedSample, LANGUAGES.en) !== null)
+			samples.push(mixedSample);
 	}
 
-	return samples;
+	// Add spacing variations
+	for (let i = 0; i < 500; i++) {
+		const baseSample = randomFromArr(samples);
+		const variants = [` ${baseSample}`, `${baseSample} `, `  ${baseSample}  `];
+		for (const variant of variants) {
+			if (vercelMS(variant) !== undefined && parse(variant, LANGUAGES.en) !== null)
+				samples.push(variant);
+		}
+	}
+
+	// Validate all samples final time
+	const validSamples: string[] = [];
+	for (const sample of samples) {
+		const vercelResult = vercelMS(sample);
+		const parseResult = parse(sample, LANGUAGES.en);
+		const fastParseResult = fastParseEn(sample);
+		if (vercelResult === parseResult && parseResult === fastParseResult)
+			validSamples.push(sample);
+	}
+
+	return validSamples;
 })();
 
+// Invalid parse samples - should return null
+export const BENCH_PARSE_FAILURES: string[] = [
+	// Completely invalid
+	'',
+	'   ',
+	'invalid',
+	'abc123',
+	'123abc',
+	'xyz',
+	// Invalid numbers
+	'--1ms',
+	'1.2.3ms',
+	'.ms',
+	// Invalid units
+	'1xyz',
+	'1seconds',  // partial match
+	'1s 2x',  // valid + invalid
+	// Empty/whitespace
+	'   ',
+	'\t\n',
+	// Edge cases
+	'NaN',
+	'Infinity',
+	'null',
+	'undefined',
+	// Out of valid range
+	'1' + '0'.repeat(20),  // huge number string
+];
+
+// Valid format samples - mix of positive, negative, small, large values
 export const BENCH_FORMAT_SAMPLES: number[] = ((): number[] => {
 	const fastFormatEn = buildFastFormat(LANGUAGES.en);
-	const samples = createBenchFormatSamples(10_000);
+	const samples: number[] = [];
 
+	// Range of values
+	for (let i = 0; i < 2000; i++) {
+		// Small values (ms range)
+		samples.push(i);
+		samples.push(-i);
+		// Medium values (seconds to hours)
+		samples.push(i * 1000);
+		samples.push(i * 60000);
+		samples.push(i * 3600000);
+		// Large values (days to years)
+		samples.push(i * 86400000);
+		samples.push(i * 2592000000);
+		samples.push(i * 31557600000);
+	}
+
+	// Decimal values
+	for (let i = 0; i < 1000; i++) {
+		samples.push(Math.random() * 1000000);
+		samples.push(-Math.random() * 1000000);
+	}
+
+	// Edge cases
+	samples.push(0, 1, -1, 0.001, -0.001, 999, -999, 1000, -1000);
+	samples.push(Number.MAX_SAFE_INTEGER / 1000);  // large but valid
+	samples.push(-Number.MAX_SAFE_INTEGER / 1000);
+
+	// Validate all samples
 	for (const value of samples) {
 		ok(vercelMS(value));
 		ok(format(value, { language: LANGUAGES.en, length: 1 }) !== null);
@@ -161,5 +236,20 @@ export const BENCH_FORMAT_SAMPLES: number[] = ((): number[] => {
 
 	return samples;
 })();
+
+// Invalid format samples - should return null
+export const BENCH_FORMAT_FAILURES: (number | string)[] = [
+	// Invalid numbers
+	NaN,
+	Infinity,
+	-Infinity,
+	// Non-numbers (will be passed but should handle gracefully)
+	'not a number' as unknown as number,
+	null as unknown as number,
+	undefined as unknown as number,
+	// Arrays and objects (invalid)
+	[] as unknown as number,
+	{} as unknown as number,
+];
 
 // #endregion

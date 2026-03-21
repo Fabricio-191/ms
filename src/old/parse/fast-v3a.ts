@@ -1,4 +1,17 @@
-import type { Language } from '../core/index.ts';
+/**
+ * Parse v3a - Char-by-char scan with inline charCode ranges
+ * 
+ * Strategy: Replace Unicode property test (`/\p{L}/u`) with pre-computed charCode ranges.
+ * 
+ * At build time, collects all character codes used in any notation of the language
+ * and compacts them into ranges (e.g., `a-z` becomes single range check).
+ * Generates inline charCode boundary check.
+ * 
+ * This eliminates the function call overhead of `/\p{L}/u.test()`.
+ * 
+ * Still uses `s.slice(_w0, i)` to extract notation strings for switch comparison.
+ */
+import type { Language } from '../../core/index.ts';
 
 type FastParseFunction = (str: string) => number | null;
 
@@ -13,9 +26,43 @@ function createSwitchCases(dict: Record<string, number>): string {
 	return body;
 }
 
-// the user uses this function, to create the fast parse function for a specific language. it will be stored by the user, not us
+function collectCharRanges(dict: Record<string, number>): Array<[number, number]> {
+	const codes = new Set<number>();
+	for (const notation of Object.keys(dict)) {
+		for (let j = 0; j < notation.length; j++)
+			codes.add(notation.charCodeAt(j));
+	}
+
+	const sorted = [ ...codes ].sort((a, b) => a - b);
+	const ranges: Array<[number, number]> = [];
+	let lo = sorted[0]!;
+	let hi = lo;
+
+	for (let j = 1; j < sorted.length; j++) {
+		const c = sorted[j]!;
+		if (c === hi + 1) {
+			hi = c;
+		}
+		else {
+			ranges.push([ lo, hi ]);
+			lo = c;
+			hi = c;
+		}
+	}
+	ranges.push([ lo, hi ]);
+	return ranges;
+}
+
+function buildLetterCheck(dict: Record<string, number>): string {
+	const ranges = collectCharRanges(dict);
+	return ranges
+		.map(([ lo, hi ]) => lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`)
+		.join(' || ');
+}
+
 export function buildFastParse(language: Language): FastParseFunction {
 	const switchCases = createSwitchCases(language.dict);
+	const letterCheck = buildLetterCheck(language.dict);
 
 	const source = `
         if (typeof str !== 'string' || str === '') return null;
@@ -49,20 +96,7 @@ export function buildFastParse(language: Language): FastParseFunction {
                         const _c0 = s.charCodeAt(_w0);
                         if (_c0 === 32 || (_c0 >= 48 && _c0 <= 57) || _c0 === 46) break notationBlock;
                         i++;
-                        if (dr.test(s[_w0])) {
-                            // dialect word (e.g. 'hours'): collect while chars stay in dialect
-                            // boundary is implicit — stops at first non-dialect char
-                            while (i < len && dr.test(s[i])) i++;
-                        } else {
-                            // non-dialect word (e.g. Devanagari): collect until dialect/space/digit
-                            // if stopped by a dialect char the boundary condition fails
-                            while (i < len) {
-                                const _c = s.charCodeAt(i);
-                                if (_c === 32 || (_c >= 48 && _c <= 57) || _c === 46 || dr.test(s[i])) break;
-                                i++;
-                            }
-                            if (i < len && dr.test(s[i])) { i = _w0; break notationBlock; }
-                        }
+                        while (i < len) { const c = s.charCodeAt(i); if (!(${letterCheck})) break; i++; }
                         switch (s.slice(_w0, i)) {${switchCases}
                         }
                     }
@@ -79,9 +113,9 @@ export function buildFastParse(language: Language): FastParseFunction {
             return num;
         }
 
-        return /^\\s*-/u.test(str) ? -value : value;
+        return str.trim().startsWith('-') ? -value : value;
     `;
 
 	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-	return Function('dr', 'str', source).bind(null, /\p{L}/u) as FastParseFunction;
+	return Function('str', source) as FastParseFunction;
 }

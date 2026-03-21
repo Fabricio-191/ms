@@ -31,15 +31,52 @@ describe('format', () => {
 	});
 });
 
-describe('fast format', () => {
-	it('buildFastFormat should return only the first unit', () => {
-		const formatEn = lib.buildFastFormat(lib.LANGUAGES.en);
+describe('buildFastFormat', () => {
+	const formatEn = lib.buildFastFormat(lib.LANGUAGES.en);
+	const formatEs = lib.buildFastFormat(lib.LANGUAGES.es);
+	const formatJa = lib.buildFastFormat(lib.LANGUAGES.ja);
 
+	it('should return only the first unit', () => {
 		check(formatEn(7200000), '2h');
 		check(formatEn(7200000, true), '2 hours');
 		check(formatEn(1000, true), '1 second');
 		check(formatEn(999), '999ms');
 		// @ts-expect-error -- testing invalid input
 		check(formatEn('invalid'), null);
+	});
+
+	it('should handle negative values', () => {
+		check(formatEn(-7200000), '- 2h');
+		check(formatEn(-7200000, true), '- 2 hours');
+		check(formatEn(-1000), '- 1s');
+		check(formatEn(-1000, true), '- 1 second');
+		check(formatEn(-999), '- 999ms');
+	});
+
+	it('should handle zero and small values', () => {
+		check(formatEn(0), '0ms');
+		check(formatEn(0, true), '0 milliseconds');
+		check(formatEn(1), '1ms');
+		check(formatEn(1, true), '1 millisecond');
+		check(formatEn(-1), '- 1ms');
+		check(formatEn(-1, true), '- 1 millisecond');
+	});
+
+	it('should use Math.floor (truncation)', () => {
+		// 1.5 hours = 5400000ms -> floors to 1h
+		check(formatEn(5400000), '1h');
+		// 59999ms floors to 59 seconds
+		check(formatEn(59999), '59s');
+		// 599ms floors to 599ms (less than 1 second)
+		check(formatEn(599), '599ms');
+	});
+
+	it('should work with different languages', () => {
+		check(formatEs(7200000), '2h');
+		check(formatEs(7200000, true), '2 horas');
+		check(formatEs(1000, true), '1 segundo');
+		// Japanese: short form has no space, long form has space before notation
+		check(formatJa(7200000), '2時間');
+		check(formatJa(7200000, true), '2 時間');
 	});
 });
