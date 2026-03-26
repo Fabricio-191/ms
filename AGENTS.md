@@ -28,13 +28,13 @@ npm run check:types  # tsc --noEmit (strict type checking)
 
 ```bash
 npm test             # transpile + jest (--experimental-vm-modules)
-npm run bench        # transpile + tsx test/benchmarks.ts
+npm run bench        # transpile + tsx benchmarks/index.ts
 ```
 
 **Run a single test file:**
 
 ```bash
-npm run transpile && node --experimental-vm-modules node_modules/jest/bin/jest.js test/parse.test.ts
+npm run transpile && node --experimental-vm-modules node_modules/jest/bin/jest.js tests/en.test.ts
 ```
 
 **Run a single test by name:**
@@ -73,7 +73,7 @@ npm run transpile && node --experimental-vm-modules node_modules/jest/bin/jest.j
 |---|---|---|
 | Classes | PascalCase | `Language`, `Notations` |
 | Exported constants | SCREAMING_SNAKE_CASE | `TIMES`, `LANGUAGES`, `NEGATIVE_REGEX` |
-| Functions/variables | camelCase | `parseClock`, `buildFastParse`, `isPlainObject` |
+| Functions/variables | camelCase | `buildFastParse`, `isPlainObject` |
 | Types/interfaces | PascalCase | `LanguageData`, `Unit`, `Options` |
 | Files | kebab-case | `fast-parse.ts` |
 | Private/readonly class properties | Standard camelCase, use `readonly` modifier | `public readonly name` |
@@ -125,7 +125,6 @@ if (typeof options !== 'object' || Array.isArray(options))
 
 ## API Conventions
 
-- `parse()` / `parseClock()` return `number | null`
 - `format()` returns `string | null`
 - All public APIs accept optional options objects with defaults
 - Language abstraction via `Language` class; do not hardcode language strings
@@ -133,9 +132,9 @@ if (typeof options !== 'object' || Array.isArray(options))
 
 ## Testing Conventions
 
-- Test files: `test/*.test.ts`, import from `../lib/esm/index.js`
+- Test files: `tests/*.test.ts`, import from `../lib/esm/index.js`
 - Use `describe`/`it` blocks from `@jest/globals`
-- Helper functions in `test/generators.ts`
+- Helper utilities in `benchmarks/utils.ts` (exported: `check`, `benchParse`, `generateParseSample`, `fastest`, `printResults`, `HEADER`)
 - Use `check()` helper for approximate numeric equality
 - Include edge cases: empty strings, negative numbers, whitespace, uppercase, plural forms, overflow
 
@@ -144,20 +143,29 @@ if (typeof options !== 'object' || Array.isArray(options))
 ```
 src/
   index.ts              # Public API exports
-  clock.ts              # Clock notation parser (hh:mm:ss)
   core/
     index.ts            # Language class, TIMES constants, Notations
     languages.ts        # Built-in Language definitions (en, es, ja)
   parse/
-    normal.ts           # Standard parse
-    fast*.ts            # Code-gen optimized parsers (fast3a/b/c variants)
+    normal.ts           # Standard parse() — regex-based, multi-language
+    fast.ts             # buildFastParse() — current best (v17: all 7 opts)
+    _trie.ts            # Shared trie infrastructure (buildTrie, collectCharRanges, buildBoundaryTable)
   format/
-    normal.ts           # Standard format
-    fast.ts             # Code-gen fast formatter
-test/
-  *.test.ts             # Jest test suites
-  generators.ts         # Random test data generation and helpers
-  benchmarks.ts         # Performance benchmarks vs vercel/ms
+    normal.ts           # Standard format() — multi-unit output
+  old/                  # Legacy implementations kept for benchmarking
+    parse/
+      v0.ts – v17.ts    # Parse variants (see docs/comparison.md for descriptions)
+    format/
+      v1.ts, v2.ts      # Format variants
+    index.ts            # Re-exports all old variants
+tests/
+  en.test.ts            # English parse/format + all buildFastParse/buildFastFormat consistency tests
+  es.test.ts            # Spanish parse consistency tests
+  ja.test.ts            # Japanese parse consistency tests
+  format.test.ts        # format() unit tests
+benchmarks/
+  index.ts              # tinybench suite: parse valid/invalid/multi-unit across all variants
+  utils.ts              # check(), benchParse(), generateParseSample(), printResults(), fastest()
 lib/                    # Build output (gitignored)
 ```
 

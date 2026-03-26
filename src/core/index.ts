@@ -15,7 +15,7 @@ export const TIMES = Object.freeze({
 	M: 1000 * 60,
 	S: 1000,
 	Ms: 1,
-});
+} as const);
 
 export type Unit = keyof typeof TIMES;
 
@@ -101,7 +101,7 @@ export class Language {
 			.map(escapeRegex)
 			.join('|');
 
-		this.REGEX = RegExp(`(?<value>\\d*\\.?\\d+) {0,3}(?<unit>${escapedNotations})(?!\\p{L})`, 'giu');
+		this.REGEX = RegExp(`(?<![.\\d])(?<value>\\d*\\.?\\d+) {0,3}(?<unit>${escapedNotations})(?!\\p{L})`, 'giu');
 	}
 
 	public getNotation(unit: Unit, long: boolean, singular: boolean): string {

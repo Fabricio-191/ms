@@ -16,10 +16,8 @@ export function parse(str: string, languages: Language | Language[] = LANGUAGES.
 		.reduce((acc, res) => res.matches_qty > acc.matches_qty ? res : acc);
 
 	if (matches_qty === 0) {
-		if (Number.isNaN(Number(str))) return null;
-
-		// parse as ms
-		return Number(str);
+		const n = Number(str);
+		return Number.isNaN(n) ? null : n;
 	}
 
 	return str.trim().startsWith('-') ? -value : value;

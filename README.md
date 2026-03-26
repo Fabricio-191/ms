@@ -40,10 +40,6 @@ ms('-.5 mins');      // -30000
 ms('- 2m 30s');      // -150000
 ms('-3 days');       // -259200000
 
-ms.clock('2:09:00');       // 7740000  (hh:mm:ss)
-ms.clock('3:10');          // 11400000 (hh:mm)
-ms.clock('3:10', true);    // 190000   (mm:ss)
-
 // english is the default language
 ms('1 day', 'es');   // null (wrong language)
 ms('1 dia', 'es');   // 86400000

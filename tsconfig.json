@@ -3,8 +3,9 @@
 	"display": "Node 22",
 	"include": [
 		"src",
-		"test",
+		"tests",
 		"eslint.config.ts",
+		"benchmarks",
 	],
 	"exclude": [
 		"lib",

@@ -30,7 +30,7 @@ export function format(miliseconds: number, options: Options = {}): string | nul
 
 const FORMATS_REGEX = /Mo|Ms|Y|W|D|H|M|S/gu;
 const VALID_FORMAT = /^Y?(?:Mo)?W?D?H?M?S?(?:Ms)?$/u;
-export type ValidFormat = `${'Y' | ''}${'Mo' | ''}${'W' | ''}${'D' | ''}${'H' | ''}${'M' | ''}${'S' | ''}${'Ms' | ''}`;
+export type ValidFormat = Exclude<`${'Y' | ''}${'Mo' | ''}${'W' | ''}${'D' | ''}${'H' | ''}${'M' | ''}${'S' | ''}${'Ms' | ''}`, ''>;
 
 interface Options {
 	long?: boolean;
@@ -54,11 +54,6 @@ const DEFAULT_FORMAT_OPTS: Required<Options> = {
 };
 
 function parseFormatOptions(options: Options = {}): ParsedOptions {
-	if (
-		typeof options !== 'object' ||
-		Array.isArray(options)
-	) throw Error('Options should be an object');
-
 	const parsedOptions = { ...DEFAULT_FORMAT_OPTS, ...options };
 
 	if (typeof parsedOptions.long !== 'boolean')
@@ -67,7 +62,7 @@ function parseFormatOptions(options: Options = {}): ParsedOptions {
 	else if (typeof parsedOptions.length !== 'number' || parsedOptions.length < 1 || parsedOptions.length > 8)
 		throw Error('\'length\' should be a number between 1 and 8');
 
-	else if (typeof parsedOptions.format !== 'string' || parsedOptions.format === '')
+	else if (typeof parsedOptions.format !== 'string')
 		throw Error('\'format\' should be a non-empty string');
 
 	else if (!VALID_FORMAT.test(parsedOptions.format))

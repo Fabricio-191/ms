@@ -8,41 +8,11 @@ export {
 	type Unit,
 } from './core/index.ts';
 export { LANGUAGES, type LanguageKey } from './core/languages.ts';
-export { parse, parse as parseTime } from './parse/normal.ts';
-export { parseClock, parseClock as clock } from './clock.ts';
-export { format, format as formatTime } from './format/normal.ts';
-export { buildFastParse } from './parse/fast.ts';
-export {
-	buildFastParseV0,
-	buildFastParseV1,
-	buildFastParseV2,
-	buildFastParseV3,
-	buildFastParseV4,
-	buildFastParseV5,
-	buildFastParseV6,
-	buildFastParseV7,
-	buildFastParseV8,
-	buildFastFormatV1,
-	buildFastFormatV2,
-} from './old/index.ts';
-export { buildFastFormat } from './format/fast.ts';
 
-// https://github.com/vercel/ms/issues
-// https://github.com/Fabricio-191/ms
-// https://github.com/Fabricio-191/youtube/blob/main/docs/list.md
+export type { FastParseFunction, FastParseWithCount } from './parse/variants/single/v18.ts';
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl
-// https://nodejs.org/api/assert.html
+export { parse } from './parse/normal.ts';
+export { buildFastParse } from './parse/variants/single/v25.ts';
 
-// https://github.com/vercel/ms/issues/59
-// https://github.com/sindresorhus/pretty-ms
-// https://github.com/KartikeSingh/ms-prettify
-// https://github.com/c0bra/text2num.js/blob/master/lib/text2num.js
-// https://github.com/Raul-Tech-Support/simple-duration-converter/blob/main/src/simple-duration.js
-
-// Add popular languages (chinese/mandarin, hindi, french, arabic, russian, portuguese, turkish, korean)
-
-// https://docs.oracle.com/cd/E41183_01/DR/Time_Formats.html
-// https://www.gnu.org/software/pspp/manual/html_node/Time-and-Date-Formats.html
-// https://en.wikipedia.org/wiki/ISO_8601
-// https://en.wikipedia.org/wiki/24-hour_clock
+export { format } from './format/normal.ts';
+export { buildFastFormat } from './format/variants/v2.ts';

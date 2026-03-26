@@ -1,14 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)",
-      "Bash(npx eslint:*)",
-      "Bash(npm test:*)",
-      "Bash(find f:/Programacion/@fabricio-191/ms/test f:/Programacion/@fabricio-191/ms/temp -not -path */node_modules/* -type f)",
-      "Bash(node -e \"const g = require\\(''globals''\\); console.log\\(Object.keys\\(g\\).filter\\(k => k.includes\\(''node''\\)\\)\\)\")",
-      "Bash(cat:*)",
+      "mcp__plugin_engram_engram__mem_search",
+      "Bash(tsx --eval \":*)",
+      "mcp__plugin_engram_engram__mem_session_summary",
+      "mcp__plugin_engram_engram__mem_context",
       "Bash(node:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__plugin_engram_engram__mem_save",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node --import tsx/esm --eval \":*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:chromium.googlesource.com)"
     ]
   }
 }

@@ -60,7 +60,7 @@ export default [
 				'declaration',
 				{ allowArrowFunctions: true },
 			],
-			'no-plusplus': [ 'error', { allowForLoopAfterthoughts: true } ],
+			'no-plusplus': [ 'off', { allowForLoopAfterthoughts: true } ],
 			'@typescript-eslint/array-type': [ 'error', { default: 'array-simple' } ],
 			'@typescript-eslint/no-use-before-define': [ 'error', { functions: false } ],
 			'@typescript-eslint/method-signature-style': [ 'error', 'method' ],

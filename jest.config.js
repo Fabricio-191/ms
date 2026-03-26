@@ -1,7 +1,7 @@
 export default {
 	testEnvironment: 'node',
 	testMatch: [
-		'<rootDir>/test/**/*.test.ts',
+		'<rootDir>/tests/**/*.test.ts',
 	],
 	passWithNoTests: true,
 	moduleFileExtensions: ['mts', 'cts', 'ts', 'mjs', 'cjs', 'js', 'json'],
