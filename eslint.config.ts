@@ -30,6 +30,10 @@ export default [
 	tseslint.configs.eslintRecommended,
 	{
 		rules: {
+			'no-bitwise': 'off', // Used in some parse variants for fast digit checks and multiplications/divisions by 10
+			'no-implied-eval': 'off', // We use new Function() to create parse functions from generated source code
+			'no-new-func': 'off', // We use new Function() to create parse functions from generated source code
+			'@typescript-eslint/no-implied-eval': 'off',
 			'max-depth': 'off',
 			'no-undef': 'off', // TypeScript handles this via projectService
 			camelcase: [ 'error' ],

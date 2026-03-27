@@ -95,9 +95,8 @@ export function buildFastFormat(language: Language): FastFormatFunction {
 		${longBranches}
 	`;
 
-	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	const formatShort = Function('miliseconds', shortSource) as (ms: number) => string | null;
-	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+
 	const formatLong = Function('miliseconds', longSource) as (ms: number) => string | null;
 
 	return (miliseconds: number, long = false): string | null => long ? formatLong(miliseconds) : formatShort(miliseconds);

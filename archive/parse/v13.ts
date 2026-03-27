@@ -1,30 +1,45 @@
+/**
+ * Parse v13 — v9 + pre-scan for any digit before entering the main loop.
+ *
+ * Scans the entire string once looking for any digit (0-9) or dot.
+ * If none found, skips straight to the Number(str) fallback.
+ *
+ * Helps for: "null", "NaN", "Infinity", "invalid", "xyz" (no digits at all).
+ * Does NOT help for: "abc123", "1xyz" (has digits, main loop still runs).
+ *
+ * Contrast with v12 which only checks the first char but also catches "abc123".
+ */
 import type { Language } from '../../src/core/index.ts';
 import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
-// v10: single case per char — applies `| 0x20` inline in the switch expression
-// instead of emitting two cases (lower + upper) like v9.
-function generateTrieCodeV10(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {
+function generateTrieCodeV9(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {
 	let code = '';
 
 	if (node.multiplier !== null) {
-		let check = 'i >= len';
-		if (ranges.length > 0) {
-			const parts = ranges.map(([ lo, hi ]) =>
-				lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`);
-			check = `i >= len || !(${parts.join(' || ')})`;
-		}
+		const parts = ranges.map(([ lo, hi ]) =>
+			lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`);
+		const check = parts.length > 0 ?
+			`i >= len || !(${parts.join(' || ')})` :
+			'i >= len';
 		code += `${indent}{ const c = s.charCodeAt(i); if (${check}) { value += parsedValue * ${node.multiplier}; matchCount++; break notationBlock; } }\n`;
 	}
 
 	if (node.children.size === 0) return code;
 
-	code += `${indent}switch (s.charCodeAt(i) | 0x20) {\n`;
+	code += `${indent}switch (s.charCodeAt(i)) {\n`;
 	for (const [ cc, child ] of node.children) {
 		const char = String.fromCharCode(cc);
-		code += `${indent}\tcase ${cc}: // '${char}'\n`;
+		const upperCc = char.toUpperCase().charCodeAt(0);
+		if (cc === upperCc) {
+			code += `${indent}\tcase ${cc}: // '${char}'\n`;
+		}
+		else {
+			code += `${indent}\tcase ${cc}: // '${char}'\n`;
+			code += `${indent}\tcase ${upperCc}: // '${String.fromCharCode(upperCc)}'\n`;
+		}
 		code += `${indent}\t\ti++;\n`;
-		code += generateTrieCodeV10(child, `${indent}\t\t`, ranges);
+		code += generateTrieCodeV9(child, `${indent}\t\t`, ranges);
 		code += `${indent}\t\tbreak;\n`;
 	}
 	code += `${indent}}\n`;
@@ -35,13 +50,27 @@ function generateTrieCodeV10(node: TrieNode, indent: string, ranges: Array<[numb
 export function buildFastParse(language: Language): ParseFunction {
 	const trie = buildTrie(language.dict);
 	const ranges = collectCharRanges(language.dict, true);
-	const trieCode = generateTrieCodeV10(trie, '\t\t\t\t\t\t', ranges);
+	const trieCode = generateTrieCodeV9(trie, '\t\t\t\t\t\t', ranges);
 
 	const source = `
 		if (typeof str !== 'string' || str === '') return null;
 
 		const s = str;
 		const len = s.length;
+
+		// opt 5b: pre-scan — if no digit or dot anywhere in the string, skip to Number() fallback
+		{
+			let _hasNum = false;
+			for (let _p = 0; _p < len; _p++) {
+				const _c = s.charCodeAt(_p);
+				if (((_c - 48) >>> 0) < 10 || _c === 46) { _hasNum = true; break; }
+			}
+			if (!_hasNum) {
+				const num = Number(str);
+				return Number.isNaN(num) ? null : num;
+			}
+		}
+
 		let value = 0;
 		let matchCount = 0;
 		let i = 0;
@@ -75,7 +104,7 @@ export function buildFastParse(language: Language): ParseFunction {
 							break notationBlock;
 						}
 ${trieCode}					}
-			}
+				}
 				continue;
 			}
 

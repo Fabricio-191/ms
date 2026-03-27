@@ -4,18 +4,19 @@
  * Single language:  `buildFastParse(language)(str)`
  * Multi language:   `buildFastParseMulti(languages)(str)`
  */
-import { buildFastParse as buildFastParseV18, type FastParseFunction, type FastParseWithCount } from './variants/single/v18.ts';
+import { buildFastParse as buildFastParseV18 } from './variants/v18.ts';
+import type { ParseFunction, ParseWithCountFunction } from '@src/core/types.ts';
 import type { Language } from '../core/index.ts';
 
-export { buildFastParseV18, type FastParseWithCount };
+export { buildFastParseV18, type ParseWithCountFunction };
 
-export function buildFastParse(language: Language, withMatchCount: true): FastParseWithCount;
-export function buildFastParse(language: Language, withMatchCount?: false): FastParseFunction;
-export function buildFastParse(language: Language, withMatchCount = false): FastParseFunction | FastParseWithCount {
+export function buildFastParse(language: Language, withMatchCount: true): ParseWithCountFunction;
+export function buildFastParse(language: Language, withMatchCount?: false): ParseFunction;
+export function buildFastParse(language: Language, withMatchCount = false): ParseFunction | ParseWithCountFunction {
 	return withMatchCount ? buildFastParseV18(language, true) : buildFastParseV18(language);
 }
 
-export function buildFastParseMulti(languages: Language[]): FastParseFunction {
+export function buildFastParseMulti(languages: Language[]): ParseFunction {
 	if (languages.length === 0)
 		throw new Error('`languages` must contain at least one Language instance');
 	if (languages.length === 1)

@@ -10,9 +10,8 @@
  * 6. Manual decimal accumulation  — avoids parseFloat(slice()) for decimal inputs too, zero string allocation
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/_trie.ts';
-
-type FastParseFunction = (str: string) => number | null;
+import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────
 
@@ -119,7 +118,7 @@ function generateRootCode(branches: Map<number, TrieNode>, indent: string, range
 
 // ─── builder ──────────────────────────────────────────────────────────────────
 
-export function buildFastParse(language: Language): FastParseFunction {
+export function buildFastParse(language: Language): ParseFunction {
 	const trie = buildTrie(language.dict);
 	const ranges = collectCharRanges(language.dict, true);
 	const { arr: rootArr, branches } = buildRootDispatch(trie);
@@ -226,7 +225,6 @@ ${rootCode}					}
 		return isNeg ? -value : value;
 	`;
 
-	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	const fn = Function('ROOT', 'str', source) as (ROOT: Uint8Array, str: string) => number | null;
-	return fn.bind(null, rootArr) as FastParseFunction;
+	return fn.bind(null, rootArr) as ParseFunction;
 }

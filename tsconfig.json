@@ -3,15 +3,22 @@
 	"display": "Node 22",
 	"include": [
 		"src",
-		"tests",
+		"testing",
+		"archive",
 		"eslint.config.ts",
-		"benchmarks",
 	],
 	"exclude": [
 		"lib",
 		"node_modules",
 	],
 	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@lib": ["./lib/esm/index.d.ts"],
+			"@src/*": ["./src/*"],
+			"@archive/*": ["./archive/*"],
+			"@testing/*": ["./testing/*"]
+		},
 		"typeRoots": [
 			"./node_modules/@types"
 		],
@@ -56,6 +63,7 @@
 		"noImplicitUseStrict": false,
 		"suppressExcessPropertyErrors": false,
 		"suppressImplicitAnyIndexErrors": false,
-		"noStrictGenericChecks": false
+		"noStrictGenericChecks": false,
+		"skipLibCheck": true
 	}
 }

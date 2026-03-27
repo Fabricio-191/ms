@@ -17,11 +17,10 @@
 	"scripts": {
 		"lint": "eslint ./ --fix",
 		"check:types": "tsc --noEmit",
-		"prepare": "npm run transpile",
 		"transpile": "tsup",
 		"test": "npm run transpile && node --experimental-vm-modules node_modules/jest/bin/jest.js",
-		"bench": "npm run transpile && tsx benchmarks/index.ts",
-		"bench:jit": "node --allow-natives-syntax --import tsx/esm benchmarks/jit.ts",
+		"bench": "npm run transpile && tsx testing/benchmarks/bench.ts",
+		"bench:jit": "node --allow-natives-syntax --import tsx/esm testing/benchmarks/jit.ts",
 		"build": "npm run lint && npm run check:types && npm run transpile"
 	},
 	"engines": {

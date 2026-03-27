@@ -10,7 +10,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(node --import tsx/esm --eval \":*)",
       "WebFetch(domain:www.npmjs.com)",
-      "WebFetch(domain:chromium.googlesource.com)"
+      "WebFetch(domain:chromium.googlesource.com)",
+      "Bash(sed -i \"s|''../benchmarks/utils.ts''|''../utils.ts''|g\" testing/tests/all.test.ts testing/tests/en.test.ts testing/tests/es.test.ts testing/tests/ja.test.ts testing/tests/misc.test.ts)",
+      "Bash(sed -i \"s|from ''./utils.ts''|from ''../utils.ts''|g\" testing/benchmarks/bench.ts)"
     ]
   }
 }

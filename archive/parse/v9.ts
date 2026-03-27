@@ -2,9 +2,11 @@ import type { Language } from '../../src/core/index.ts';
 import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
-// v10: single case per char — applies `| 0x20` inline in the switch expression
-// instead of emitting two cases (lower + upper) like v9.
-function generateTrieCodeV10(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {
+// v9: Combines all optimizations:
+// - Case-insensitive without .toLowerCase() (from v8)
+// - Inline boundary check (from v6)
+// - Bitwise digit check (from v7)
+function generateTrieCodeV9(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {
 	let code = '';
 
 	if (node.multiplier !== null) {
@@ -19,12 +21,21 @@ function generateTrieCodeV10(node: TrieNode, indent: string, ranges: Array<[numb
 
 	if (node.children.size === 0) return code;
 
-	code += `${indent}switch (s.charCodeAt(i) | 0x20) {\n`;
+	code += `${indent}switch (s.charCodeAt(i)) {\n`;
 	for (const [ cc, child ] of node.children) {
 		const char = String.fromCharCode(cc);
-		code += `${indent}\tcase ${cc}: // '${char}'\n`;
+		const upperChar = char.toUpperCase();
+		const upperCc = upperChar.charCodeAt(0);
+
+		if (cc === upperCc) {
+			code += `${indent}\tcase ${cc}: // '${char}'\n`;
+		}
+		else {
+			code += `${indent}\tcase ${cc}: // '${char}'\n`;
+			code += `${indent}\tcase ${upperCc}: // '${upperChar}'\n`;
+		}
 		code += `${indent}\t\ti++;\n`;
-		code += generateTrieCodeV10(child, `${indent}\t\t`, ranges);
+		code += generateTrieCodeV9(child, `${indent}\t\t`, ranges);
 		code += `${indent}\t\tbreak;\n`;
 	}
 	code += `${indent}}\n`;
@@ -35,11 +46,12 @@ function generateTrieCodeV10(node: TrieNode, indent: string, ranges: Array<[numb
 export function buildFastParse(language: Language): ParseFunction {
 	const trie = buildTrie(language.dict);
 	const ranges = collectCharRanges(language.dict, true);
-	const trieCode = generateTrieCodeV10(trie, '\t\t\t\t\t\t', ranges);
+	const trieCode = generateTrieCodeV9(trie, '\t\t\t\t\t\t', ranges);
 
 	const source = `
 		if (typeof str !== 'string' || str === '') return null;
 
+		// v9: No .toLowerCase() - work directly with original string
 		const s = str;
 		const len = s.length;
 		let value = 0;
@@ -49,6 +61,8 @@ export function buildFastParse(language: Language): ParseFunction {
 		while (i < len) {
 			const cc = s.charCodeAt(i);
 
+			// v9: Bitwise digit check + case-insensitive
+			// Digits: 48-57, Dot: 46
 			if (((cc - 48) >>> 0) < 10 || cc === 46) {
 				const numStart = i;
 				let hasDot = cc === 46;
@@ -60,13 +74,16 @@ export function buildFastParse(language: Language): ParseFunction {
 					else { break; }
 				}
 				const parsedValue = parseFloat(s.slice(numStart, i));
-				if (!Number.isNaN(parsedValue)) {
+if (!Number.isNaN(parsedValue)) {
 					let spaces = 0;
 					while (i < len && s.charCodeAt(i) === 32 && spaces < 3) { i++; spaces++; }
 
 					notationBlock: if (i < len) {
 						const _c0 = s.charCodeAt(i);
+						// Check for space, digit, or dot - if found, skip the entire trailing numeric segment
+						// This handles cases like "1.2.3ms" where the number is invalid (multiple dots)
 						if (_c0 === 32 || ((_c0 - 48) >>> 0) < 10 || _c0 === 46) {
+							// Skip all trailing digits and dots (invalid number like "1.2.3")
 							while (i < len) {
 								const c = s.charCodeAt(i);
 								if (((c - 48) >>> 0) < 10 || c === 46) { i++; }
@@ -74,8 +91,8 @@ export function buildFastParse(language: Language): ParseFunction {
 							}
 							break notationBlock;
 						}
-${trieCode}					}
-			}
+${trieCode}                    }
+				}
 				continue;
 			}
 
@@ -88,6 +105,7 @@ ${trieCode}					}
 			return num;
 		}
 
+		// Negative check is case-insensitive
 		return str.trim().startsWith('-') ? -value : value;
 	`;
 

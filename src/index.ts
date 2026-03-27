@@ -9,10 +9,10 @@ export {
 } from './core/index.ts';
 export { LANGUAGES, type LanguageKey } from './core/languages.ts';
 
-export type { FastParseFunction, FastParseWithCount } from './parse/variants/single/v18.ts';
+export type { ParseFunction, ParseWithCountFunction } from './core/types.ts';
 
 export { parse } from './parse/normal.ts';
-export { buildFastParse } from './parse/variants/single/v25.ts';
+export { buildFastParse } from './parse/variants/v25.ts';
 
 export { format } from './format/normal.ts';
 export { buildFastFormat } from './format/variants/v2.ts';

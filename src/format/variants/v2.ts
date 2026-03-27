@@ -60,7 +60,6 @@ function createInlinedShortFunction(language: Language): (ms: number) => string 
 		return neg + abs + (abs === 1 ? '${msSingular}' : '${msPlural}');
 	`;
 
-	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	return Function('miliseconds', source) as (ms: number) => string | null;
 }
 
@@ -97,7 +96,6 @@ function createInlinedLongFunction(language: Language): (ms: number) => string |
 		return neg + abs + (abs === 1 ? '${msSingular}' : '${msPlural}');
 	`;
 
-	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	return Function('miliseconds', source) as (ms: number) => string | null;
 }
 

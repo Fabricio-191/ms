@@ -1,45 +1,20 @@
 /**
- * Parse v14 — v11 + opt 5: early exit on first parseable character.
+ * Parse v19 — v18 + opt 9: unrolled 1–2 extra digit fast path.
  *
- * All five optimizations combined:
- * 1. Manual integer accumulation  — avoids parseFloat(slice()) for integer inputs
- * 2. In-scan sign detection       — avoids str.trim().startsWith('-') at the end
- * 3. Root flat-array dispatch     — Uint8Array[charCode] replaces root-level switch
- * 4. Trie path compression        — linear single-child chains become consecutive char checks
- * 5. Early exit                   — after sign scan, if first char is not digit or dot → Number() fallback
- *
- * The early exit integrates naturally with opt 2: once _si is computed (after
- * skipping spaces and optional sign), we check s.charCodeAt(_si) before entering
- * the main loop, at zero extra cost.
+ * All nine optimizations combined:
+ * 1–8. Same as v18.
+ * 9. Digit unroll — the first two extra digits after the leading digit are checked inline
+ *    without entering a loop. Avoids loop-setup overhead for the majority of inputs where
+ *    numbers are 1–3 digits (e.g. "2h", "30m", "500ms"). The general while loop only runs
+ *    for 4+ digit numbers.
  */
-import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
-import type { ParseFunction } from '../../src/core/types.ts';
+import type { Language } from '../../core/index.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../utils/trie.ts';
+import type { ParseFunction } from '@src/core/types.ts';
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────
 
-interface RootDispatch {
-	arr: Uint8Array;
-	branches: Map<number, TrieNode>;
-}
-
-function buildRootDispatch(root: TrieNode): RootDispatch {
-	const arr = new Uint8Array(128);
-	const branches = new Map<number, TrieNode>();
-	let nextId = 1;
-
-	for (const [ cc, child ] of root.children) {
-		const id = nextId++;
-		branches.set(id, child);
-		if (cc < 128) arr[cc] = id;
-		const upperCc = String.fromCharCode(cc).toUpperCase().charCodeAt(0);
-		if (upperCc !== cc && upperCc < 128) arr[upperCc] = id;
-	}
-
-	return { arr, branches };
-}
-
-// ─── opt 4: code generator with path compression ──────────────────────────────
+// ─── opt 4 + 7: code generator with path compression + boundary table ─────────
 
 function collectChain(cc: number, node: TrieNode): { chain: Array<[number, number]>; leaf: TrieNode } {
 	const upper = String.fromCharCode(cc).toUpperCase().charCodeAt(0);
@@ -56,17 +31,11 @@ function collectChain(cc: number, node: TrieNode): { chain: Array<[number, numbe
 	return { chain, leaf: cur };
 }
 
-function generateCode(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {
+function generateCode(node: TrieNode, indent: string): string {
 	let code = '';
 
-	if (node.multiplier !== null) {
-		const parts = ranges.map(([ lo, hi ]) =>
-			lo === hi ? `c === ${lo}` : `(c >= ${lo} && c <= ${hi})`);
-		const check = parts.length > 0 ?
-			`i >= len || !(${parts.join(' || ')})` :
-			'i >= len';
-		code += `${indent}{ const c = s.charCodeAt(i); if (${check}) { value += parsedValue * ${node.multiplier}; matchCount++; break notationBlock; } }\n`;
-	}
+	if (node.multiplier !== null)
+		code += `${indent}{ const c = s.charCodeAt(i); if (i >= len || c >= 128 || !BOUND[c]) { value += parsedValue * ${node.multiplier}; matchCount++; break notationBlock; } }\n`;
 
 	if (node.children.size === 0) return code;
 
@@ -83,7 +52,7 @@ function generateCode(node: TrieNode, indent: string, ranges: Array<[number, num
 				code += `${indent}{ const _c = s.charCodeAt(i + ${k}); if (_c !== ${lo} && _c !== ${hi}) break notationBlock; } // '${String.fromCharCode(lo)}'\n`;
 		}
 		code += `${indent}i += ${chain.length};\n`;
-		code += generateCode(leaf, indent, ranges);
+		code += generateCode(leaf, indent);
 	}
 	else {
 		code += `${indent}switch (s.charCodeAt(i)) {\n`;
@@ -98,7 +67,7 @@ function generateCode(node: TrieNode, indent: string, ranges: Array<[number, num
 				code += `${indent}\tcase ${upperCc}: // '${String.fromCharCode(upperCc)}'\n`;
 			}
 			code += `${indent}\t\ti++;\n`;
-			code += generateCode(child, `${indent}\t\t`, ranges);
+			code += generateCode(child, `${indent}\t\t`);
 			code += `${indent}\t\tbreak;\n`;
 		}
 		code += `${indent}}\n`;
@@ -107,13 +76,29 @@ function generateCode(node: TrieNode, indent: string, ranges: Array<[number, num
 	return code;
 }
 
-function generateRootCode(branches: Map<number, TrieNode>, indent: string, ranges: Array<[number, number]>): string {
+function generateRootCode(
+	branches: Map<number, TrieNode>,
+	nonAscii: Map<number, TrieNode>,
+	indent: string,
+): string {
 	let code = `${indent}switch (_c0 < 128 ? ROOT[_c0] : 0) {\n`;
 	for (const [ id, child ] of branches) {
 		code += `${indent}\tcase ${id}:\n`;
 		code += `${indent}\t\ti++;\n`;
-		code += generateCode(child, `${indent}\t\t`, ranges);
+		code += generateCode(child, `${indent}\t\t`);
 		code += `${indent}\t\tbreak;\n`;
+	}
+	if (nonAscii.size > 0) {
+		code += `${indent}\tcase 0: if (_c0 >= 128) {\n`;
+		code += `${indent}\t\tswitch (_c0) {\n`;
+		for (const [ cc, child ] of nonAscii) {
+			code += `${indent}\t\t\tcase ${cc}:\n`;
+			code += `${indent}\t\t\t\ti++;\n`;
+			code += generateCode(child, `${indent}\t\t\t\t`);
+			code += `${indent}\t\t\t\tbreak;\n`;
+		}
+		code += `${indent}\t\t}\n`;
+		code += `${indent}\t} break;\n`;
 	}
 	code += `${indent}}\n`;
 	return code;
@@ -124,8 +109,9 @@ function generateRootCode(branches: Map<number, TrieNode>, indent: string, range
 export function buildFastParse(language: Language): ParseFunction {
 	const trie = buildTrie(language.dict);
 	const ranges = collectCharRanges(language.dict, true);
-	const { arr: rootArr, branches } = buildRootDispatch(trie);
-	const rootCode = generateRootCode(branches, '\t\t\t\t\t\t', ranges);
+	const { arr: rootArr, branches, nonAscii } = buildRootDispatch(trie);
+	const boundaryArr = buildBoundaryTable(ranges);
+	const rootCode = generateRootCode(branches, nonAscii, '\t\t\t\t\t\t');
 
 	const source = `
 		if (typeof str !== 'string' || str === '') return null;
@@ -142,8 +128,7 @@ export function buildFastParse(language: Language): ParseFunction {
 			while (_si < len && s.charCodeAt(_si) === 32) _si++;
 		}
 
-		// opt 5: early exit — after consuming sign, if first char is not digit, dot, or another '-' → fallback
-		// Allow '-' to pass through: a second minus (e.g. "--1ms") gets skipped by i++ in the main loop.
+		// opt 5: early exit
 		{
 			const _fc = s.charCodeAt(_si);
 			if (_fc !== 45 && ((_fc - 48) >>> 0) >= 10 && _fc !== 46) {
@@ -160,23 +145,48 @@ export function buildFastParse(language: Language): ParseFunction {
 			const cc = s.charCodeAt(i);
 
 			if (((cc - 48) >>> 0) < 10 || cc === 46) {
-				const numStart = i;
-				let hasDot = cc === 46;
-				i++;
-				while (i < len) {
-					const c = s.charCodeAt(i);
-					if (((c - 48) >>> 0) < 10) { i++; }
-					else if (c === 46 && !hasDot) { hasDot = true; i++; }
-					else { break; }
-				}
-
-				// opt 1: manual integer accumulation
+				// opt 8 + 9: single-pass + unrolled first two extra digits
 				let parsedValue = 0;
-				if (hasDot) {
-					parsedValue = parseFloat(s.slice(numStart, i));
+				let _d;
+				if (cc !== 46) {
+					// integer-first path: unroll 2 digits, then fall into general loop for 3+
+					parsedValue = cc - 48;
+					i++;
+					if (i < len && (_d = (s.charCodeAt(i) - 48) >>> 0) < 10) {
+						parsedValue = parsedValue * 10 + _d;
+						i++;
+						if (i < len && (_d = (s.charCodeAt(i) - 48) >>> 0) < 10) {
+							parsedValue = parsedValue * 10 + _d;
+							i++;
+							// general loop for 3+ additional digits
+							let _c;
+							while (i < len && (_c = s.charCodeAt(i), (_d = (_c - 48) >>> 0) < 10)) {
+								parsedValue = parsedValue * 10 + _d;
+								i++;
+							}
+						}
+					}
+					// optional trailing dot + fractional part
+					if (i < len && s.charCodeAt(i) === 46) {
+						i++;
+						let frac = 0, divisor = 1, _c;
+						while (i < len && (_c = s.charCodeAt(i), (_d = (_c - 48) >>> 0) < 10)) {
+							frac = frac * 10 + _d;
+							divisor *= 10;
+							i++;
+						}
+						if (divisor > 1) parsedValue += frac / divisor;
+					}
 				} else {
-					for (let k = numStart; k < i; k++)
-						parsedValue = parsedValue * 10 + (s.charCodeAt(k) - 48);
+					// dot-first path (".5h", ".h")
+					i++;
+					let frac = 0, divisor = 1, _c;
+					while (i < len && (_c = s.charCodeAt(i), (_d = (_c - 48) >>> 0) < 10)) {
+						frac = frac * 10 + _d;
+						divisor *= 10;
+						i++;
+					}
+					parsedValue = divisor === 1 ? NaN : frac / divisor;
 				}
 
 				if (!Number.isNaN(parsedValue)) {
@@ -194,12 +204,12 @@ export function buildFastParse(language: Language): ParseFunction {
 							break notationBlock;
 						}
 ${rootCode}					}
-			}
-				continue;
-			}
-
-			i++;
 		}
+			continue;
+		}
+
+		i++;
+	}
 
 		if (matchCount === 0) {
 			const num = Number(str);
@@ -207,10 +217,9 @@ ${rootCode}					}
 			return num;
 		}
 
-		// opt 2: use pre-detected sign
 		return isNeg ? -value : value;
 	`;
 
-	const fn = Function('ROOT', 'str', source) as (ROOT: Uint8Array, str: string) => number | null;
-	return fn.bind(null, rootArr) as ParseFunction;
+	const fn = Function('ROOT', 'BOUND', 'str', source) as (ROOT: Uint8Array, BOUND: Uint8Array, str: string) => number | null;
+	return fn.bind(null, rootArr, boundaryArr) as ParseFunction;
 }
