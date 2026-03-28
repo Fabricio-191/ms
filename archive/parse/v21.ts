@@ -1,4 +1,4 @@
-import type { Language } from '../../core/index.ts';
+import type { Language } from '../../src/core/index.ts';
 import type { ParseFunction } from '@src/core/types.ts';
 
 // ─── perfect hash implementation ────────────────────────────────────────────────

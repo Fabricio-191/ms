@@ -1,13 +1,12 @@
 /**
- * Parse v25 — Lookup table with labeled block (like v18 but flatter ifs).
+ * Parse v26 — Same as v25 but uses eval() instead of new Function().
  *
- * Uses a flat list of if-else checks instead of nested trie ifs.
- * Still uses labeled blocks to allow early exit from matching.
+ * With eval(), ROOT and BOUND are captured from closure, not passed as arguments.
+ * This tests whether closure vs arguments affects TurboFan optimization.
  */
-import type { Language } from '../../core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '@src/core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import type { Language } from '../../src/core/index.ts';
+import { collectCharRanges, buildBoundaryTable } from '../../src/utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
 
 export type { ParseFunction };
 
@@ -56,24 +55,29 @@ function generateLookupCode(entries: NotationEntry[], indent: string): string {
 						`s.charCodeAt(i+${idx + 1})===${c}` :
 						`(s.charCodeAt(i+${idx + 1})===${c}||s.charCodeAt(i+${idx + 1})===${upper})`;
 				}).join('&&');
-				code += `${indent}if(c0===${firstChar}&&i+${entry.chars.length}<=len&&${checks}){{const _bci=i+${entry.chars.length},_bc=s.charCodeAt(_bci);if(_bci>=len||_bc>=128||!BOUND[_bc]){i+=${entry.chars.length};v+=pv*${entry.multiplier};mc++;break match}}}\n`;
+				const len = entry.chars.length;
+				code += `${indent}if(c0===${firstChar}&&i+${len}<=len&&${checks}){{const _bci=i+${len},_bc=s.charCodeAt(_bci);if(_bci>=len||_bc>=128||!BOUND[_bc]){i+=${len};v+=pv*${entry.multiplier};mc++;break match}}}
+`;
 			}
 		}
 	}
 	return code;
 }
 
-export function buildFastParse(language: Language): ParseFunction {
-	const notations = extractNotations(language.dict);
+export function buildFastParseV26(language: Language): ParseFunction {
 	const ranges = collectCharRanges(language.dict, true);
-	const boundaryArr = buildBoundaryTable(ranges);
-	const lookupCode = generateLookupCode(notations, '\t\t\t\t\t');
+	// @ts-expect-error — BOUND is captured by the eval() closure below; TS can't see through eval
+
+	const BOUND = buildBoundaryTable(ranges);
+	const entries = extractNotations(language.dict);
+
+	// Generate lookup code for all notations
+	const lookupCode = generateLookupCode(entries, '\t\t\t\t\t');
 
 	const source = `if(typeof str!=='string'||str==='')return null;
 var s=str,len=s.length;
 var si=0;while(si<len&&s.charCodeAt(si)===32)si++;
-var neg=s.charCodeAt(si)===45;
-if(neg){si++;while(si<len&&s.charCodeAt(si)===32)si++;}
+var neg=false;if(s.charCodeAt(si)===45){neg=true;si++;while(si<len&&s.charCodeAt(si)===32)si++;}
 var fc=s.charCodeAt(si);
 if(fc!==45&&(fc-48>>>0)>=10&&fc!==46){var n=+str;return n!==n?null:n;}
 var v=0,mc=0,i=si;
@@ -96,12 +100,14 @@ var sp=0;while(i<len&&s.charCodeAt(i)===32&&sp<3){i++;sp++;}
 if(i<len){var c0=s.charCodeAt(i);
 if(c0===32||(c0-48>>>0)<10||c0===46){while(i<len){var _c=s.charCodeAt(i);if((_c-48>>>0)<10||_c===46)i++;else break;}}
 else{match:{
-${lookupCode}
-}}}}
+${lookupCode}}}}}
 continue}
 i++}
 if(mc===0){var n=+str;return n!==n?null:n;}
 return neg?-v:v;`;
 
-	return craftFunction<ParseFunction>('fastParseV25', [ 'str' ], source, { BOUND: boundaryArr });
+	// Use eval() with BOUND captured from closure
+	// eslint-disable-next-line no-eval
+	const fn = eval(`(function fastParseV26(str) { ${source} })`) as (str: string) => number | null;
+	return fn;
 }

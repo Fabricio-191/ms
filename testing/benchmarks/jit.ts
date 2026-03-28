@@ -8,12 +8,14 @@
  *   npm run bench:jit
  * O directamente:
  *   node --allow-natives-syntax --import tsx/esm testing/benchmarks/jit.ts
+ *
+ * Hipótesis investigada:
+ *   - El wrapper (str) => fn(ROOT, BOUND, str) llega a TurboFan
+ *   - La fn generada directamente se queda en Maglev (código muy grande)
+ *   - craftFunction elimina el wrapper y captura contexto como closure
  */
 
-import { LANGUAGES } from '@src/index.ts';
-import { buildFastParse as buildFastParseV18 } from '@src/parse/variants/v18.ts';
-import { buildFastParse as buildFastParseV23 } from '@src/parse/variants/v23.ts';
-import { buildFastParse as buildFastParseV25 } from '@src/parse/variants/v25.ts';
+import { LANGUAGES, parseVariants } from '@src/index.ts';
 import { createArgs } from '../utils.ts';
 
 // Intrínsecos de V8 — sólo disponibles con --allow-natives-syntax.
@@ -45,39 +47,63 @@ function describeStatus(n: number): string {
 
 // ─── Samples ──────────────────────────────────────────────────────────────────
 
-const WARMUP = 20_000;
+const WARMUP = 100_000;
 const samples = Array.from({ length: WARMUP }, () => createArgs(true, true));
 
-// ─── Funciones generadas a analizar ───────────────────────────────────────────
+// ─── Funciones a analizar ─────────────────────────────────────────────────────
 
-const v18fn = buildFastParseV18(LANGUAGES.en);
-const v23fn = buildFastParseV23(LANGUAGES.en);
-const v25fn = buildFastParseV25(LANGUAGES.en);
+const v18Wrap = parseVariants.v18(LANGUAGES.en);
+const v23Wrap = parseVariants.v23(LANGUAGES.en);
+const v25Wrap = parseVariants.v25(LANGUAGES.en);
+const v29Wrap = parseVariants.v29(LANGUAGES.en);
+const v31Wrap = parseVariants.v31(LANGUAGES.en);
+const v32Wrap = parseVariants.v32(LANGUAGES.en);
 
-const entries = [
+interface Entry {
+	name: string;
+	fn: unknown;
+	warm(this: void): void;
+}
+
+const entries: Entry[] = [
 	{
-		name: 'v18 single-pass',
-		fn: v18fn,
-		warm(this: void): void { for (const s of samples) v18fn(s.input); },
+		name: 'v18 (craftFunction, trie)',
+		fn: v18Wrap,
+		warm(): void { for (const s of samples) v18Wrap(s.input); },
 	},
 	{
-		name: 'v23 turbofan-opt',
-		fn: v23fn,
-		warm(this: void): void { for (const s of samples) v23fn(s.input); },
+		name: 'v23 (craftFunction, trie)',
+		fn: v23Wrap,
+		warm(): void { for (const s of samples) v23Wrap(s.input); },
 	},
 	{
-		name: 'v25 flat-lookup',
-		fn: v25fn,
-		warm(this: void): void { for (const s of samples) v25fn(s.input); },
+		name: 'v25 (craftFunction, lookup)',
+		fn: v25Wrap,
+		warm(): void { for (const s of samples) v25Wrap(s.input); },
+	},
+	{
+		name: 'v29 (craftFunction, compressed DFA)',
+		fn: v29Wrap,
+		warm(): void { for (const s of samples) v29Wrap(s.input); },
+	},
+	{
+		name: 'v31 (eval closure, compressed)',
+		fn: v31Wrap,
+		warm(): void { for (const s of samples) v31Wrap(s.input); },
+	},
+	{
+		name: 'v32 (craftFunction, trie)',
+		fn: v32Wrap,
+		warm(): void { for (const s of samples) v32Wrap(s.input); },
 	},
 ];
 
 // ─── Run ──────────────────────────────────────────────────────────────────────
 
 console.log('\n=== V8 JIT Optimization Status ===');
-console.log(`Node.js ${process.version}  |  Warmup: ${WARMUP.toLocaleString()} calls por función\n`);
-console.log(`${'  Función'.padEnd(26)} ${'Estado'.padEnd(30)} Raw`);
-console.log('─'.repeat(62));
+console.log(`Node.js ${process.version}  |  Warmup: ${WARMUP.toLocaleString()} calls per function\n`);
+console.log(`${'  Function'.padEnd(42)} ${'Status'.padEnd(35)} Raw`);
+console.log('─'.repeat(90));
 
 for (const { name, fn, warm } of entries) {
 	warm();
@@ -85,5 +111,5 @@ for (const { name, fn, warm } of entries) {
 	let icon = '~';
 	if (status & STATUS.kOptimized) icon = '✓';
 	else if (status & STATUS.kNeverOptimize) icon = '✗';
-	console.log(`${icon} ${name.padEnd(24)} ${describeStatus(status).padEnd(30)} ${status}`);
+	console.log(`${icon} ${name.padEnd(40)} ${describeStatus(status).padEnd(35)} ${status}`);
 }

@@ -41,7 +41,7 @@ Comparison of all parse/format methods available in `@fabricio-191/ms` vs `verce
 
 ## Parse Implementation History
 
-Active bench: v5 onwards (v0–v4 archived). All ops/sec are approximate (1s runs, p50).
+Active bench: v5 onwards (v1–v4 archived). All ops/sec are approximate (1s runs, p50).
 
 | Version | Strategy | Single-unit | Multi-unit | Invalid | vs v9 (single) |
 |---|---|---:|---:|---:|---:|
@@ -76,11 +76,10 @@ Active bench: v5 onwards (v0–v4 archived). All ops/sec are approximate (1s run
 
 | Version | Strategy | Benchmark | Why discarded |
 |---|---|---:|---|
-| v0 | Trie + `.toLowerCase()` | ~879 ops/sec | O(n) string allocation per call |
 | v1 | Pre-built regex + switch | ~359 ops/sec | Slowest — regex engine overhead even when pre-compiled |
 | v2 | Char-by-char + `/\p{L}/u.test()` | ~477 ops/sec | Unicode property test per char is slow |
 | v3 | Inline charCode ranges + `slice`+switch | ~767 ops/sec | `slice` allocation per match |
-| v4 | Length-based dispatch | ~835 ops/sec | Extra outer switch negates savings; worse than v0 |
+| v4 | Length-based dispatch | ~835 ops/sec | Extra outer switch negates savings |
 
 ---
 

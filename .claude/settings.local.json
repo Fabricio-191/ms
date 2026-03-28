@@ -2,17 +2,21 @@
   "permissions": {
     "allow": [
       "mcp__plugin_engram_engram__mem_search",
-      "Bash(tsx --eval \":*)",
       "mcp__plugin_engram_engram__mem_session_summary",
       "mcp__plugin_engram_engram__mem_context",
-      "Bash(node:*)",
       "mcp__plugin_engram_engram__mem_save",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(node --import tsx/esm --eval \":*)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:chromium.googlesource.com)",
-      "Bash(sed -i \"s|''../benchmarks/utils.ts''|''../utils.ts''|g\" testing/tests/all.test.ts testing/tests/en.test.ts testing/tests/es.test.ts testing/tests/ja.test.ts testing/tests/misc.test.ts)",
-      "Bash(sed -i \"s|from ''./utils.ts''|from ''../utils.ts''|g\" testing/benchmarks/bench.ts)"
+      "Bash(node:*)",
+      "Bash(node --import tsx/esm --eval \":*)",
+      "Bash(tsx --eval \":*)",
+      "Bash(sed:*)",
+      "Bash(npx jest:*)",
+      "Bash(grep:*)",
+      "Bash(python3:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)"
     ]
   }
 }

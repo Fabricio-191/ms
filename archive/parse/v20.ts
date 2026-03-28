@@ -8,8 +8,8 @@
  *    this replaces 1-4 multiply-add operations with a single table lookup.
  *    The index is computed from character codes directly without string slicing.
  */
-import type { Language } from '../../core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../utils/trie.ts';
+import type { Language } from '../../src/core/index.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../src/utils/trie.ts';
 import type { ParseFunction } from '@src/core/types.ts';
 
 // #region INT_TABLE: 10000-entry lookup for integers 0-9999

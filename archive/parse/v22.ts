@@ -1,16 +1,23 @@
 /**
- * Parse v19 — v18 + opt 9: unrolled 1–2 extra digit fast path.
+ * Parse v22 — v19+branchless digit lookup table.
  *
- * All nine optimizations combined:
- * 1–8. Same as v18.
- * 9. Digit unroll — the first two extra digits after the leading digit are checked inline
- *    without entering a loop. Avoids loop-setup overhead for the majority of inputs where
- *    numbers are 1–3 digits (e.g. "2h", "30m", "500ms"). The general while loop only runs
- *    for 4+ digit numbers.
+ * All optimizations from v19, plus:
+ * 10. DIGIT_TABLE — Int8Array[256] maps ASCII codes to digit values (-1 for non-digits).
+ *    Replaces arithmetic `(cc -48) >>> 0) < 10` with single table lookup.
+ *    - Eliminates subtraction and unsigned coercion per-character
+ *    - Table lookup is branchless (single memory access)
+ *    - Likely L1 cache resident for hot paths
+ *    - Direct comparison `d >=0` is CPU-predictable for typical digit streams
  */
-import type { Language } from '../../core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../utils/trie.ts';
+import type { Language } from '../../src/core/index.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../src/utils/trie.ts';
 import type { ParseFunction } from '@src/core/types.ts';
+
+// ─── opt 10: branchless digit lookup table ───────────────────────────────────────
+
+const DIGIT: Int8Array = new Int8Array(256);
+DIGIT.fill(-1);
+for (let i = 48; i <= 57; i++) DIGIT[i] = i - 48;
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────
 
@@ -128,10 +135,10 @@ export function buildFastParse(language: Language): ParseFunction {
 			while (_si < len && s.charCodeAt(_si) === 32) _si++;
 		}
 
-		// opt 5: early exit
+		// opt 5 + 10: early exit using DIGIT table
 		{
 			const _fc = s.charCodeAt(_si);
-			if (_fc !== 45 && ((_fc - 48) >>> 0) >= 10 && _fc !== 46) {
+			if (_fc !== 45 && DIGIT[_fc] < 0 && _fc !== 46) {
 				const num = Number(str);
 				return Number.isNaN(num) ? null : num;
 			}
@@ -144,24 +151,24 @@ export function buildFastParse(language: Language): ParseFunction {
 		while (i < len) {
 			const cc = s.charCodeAt(i);
 
-			if (((cc - 48) >>> 0) < 10 || cc === 46) {
-				// opt 8 + 9: single-pass + unrolled first two extra digits
+			if (DIGIT[cc] >= 0 || cc === 46) {
+				// opt 8 + 9 + 10: single-pass + unrolled first two extra digits + DIGIT table
 				let parsedValue = 0;
-				let _d;
+				let d;
 				if (cc !== 46) {
 					// integer-first path: unroll 2 digits, then fall into general loop for 3+
-					parsedValue = cc - 48;
+					parsedValue = DIGIT[cc];
 					i++;
-					if (i < len && (_d = (s.charCodeAt(i) - 48) >>> 0) < 10) {
-						parsedValue = parsedValue * 10 + _d;
+					if (i < len && (d = DIGIT[s.charCodeAt(i)]) >= 0) {
+						parsedValue = parsedValue * 10 + d;
 						i++;
-						if (i < len && (_d = (s.charCodeAt(i) - 48) >>> 0) < 10) {
-							parsedValue = parsedValue * 10 + _d;
+						if (i < len && (d = DIGIT[s.charCodeAt(i)]) >= 0) {
+							parsedValue = parsedValue * 10 + d;
 							i++;
 							// general loop for 3+ additional digits
-							let _c;
-							while (i < len && (_c = s.charCodeAt(i), (_d = (_c - 48) >>> 0) < 10)) {
-								parsedValue = parsedValue * 10 + _d;
+							let c;
+							while (i < len && (c = s.charCodeAt(i), (d = DIGIT[c]) >= 0)) {
+								parsedValue = parsedValue * 10 + d;
 								i++;
 							}
 						}
@@ -169,9 +176,9 @@ export function buildFastParse(language: Language): ParseFunction {
 					// optional trailing dot + fractional part
 					if (i < len && s.charCodeAt(i) === 46) {
 						i++;
-						let frac = 0, divisor = 1, _c;
-						while (i < len && (_c = s.charCodeAt(i), (_d = (_c - 48) >>> 0) < 10)) {
-							frac = frac * 10 + _d;
+						let frac = 0, divisor = 1, c;
+						while (i < len && (c = s.charCodeAt(i), (d = DIGIT[c]) >= 0)) {
+							frac = frac * 10 + d;
 							divisor *= 10;
 							i++;
 						}
@@ -180,9 +187,9 @@ export function buildFastParse(language: Language): ParseFunction {
 				} else {
 					// dot-first path (".5h", ".h")
 					i++;
-					let frac = 0, divisor = 1, _c;
-					while (i < len && (_c = s.charCodeAt(i), (_d = (_c - 48) >>> 0) < 10)) {
-						frac = frac * 10 + _d;
+					let frac = 0, divisor = 1, c;
+					while (i < len && (c = s.charCodeAt(i), (d = DIGIT[c]) >= 0)) {
+						frac = frac * 10 + d;
 						divisor *= 10;
 						i++;
 					}
@@ -195,21 +202,21 @@ export function buildFastParse(language: Language): ParseFunction {
 
 					notationBlock: if (i < len) {
 						const _c0 = s.charCodeAt(i);
-						if (_c0 === 32 || ((_c0 - 48) >>> 0) < 10 || _c0 === 46) {
+						if (_c0 === 32 || DIGIT[_c0] >= 0 || _c0 === 46) {
 							while (i < len) {
 								const c = s.charCodeAt(i);
-								if (((c - 48) >>> 0) < 10 || c === 46) { i++; }
+								if (DIGIT[c] >= 0 || c === 46) { i++; }
 								else { break; }
 							}
 							break notationBlock;
 						}
 ${rootCode}					}
-		}
-			continue;
-		}
+				}
+				continue;
+			}
 
-		i++;
-	}
+			i++;
+		}
 
 		if (matchCount === 0) {
 			const num = Number(str);
@@ -220,6 +227,6 @@ ${rootCode}					}
 		return isNeg ? -value : value;
 	`;
 
-	const fn = Function('ROOT', 'BOUND', 'str', source) as (ROOT: Uint8Array, BOUND: Uint8Array, str: string) => number | null;
-	return fn.bind(null, rootArr, boundaryArr) as ParseFunction;
+	const fn = Function('ROOT', 'BOUND', 'DIGIT', 'str', source) as (ROOT: Uint8Array, BOUND: Uint8Array, DIGIT: Int8Array, str: string) => number | null;
+	return fn.bind(null, rootArr, boundaryArr, DIGIT) as ParseFunction;
 }

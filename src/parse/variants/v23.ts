@@ -10,6 +10,7 @@
 import type { Language } from '../../core/index.ts';
 import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../utils/trie.ts';
 import type { ParseFunction } from '@src/core/types.ts';
+import { craftFunction } from '../../utils/craft.ts';
 
 export type { ParseFunction };
 
@@ -32,7 +33,7 @@ function generateCode(node: TrieNode, indent: string): string {
 	let code = '';
 
 	if (node.multiplier !== null)
-		code += `${indent}{const c=s.charCodeAt(i);if(i>=len||c>=128||!BOUND[c]){v+=pv*${node.multiplier};mc++;return neg?-v:v}}\n`;
+		code += `${indent}{const c=s.charCodeAt(i);if(i>=len||c>=128||!BOUND[c]){v+=pv*${node.multiplier};mc++;break notationBlock}}\n`;
 
 	if (node.children.size === 0) return code;
 
@@ -43,18 +44,21 @@ function generateCode(node: TrieNode, indent: string): string {
 		for (let k = 0; k < chain.length; k++) {
 			const [ lo, hi ] = chain[k]!;
 			if (lo === hi)
-				code += `${indent}if(s.charCodeAt(i+${k})!==${lo})return v;\n`;
+				code += `${indent}if(s.charCodeAt(i+${k})!==${lo})break notationBlock;\n`;
 			else
-				code += `${indent}{const _c=s.charCodeAt(i+${k});if(_c!==${lo}&&_c!==${hi})return v;}\n`;
+				code += `${indent}{const _c=s.charCodeAt(i+${k});if(_c!==${lo}&&_c!==${hi})break notationBlock;}\n`;
 		}
 		code += `${indent}i+=${chain.length};\n`;
 		code += generateCode(leaf, indent);
 	}
 	else {
+		let first = true;
 		for (const [ cc, child ] of node.children) {
 			const char = String.fromCharCode(cc);
 			const upperCc = char.toUpperCase().charCodeAt(0);
-			code += `${indent}if(s.charCodeAt(i)===${cc}||s.charCodeAt(i)===${upperCc}){i++;\n`;
+			const kw = first ? 'if' : 'else if';
+			first = false;
+			code += `${indent}${kw}(s.charCodeAt(i)===${cc}||s.charCodeAt(i)===${upperCc}){i++;\n`;
 			code += generateCode(child, `${indent}\t`);
 			code += `${indent}}\n`;
 		}
@@ -88,11 +92,7 @@ function generateRootCode(
 	return code;
 }
 
-function buildCore(language: Language): {
-	fn(this: void, ROOT: Uint8Array, BOUND: Uint8Array, str: string): number | null;
-	rootArr: Uint8Array;
-	boundaryArr: Uint8Array;
-} {
+export function buildFastParse(language: Language): ParseFunction {
 	const trie = buildTrie(language.dict);
 	const ranges = collectCharRanges(language.dict, true);
 	const { arr: rootArr, branches, nonAscii } = buildRootDispatch(trie);
@@ -123,7 +123,7 @@ while(i<len){var _c=s.charCodeAt(i);var d=_c-48>>>0;if(d>=10)break;fr=fr*10+d;di
 pv=div===1?NaN:fr/div;}
 if(pv===pv){
 var sp=0;while(i<len&&s.charCodeAt(i)===32&&sp<3){i++;sp++;}
-if(i<len){var c0=s.charCodeAt(i);
+notationBlock:if(i<len){var c0=s.charCodeAt(i);
 if(c0===32||(c0-48>>>0)<10||c0===46){while(i<len){var _c=s.charCodeAt(i);if((_c-48>>>0)<10||_c===46)i++;else break;}}
 else{var r=c0<128?ROOT[c0]:0;
 ${rootCode}}}}
@@ -132,11 +132,5 @@ i++}
 if(mc===0){var n=+str;return n!==n?null:n;}
 return neg?-v:v;`;
 
-	const fn = Function('ROOT', 'BOUND', 'str', source) as (ROOT: Uint8Array, BOUND: Uint8Array, str: string) => number | null;
-	return { fn, rootArr, boundaryArr };
-}
-
-export function buildFastParse(language: Language): ParseFunction {
-	const { fn, rootArr, boundaryArr } = buildCore(language);
-	return ((str: string) => fn(rootArr, boundaryArr, str)) as ParseFunction;
+	return craftFunction<ParseFunction>('fastParseV23', [ 'str' ], source, { ROOT: rootArr, BOUND: boundaryArr });
 }

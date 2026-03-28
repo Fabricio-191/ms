@@ -17,6 +17,7 @@
 import type { Language } from '../../core/index.ts';
 import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../utils/trie.ts';
 import type { ParseFunction, ParseWithCountFunction } from '@src/core/types.ts';
+import { craftFunction } from '../../utils/craft.ts';
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────
 
@@ -112,11 +113,9 @@ function generateRootCode(
 
 // ─── builder ──────────────────────────────────────────────────────────────────
 
-function buildCore(language: Language, withMatchCount: boolean): {
-	fn(this: void, ROOT: Uint8Array, BOUND: Uint8Array, str: string): number | null | [number | null, number];
-	rootArr: Uint8Array;
-	boundaryArr: Uint8Array;
-} {
+export function buildFastParse(language: Language, withMatchCount: true): ParseWithCountFunction;
+export function buildFastParse(language: Language, withMatchCount?: false): ParseFunction;
+export function buildFastParse(language: Language, withMatchCount = false): ParseFunction | ParseWithCountFunction {
 	const trie = buildTrie(language.dict);
 	const ranges = collectCharRanges(language.dict, true);
 	const { arr: rootArr, branches, nonAscii } = buildRootDispatch(trie);
@@ -228,13 +227,5 @@ ${rootCode}					}
 		return ${retFinal};
 	`;
 
-	const fn = Function('ROOT', 'BOUND', 'str', source) as (ROOT: Uint8Array, BOUND: Uint8Array, str: string) => number | null | [number | null, number];
-	return { fn, rootArr, boundaryArr };
-}
-
-export function buildFastParse(language: Language, withMatchCount: true): ParseWithCountFunction;
-export function buildFastParse(language: Language, withMatchCount?: false): ParseFunction;
-export function buildFastParse(language: Language, withMatchCount = false): ParseFunction | ParseWithCountFunction {
-	const { fn, rootArr, boundaryArr } = buildCore(language, withMatchCount);
-	return ((str: string) => fn(rootArr, boundaryArr, str)) as ParseFunction | ParseWithCountFunction;
+	return craftFunction<ParseFunction | ParseWithCountFunction>('fastParseV18', [ 'str' ], source, { ROOT: rootArr, BOUND: boundaryArr });
 }

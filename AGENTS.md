@@ -134,38 +134,46 @@ if (typeof options !== 'object' || Array.isArray(options))
 
 - Test files: `tests/*.test.ts`, import from `../lib/esm/index.js`
 - Use `describe`/`it` blocks from `@jest/globals`
-- Helper utilities in `benchmarks/utils.ts` (exported: `check`, `benchParse`, `generateParseSample`, `fastest`, `printResults`, `HEADER`)
+- Helper utilities in `testing/benchmarks/utils.ts` (exported: `createArgs`, `check`, bench helpers)
 - Use `check()` helper for approximate numeric equality
 - Include edge cases: empty strings, negative numbers, whitespace, uppercase, plural forms, overflow
+- All variants tested across all languages in `tests/all.test.ts`
+- ASCII-only variants (v10, v11, v14-v17) skipped for Japanese tests (cannot parse non-ASCII)
 
 ## Project Structure
 
 ```
 src/
-  index.ts              # Public API exports
+  index.ts              # Public API exports: parse, format, buildFastParse (v25), buildFastFormat
   core/
     index.ts            # Language class, TIMES constants, Notations
     languages.ts        # Built-in Language definitions (en, es, ja)
+    types.ts            # Type definitions
   parse/
     normal.ts           # Standard parse() — regex-based, multi-language
-    fast.ts             # buildFastParse() — current best (v17: all 7 opts)
-    _trie.ts            # Shared trie infrastructure (buildTrie, collectCharRanges, buildBoundaryTable)
+    fast.ts             # buildFastParseMulti() — multi-language fast parse
+    variants/
+      single/           # Active variants (v0-v9, v12-v13, v18-v25)
+        v18.ts          # Single-pass scan (buildCore exported for JIT testing)
+        v25.ts          # Flat-lookup variant (default buildFastParse)
+      multi/            # Multi-language variants
   format/
     normal.ts           # Standard format() — multi-unit output
-  old/                  # Legacy implementations kept for benchmarking
-    parse/
-      v0.ts – v17.ts    # Parse variants (see docs/comparison.md for descriptions)
-    format/
-      v1.ts, v2.ts      # Format variants
-    index.ts            # Re-exports all old variants
+    variants/           # Format variants (v1, v2)
+  utils/
+    _trie.ts            # Trie infrastructure (buildTrie, collectCharRanges, buildBoundaryTable)
+archive/                # ASCII-only variants (cannot parse Japanese/Chinese)
+  v10.ts, v11.ts, v14-v17.ts  # Use bitwise | 0x20 or Uint8Array(128)
+testing/
+  benchmarks/
+    jit.ts              # V8 JIT optimization status checker
+    utils.ts             # createArgs(), check() utilities
 tests/
   en.test.ts            # English parse/format + all buildFastParse/buildFastFormat consistency tests
   es.test.ts            # Spanish parse consistency tests
   ja.test.ts            # Japanese parse consistency tests
   format.test.ts        # format() unit tests
-benchmarks/
-  index.ts              # tinybench suite: parse valid/invalid/multi-unit across all variants
-  utils.ts              # check(), benchParse(), generateParseSample(), printResults(), fastest()
+  all.test.ts           # All variants across all languages (ASCII-only skipped for Japanese)
 lib/                    # Build output (gitignored)
 ```
 
@@ -178,3 +186,59 @@ lib/                    # Build output (gitignored)
 - Do not use magic numbers; extract to named constants
 - Do not use `for...in` loops on arrays (use `for...of` or indexed loops)
 - Do not import from `src/` in test files—use `lib/esm/`
+
+## JIT Optimization Notes
+
+### V8 Optimization Status
+
+All generated parse functions use `new Function()` to create code at runtime. V8's optimizer handles these as follows:
+
+| Component | JIT Status | Notes |
+|-----------|------------|-------|
+| Wrapper `(str) => fn(arr, arr, str)` | TurboFan ✓ | Trivial function, fully optimized |
+| Generated function `fn(arr, arr, str)` | Maglev only ✗ | Complex control flow (~150+ nesting levels) |
+
+### Key Findings
+
+- **Creation method doesn't matter**: `new Function()` vs `eval()` produces same results
+- **Closure vs parameters doesn't matter**: Both approaches stay at Maglev
+- **Code complexity is the bottleneck**: V8 TurboFan rejects functions with complex CFG
+
+### Benchmark Commands
+
+```bash
+npm run bench              # Performance benchmarks (all variants)
+node --allow-natives-syntax --import tsx/esm testing/benchmarks/jit.ts  # JIT status check
+```
+
+### Testing JIT Status
+
+```bash
+node --allow-natives-syntax --import tsx/esm testing/benchmarks/jit.ts
+```
+
+Uses `%GetOptimizationStatus(fn)` to check if functions reach TurboFan or stay at Maglev.
+
+### Variant Exports
+
+Active variants export `buildCore` for JIT testing:
+```typescript
+import { buildCore } from './parse/variants/v18.ts';
+// Returns { fn, rootArr, boundaryArr } for direct function access
+```
+
+## Import Pattern
+
+Direct imports from variant files (no barrel exports):
+
+```typescript
+// Main API from index
+import { parse, format, buildFastParse } from '@src/index.ts';
+
+// Specific variants (direct import)
+import { buildFastParseV25 } from '@src/parse/variants/v25.ts';
+import { buildCore } from '@src/parse/variants/v18.ts';
+
+// Archive variants (ASCII-only, cannot parse Japanese)
+import { buildFastParseV10 } from '../../archive/v10.ts';
+```
