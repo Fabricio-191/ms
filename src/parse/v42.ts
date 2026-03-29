@@ -23,13 +23,13 @@
  *   - Per-char two-constant comparisons.
  *   - 3-condition boundary check.
  */
-import type { Language } from '../../core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '../../core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
-import { extractNotations, generateLookupCode } from '../../utils/notation.ts';
+import { Language } from '../core/index.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
+import type { ParseFunction } from '../core/types.ts';
+import { craftFunction } from '../utils/craft.ts';
+import { extractNotations, generateLookupCode } from '../utils/notation.ts';
 
-export function buildFastParse(language: Language): ParseFunction {
+function buildSingleParse(language: Language): ParseFunction {
 	const ranges = collectCharRanges(language.dict, true);
 	const BOUND = buildBoundaryTable(ranges);
 	const entries = extractNotations(language.dict);
@@ -151,4 +151,21 @@ ${lookupCode}
 	`;
 
 	return craftFunction<ParseFunction>('fastParseV42', [ 'str' ], body, { BOUND });
+}
+
+export function buildParse(languages: Language | Language[]): ParseFunction {
+	if (languages instanceof Language) return buildSingleParse(languages);
+	if (!Array.isArray(languages) || languages.length === 0 || languages.some(l => !(l instanceof Language)))
+		throw new Error('`languages` must be a Language or a non-empty Language[]');
+	if (languages.length === 1) return buildSingleParse(languages[0]!);
+	const parsers = languages.map(lang => buildSingleParse(lang));
+	return (str: string): number | null => {
+		if (typeof str !== 'string' || str === '') return null;
+		for (const parser of parsers) {
+			const result = parser(str);
+			if (result !== null) return result;
+		}
+		const n = Number(str);
+		return Number.isNaN(n) ? null : n;
+	};
 }

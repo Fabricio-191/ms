@@ -1,6 +1,6 @@
 import { strictEqual, ok } from 'node:assert';
-import { TIMES, LANGUAGES, parse, type Language } from '@src/index.ts';
-import type { ValidFormat } from '@src/format/normal.ts';
+import { TIMES, LANGUAGES, buildParse, type Language } from '@src/index.ts';
+import type { ValidFormat } from '@src/format/v16.ts';
 
 // #region helpers
 
@@ -110,6 +110,8 @@ export function createArgs(valid: boolean, forVercel = false, lang?: Language): 
 	};
 }
 
+const parseEn = buildParse(LANGUAGES.en);
+
 export const INVALID_INPUTS = [
 	'',
 	'   ',
@@ -128,90 +130,6 @@ export const INVALID_INPUTS = [
 	'null',
 	'undefined',
 	`1${'0'.repeat(20)}`,
-].map(input => ({ input, expected: parse(input, LANGUAGES.en), options: { language: LANGUAGES.en, long: false, format: 'S' as const, length: 1 } }));
+].map(input => ({ input, expected: parseEn(input), options: { language: LANGUAGES.en, long: false, format: 'S' as const, length: 1 } }));
 
 // #endregion
-
-/*
-
-export function generateParseSample(multi = false, language?: Language): ParseSample {
-	if (!multi) {
-		// Single-unit: random language, random unit, varied number formats
-		const lang = language ?? randomFrom(Object.values(LANGUAGES));
-		const unit = randomFrom(UNIT_KEYS);
-		const notation = randomFrom(lang.units[unit].all);
-
-		// Build number string: integer, decimal, or leading-dot
-		const { numStr, numVal } = randomNumPart();
-
-		// 0–3 spaces between number and unit
-		const spaces = ' '.repeat(randomInt(0, 3));
-
-		// occasionally negative
-		const negative = chance(0.15);
-		const negPrefix = chance(0.5) ? '- ' : '-';
-		const prefix = negative ? negPrefix : '';
-		const input = `${prefix}${numStr}${spaces}${notation}`;
-		const expected = TIMES[unit] * numVal * (negative ? -1 : 1);
-
-		return { input, expected, language: lang };
-	}
-
-	// Multi-unit: integers only, 2–8 units sorted largest to smallest
-	const lang = language ?? LANGUAGES.en;
-	const count = randomInt(2, 8);
-	const selectedUnits = [ ...UNIT_KEYS ]
-		.sort(() => Math.random() - 0.5)
-		.slice(0, count)
-		.sort((a, b) => TIMES[b] - TIMES[a]);
-
-	let expected = 0;
-	const parts: string[] = [];
-
-	for (const unit of selectedUnits) {
-		const notation = randomFrom(lang.units[unit].all);
-		const num = randomInt(1, 59);
-		const spaces = ' '.repeat(randomInt(0, 1));
-		parts.push(`${num}${spaces}${notation}`);
-		expected += TIMES[unit] * num;
-	}
-
-	const negative = chance(0.2);
-	const negPrefix = chance(0.5) ? '- ' : '-';
-	const prefix = negative ? negPrefix : '';
-
-	return {
-		input: `${prefix}${parts.join(' ')}`,
-		expected: negative ? -expected : expected,
-		language: lang,
-	};
-}
-
-export function generateParseSampleForVercel(): ParseSample {
-	const { num, options } = createArgs(true, true);
-	const input = format(num, options) ?? '';
-	return { input, expected: num, language: LANGUAGES.en };
-}
-
-export function generateFormatSample(): FormatSample {
-	const formatStr = randomFrom(VALID_FORMATS);
-	const formatUnits = (formatStr.match(FORMATS_REGEX) ?? []) as Unit[];
-
-	const language = randomFrom(Object.values(LANGUAGES));
-	const long = chance(0.5);
-	// length cannot exceed number of units available in the format
-	const maxLen = Math.min(formatUnits.length, 8);
-	const length = randomInt(1, maxLen);
-
-	// Build ms from exactly `length` units so parse(format(ms)) === ms
-	let ms = 0;
-	for (let i = 0; i < length; i++) {
-		const unit = formatUnits[i]!;
-		ms += randomInt(1, MAXS[unit]) * TIMES[unit];
-	}
-
-	const string = format(ms, { language, long, format: formatStr, length }) ?? '';
-
-	return { ms, string, language, long, length, format: formatStr };
-}
-*/

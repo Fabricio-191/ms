@@ -1,18 +1,17 @@
 import { Bench, type Task, type TaskResultCompleted } from 'tinybench';
 import vercelMs from 'ms';
 
-import { LANGUAGES, format, parse, parseVariants as buildVariants } from '@src/index.ts';
+import { LANGUAGES, buildParse } from '@src/index.ts';
 import { createArgs, type FormatArgs } from '../utils.ts';
 import { createRequire } from 'module';
 
 type CompletedTask = Task & { result: TaskResultCompleted };
 
+const parseEn = buildParse(LANGUAGES.en);
+
 const parseVariants: Record<string, (s: string) => number | null> = {
 	'vercel/ms': (s: string): number | null => vercelMs(s),
-	normal: (s: string): number | null => parse(s, LANGUAGES.en),
-	...Object.fromEntries(
-		Object.entries(buildVariants).map(([ k, build ]) => [ k, build(LANGUAGES.en) ]),
-	),
+	v42: parseEn,
 };
 
 const concurrency = 'bench'; // null | 'task' | 'bench';
@@ -20,7 +19,7 @@ const N = 10000;
 const INVALID_SAMPLES = Array.from({ length: N }, () => createArgs(false, true));
 const PARSE_SAMPLES_VERCEL = Array.from({ length: N }, (): FormatArgs => {
 	const args = createArgs(true, true);
-	const input = format(args.expected, args.options) ?? '';
+	const input = vercelMs(args.expected) ?? '';
 	const expected = vercelMs(input);
 	return { ...args, input, expected };
 });
@@ -54,10 +53,6 @@ for (const [ name, fn ] of Object.entries(parseVariants)) {
 			fn(s.input);
 	});
 }
-
-// ─── Parse multi-unit ─────────────────────────────────────────────────────────
-
-// ─── Multi-language overhead ──────────────────────────────────────────────────
 
 // ─── Run ──────────────────────────────────────────────────────────────────────
 

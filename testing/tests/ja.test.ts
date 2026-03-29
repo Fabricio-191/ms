@@ -1,10 +1,11 @@
 import { describe, it } from '@jest/globals';
 import { ok, strictEqual } from 'node:assert';
-import { LANGUAGES, TIMES, parse, format, parseVariants, buildFastParse, buildFastFormat } from '@lib';
+import { LANGUAGES, TIMES, buildParse, buildFormat } from '@lib';
 import { check } from '../utils.ts';
 
 const { Y, Mo, W, D, H, M, S, Ms } = TIMES;
 const ja = LANGUAGES.ja;
+const parseJa = buildParse(ja);
 
 // ─── Variant runner ───────────────────────────────────────────────────────────
 
@@ -13,19 +14,15 @@ interface Case {
 	expected: number | null;
 }
 
-function runVariants(cases: Case[]): void {
-	for (const [ name, build ] of Object.entries(parseVariants)) {
-		const fn = build(ja);
-		describe(name, () => {
-			for (const { input, expected } of cases) {
-				it(`"${input}" → ${expected ?? 'null'}`, () => {
-					const actual = fn(input);
-					if (typeof expected === 'number' && typeof actual === 'number')
-						ok(actual === expected || Math.abs(expected - actual) < 1, `Expected ~${expected}, got ${actual}`);
-					else
-						strictEqual(actual, expected);
-				});
-			}
+function runCases(cases: Case[]): void {
+	const fn = parseJa;
+	for (const { input, expected } of cases) {
+		it(`"${input}" → ${expected ?? 'null'}`, () => {
+			const actual = fn(input);
+			if (typeof expected === 'number' && typeof actual === 'number')
+				ok(actual === expected || Math.abs(expected - actual) < 1, `Expected ~${expected}, got ${actual}`);
+			else
+				strictEqual(actual, expected);
 		});
 	}
 }
@@ -34,23 +31,23 @@ function runVariants(cases: Case[]): void {
 
 describe('parse (日本語)', () => {
 	it('unit notations', () => {
-		check(parse('2時間', ja), 7200000);
-		check(parse('30分', ja), 1800000);
-		check(parse('1日', ja), 86400000);
-		check(parse('45秒', ja), 45000);
-		check(parse('500ミリ秒', ja), 500);
-		check(parse('1週間', ja), 604800000);
+		check(parseJa('2時間'), 7200000);
+		check(parseJa('30分'), 1800000);
+		check(parseJa('1日'), 86400000);
+		check(parseJa('45秒'), 45000);
+		check(parseJa('500ミリ秒'), 500);
+		check(parseJa('1週間'), 604800000);
 	});
 
 	it('multi-unit', () => {
-		check(parse('2時間30分', ja), 9000000);
-		check(parse('1日8時間', ja), 86400000 + 28800000);
-		check(parse('2分15秒', ja), 135000);
+		check(parseJa('2時間30分'), 9000000);
+		check(parseJa('1日8時間'), 86400000 + 28800000);
+		check(parseJa('2分15秒'), 135000);
 	});
 
 	it('english notations → null', () => {
-		check(parse('1 hour', ja), null);
-		check(parse('1h', ja), null);
+		check(parseJa('1 hour'), null);
+		check(parseJa('1h'), null);
 	});
 });
 
@@ -58,64 +55,63 @@ describe('parse (日本語)', () => {
 
 describe('日本語 — 月 vs 月間 vs ヶ月 (全部 → 同じ月の値)', () => {
 	it('月, 月間, ヶ月 → 2592000000ms', () => {
-		check(parse('1月', ja), Mo);
-		check(parse('1月間', ja), Mo);
-		check(parse('1ヶ月', ja), Mo);
-		check(parse('2月', ja), Mo * 2);
-		check(parse('2ヶ月', ja), Mo * 2);
+		check(parseJa('1月'), Mo);
+		check(parseJa('1月間'), Mo);
+		check(parseJa('1ヶ月'), Mo);
+		check(parseJa('2月'), Mo * 2);
+		check(parseJa('2ヶ月'), Mo * 2);
 	});
 });
 
 describe('日本語 — 時 vs 時間 (全部 → 同じ時間の値)', () => {
 	it('時, 時間 → 3600000ms', () => {
-		check(parse('1時', ja), 3600000);
-		check(parse('1時間', ja), 3600000);
-		check(parse('2時間', ja), 7200000);
+		check(parseJa('1時'), 3600000);
+		check(parseJa('1時間'), 3600000);
+		check(parseJa('2時間'), 7200000);
 	});
 
 	it('時/時間 + 数字 → 数字はASCIIなので境界チェックを通過', () => {
-		// Japanese BOUND table has no ASCII chars → any digit after a unit is a valid boundary
-		check(parse('1時30分', ja), 3600000 + 1800000);
-		check(parse('1時間30分', ja), 3600000 + 1800000);
+		check(parseJa('1時30分'), 3600000 + 1800000);
+		check(parseJa('1時間30分'), 3600000 + 1800000);
 	});
 });
 
 describe('日本語 — 週 vs 週間 (全部 → 同じ週の値)', () => {
 	it('週, 週間 → 604800000ms', () => {
-		check(parse('1週', ja), 604800000);
-		check(parse('1週間', ja), 604800000);
-		check(parse('2週間', ja), 604800000 * 2);
+		check(parseJa('1週'), 604800000);
+		check(parseJa('1週間'), 604800000);
+		check(parseJa('2週間'), 604800000 * 2);
 	});
 });
 
 describe('日本語 — 日 vs 日々 (全部 → 同じ日の値)', () => {
 	it('日, 日々 → 86400000ms', () => {
-		check(parse('1日', ja), 86400000);
-		check(parse('1日々', ja), 86400000);
+		check(parseJa('1日'), 86400000);
+		check(parseJa('1日々'), 86400000);
 	});
 });
 
 describe('日本語 — 複合ユニット', () => {
 	it('複数のユニットを組み合わせ', () => {
-		check(parse('1月2日', ja), Mo + 2 * 86400000);
-		check(parse('1週間2日', ja), 604800000 + 2 * 86400000);
-		check(parse('1時間30分', ja), 5400000);
-		check(parse('1時30分30秒', ja), 3600000 + 1800000 + 30000);
-		check(parse('1日10時間', ja), 86400000 + 36000000);
+		check(parseJa('1月2日'), Mo + 2 * 86400000);
+		check(parseJa('1週間2日'), 604800000 + 2 * 86400000);
+		check(parseJa('1時間30分'), 5400000);
+		check(parseJa('1時30分30秒'), 3600000 + 1800000 + 30000);
+		check(parseJa('1日10時間'), 86400000 + 36000000);
 	});
 
 	it('かな読み (とし, じかん, ぶん, びょう)', () => {
-		check(parse('1とし', ja), 31557600000);
-		check(parse('1じかん', ja), 3600000);
-		check(parse('1ぶん', ja), 60000);
-		check(parse('1びょう', ja), 1000);
+		check(parseJa('1とし'), 31557600000);
+		check(parseJa('1じかん'), 3600000);
+		check(parseJa('1ぶん'), 60000);
+		check(parseJa('1びょう'), 1000);
 	});
 
 	it('ミリ秒バリアント', () => {
-		check(parse('1ミリ秒', ja), 1);
-		check(parse('1ミリセコンド', ja), 1);
-		check(parse('1ミリセカンド', ja), 1);
-		check(parse('500ミリびょう', ja), 500);
+		check(parseJa('1ミリ秒'), 1);
+		check(parseJa('1ミリセコンド'), 1);
+		check(parseJa('1ミリセカンド'), 1);
+		check(parseJa('500ミリびょう'), 500);
 	});
 });
 
@@ -123,36 +119,35 @@ describe('日本語 — 複合ユニット', () => {
 
 describe('format (日本語)', () => {
 	it('short form (no space before notation)', () => {
-		check(format(7200000, { language: ja }), '2時間');
-		check(format(1800000, { language: ja }), '30分');
-		check(format(86400000, { language: ja }), '1日');
-		check(format(1000, { language: ja }), '1秒');
+		check(buildFormat({ language: ja })(7200000), '2時間');
+		check(buildFormat({ language: ja })(1800000), '30分');
+		check(buildFormat({ language: ja })(86400000), '1日');
+		check(buildFormat({ language: ja })(1000), '1秒');
 	});
 
 	it('long form (space before notation)', () => {
-		check(format(7200000, { language: ja, long: true }), '2 時間');
-		check(format(1800000, { language: ja, long: true }), '30 分');
-		check(format(1000, { language: ja, long: true }), '1 秒');
+		check(buildFormat({ language: ja, long: true })(7200000), '2 時間');
+		check(buildFormat({ language: ja, long: true })(1800000), '30 分');
+		check(buildFormat({ language: ja, long: true })(1000), '1 秒');
 	});
 
 	it('multi-unit output', () => {
-		const num = parse('16日 8時間 20分', ja)!;
-		check(format(num, { language: ja }), '16日 8時間 20分');
+		const num = parseJa('16日 8時間 20分')!;
+		check(buildFormat({ language: ja, length: 3 })(num), '16日 8時間 20分');
 	});
 
 	it('parse(format(ms)) === ms', () => {
 		for (const ms of [ 7200000, 1800000, 86400000, 5445000 ]) {
-			const str = format(ms, { language: ja })!;
-			check(parse(str, ja), ms);
+			const str = buildFormat({ language: ja, length: 3 })(ms)!;
+			check(parseJa(str), ms);
 		}
 	});
 });
 
-// ─── Fast variants ───────────────────────────────────────────────────────────
+// ─── buildParse (日本語) ──────────────────────────────────────────────────────
 
-describe('buildFastParse (日本語)', () => {
-	it('current (v9 combined)', () => {
-		const parseJa = buildFastParse(ja);
+describe('buildParse (日本語)', () => {
+	it('current', () => {
 		check(parseJa('2時間'), 7200000);
 		check(parseJa('30分'), 1800000);
 		check(parseJa('2時間30分'), 9000000);
@@ -162,25 +157,22 @@ describe('buildFastParse (日本語)', () => {
 	});
 });
 
-describe('buildFastFormat (日本語)', () => {
+describe('buildFormat (日本語)', () => {
 	it('current', () => {
-		const formatJa = buildFastFormat({ language: ja });
+		const formatJa = buildFormat({ language: ja });
 		check(formatJa(7200000), '2時間');
 		check(formatJa(1800000), '30分');
 		check(formatJa(-7200000), '- 2時間');
 		check(formatJa(0), '0ミリ秒');
 
-		const formatJaLong = buildFastFormat({ language: ja, long: true });
+		const formatJaLong = buildFormat({ language: ja, long: true });
 		check(formatJaLong(7200000), '2 時間');
 		check(formatJaLong(1800000), '30 分');
 		check(formatJaLong(-7200000), '- 2 時間');
 	});
 });
 
-// ─── Fast parse variants — all notations ────────────────────────────────────
-// Japanese notations are all non-ASCII (Unicode). The BOUND table for Japanese
-// contains only non-ASCII chars, so any ASCII char is always a valid boundary.
-// Non-ASCII chars after a notation immediately fire the multiplier (c >= 128).
+// ─── all notations ────────────────────────────────────────────────────────────
 
 const ALL_NOTATIONS: Case[] = [
 	// Years
@@ -246,11 +238,9 @@ const ALL_NOTATIONS: Case[] = [
 	{ input: '- 1秒', expected: -S },
 ];
 
-describe('日本語 — all notations (all variants)', () => {
-	runVariants(ALL_NOTATIONS);
-});
+describe('日本語 — all notations', () => { runCases(ALL_NOTATIONS); });
 
-// ─── Fast parse variants — multi-unit ────────────────────────────────────────
+// ─── multi-unit ───────────────────────────────────────────────────────────────
 
 const MULTI_UNIT: Case[] = [
 	// Two units
@@ -283,14 +273,9 @@ const MULTI_UNIT: Case[] = [
 	{ input: '1時間xyz', expected: H },
 ];
 
-describe('日本語 — multi-unit (all variants)', () => {
-	runVariants(MULTI_UNIT);
-});
+describe('日本語 — multi-unit', () => { runCases(MULTI_UNIT); });
 
-// ─── Fast parse variants — invalid inputs ────────────────────────────────────
-// Japanese BOUND has only non-ASCII chars. There is no "boundary invalid" case
-// equivalent to English/Spanish since non-ASCII always fires the multiplier check.
-// Invalid cases focus on: ASCII-only notations, bad numbers, structural errors.
+// ─── invalid inputs ───────────────────────────────────────────────────────────
 
 const INVALID: Case[] = [
 	{ input: '', expected: null },
@@ -316,6 +301,4 @@ const INVALID: Case[] = [
 	{ input: '1ミリセ', expected: null }, // prefix of ミリセコンド/ミリセカンド
 ];
 
-describe('日本語 — invalid inputs (all variants)', () => {
-	runVariants(INVALID);
-});
+describe('日本語 — invalid inputs', () => { runCases(INVALID); });

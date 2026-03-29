@@ -1,10 +1,11 @@
 import { describe, it } from '@jest/globals';
 import { ok, strictEqual } from 'node:assert';
-import { LANGUAGES, TIMES, parse, format, parseVariants, buildFastParse, buildFastFormat } from '@lib';
+import { LANGUAGES, TIMES, buildParse, buildFormat } from '@lib';
 import { check } from '../utils.ts';
 
 const { Y, Mo, W, D, H, M, S, Ms } = TIMES;
 const es = LANGUAGES.es;
+const parseEs = buildParse(es);
 
 // ─── Variant runner ───────────────────────────────────────────────────────────
 
@@ -13,19 +14,15 @@ interface Case {
 	expected: number | null;
 }
 
-function runVariants(cases: Case[]): void {
-	for (const [ name, build ] of Object.entries(parseVariants)) {
-		const fn = build(es);
-		describe(name, () => {
-			for (const { input, expected } of cases) {
-				it(`"${input}" → ${expected ?? 'null'}`, () => {
-					const actual = fn(input);
-					if (typeof expected === 'number' && typeof actual === 'number')
-						ok(actual === expected || Math.abs(expected - actual) < 1, `Expected ~${expected}, got ${actual}`);
-					else
-						strictEqual(actual, expected);
-				});
-			}
+function runCases(cases: Case[]): void {
+	const fn = parseEs;
+	for (const { input, expected } of cases) {
+		it(`"${input}" → ${expected ?? 'null'}`, () => {
+			const actual = fn(input);
+			if (typeof expected === 'number' && typeof actual === 'number')
+				ok(actual === expected || Math.abs(expected - actual) < 1, `Expected ~${expected}, got ${actual}`);
+			else
+				strictEqual(actual, expected);
 		});
 	}
 }
@@ -34,31 +31,31 @@ function runVariants(cases: Case[]): void {
 
 describe('parse (español)', () => {
 	it('unit notations', () => {
-		check(parse('1 dia', es), 86400000);
-		check(parse('2 horas', es), 7200000);
-		check(parse('1 hora', es), 3600000);
-		check(parse('30 minutos', es), 1800000);
-		check(parse('1 minuto', es), 60000);
-		check(parse('5 segundos', es), 5000);
-		check(parse('1 segundo', es), 1000);
-		check(parse('1 semana', es), 604800000);
+		check(parseEs('1 dia'), 86400000);
+		check(parseEs('2 horas'), 7200000);
+		check(parseEs('1 hora'), 3600000);
+		check(parseEs('30 minutos'), 1800000);
+		check(parseEs('1 minuto'), 60000);
+		check(parseEs('5 segundos'), 5000);
+		check(parseEs('1 segundo'), 1000);
+		check(parseEs('1 semana'), 604800000);
 	});
 
 	it('multi-unit', () => {
-		check(parse('2 horas 30 minutos', es), 9000000);
-		check(parse('1 dia 2 horas', es), 86400000 + 7200000);
-		check(parse('2 minutos 15 segundos', es), 135000);
+		check(parseEs('2 horas 30 minutos'), 9000000);
+		check(parseEs('1 dia 2 horas'), 86400000 + 7200000);
+		check(parseEs('2 minutos 15 segundos'), 135000);
 	});
 
 	it('negative values', () => {
-		check(parse('-1 hora', es), -3600000);
-		check(parse('-3 minutos', es), -180000);
-		check(parse('- 2 horas 30 minutos', es), -9000000);
+		check(parseEs('-1 hora'), -3600000);
+		check(parseEs('-3 minutos'), -180000);
+		check(parseEs('- 2 horas 30 minutos'), -9000000);
 	});
 
 	it('english notations → null', () => {
-		check(parse('1 hour', es), null);
-		check(parse('1 day', es), null);
+		check(parseEs('1 hour'), null);
+		check(parseEs('1 day'), null);
 	});
 });
 
@@ -66,67 +63,67 @@ describe('parse (español)', () => {
 
 describe('español — ñ en año/años', () => {
 	it('año / años → año (31557600000ms)', () => {
-		check(parse('1año', es), 31557600000);
-		check(parse('1años', es), 31557600000);
-		check(parse('2años', es), 31557600000 * 2);
+		check(parseEs('1año'), 31557600000);
+		check(parseEs('1años'), 31557600000);
+		check(parseEs('2años'), 31557600000 * 2);
 	});
 
 	it('multi-unit con año', () => {
-		check(parse('1año1mes', es), 31557600000 + Mo);
-		check(parse('2años 3meses', es), 31557600000 * 2 + Mo * 3);
+		check(parseEs('1año1mes'), 31557600000 + Mo);
+		check(parseEs('2años 3meses'), 31557600000 * 2 + Mo * 3);
 	});
 
 	it('año seguido de char de notación → null', () => {
-		check(parse('1añom', es), null); // 'm' es char de notación en español
-		check(parse('1añod', es), null); // 'd' es char de notación en español
+		check(parseEs('1añom'), null); // 'm' es char de notación en español
+		check(parseEs('1añod'), null); // 'd' es char de notación en español
 	});
 });
 
 describe('español — sem vs semana vs semanas', () => {
 	it('sem / semana / semanas → semana (604800000ms)', () => {
-		check(parse('1sem', es), 604800000);
-		check(parse('1semana', es), 604800000);
-		check(parse('2semanas', es), 604800000 * 2);
+		check(parseEs('1sem'), 604800000);
+		check(parseEs('1semana'), 604800000);
+		check(parseEs('2semanas'), 604800000 * 2);
 	});
 
 	it('sem + char de notación → null', () => {
-		check(parse('1sems', es), null); // 's' bloquea 'sem'
-		check(parse('1semd', es), null); // 'd' bloquea 'sem'
-		check(parse('1semm', es), null); // 'm' bloquea 'sem'
+		check(parseEs('1sems'), null); // 's' bloquea 'sem'
+		check(parseEs('1semd'), null); // 'd' bloquea 'sem'
+		check(parseEs('1semm'), null); // 'm' bloquea 'sem'
 	});
 
 	it('compact multi-unit con sem', () => {
-		check(parse('1sem3dias', es), 604800000 + 3 * 86400000);
+		check(parseEs('1sem3dias'), 604800000 + 3 * 86400000);
 	});
 });
 
 describe('español — ms vs m (milisegundo vs minuto)', () => {
 	it('m → minuto, ms → milisegundo', () => {
-		check(parse('1m', es), 60000);
-		check(parse('5m', es), 300000);
-		check(parse('1ms', es), 1);
-		check(parse('500ms', es), 500);
+		check(parseEs('1m'), 60000);
+		check(parseEs('5m'), 300000);
+		check(parseEs('1ms'), 1);
+		check(parseEs('500ms'), 500);
 	});
 
 	it('ms + char de notación → null', () => {
-		check(parse('1mss', es), null);
-		check(parse('1msm', es), null);
-		check(parse('1msh', es), null);
+		check(parseEs('1mss'), null);
+		check(parseEs('1msm'), null);
+		check(parseEs('1msh'), null);
 	});
 });
 
 describe('español — seg / segs / segundo / segundos', () => {
 	it('todas las formas → 1000ms', () => {
-		check(parse('1seg', es), 1000);
-		check(parse('1segs', es), 1000);
-		check(parse('1segundo', es), 1000);
-		check(parse('1segundos', es), 1000);
+		check(parseEs('1seg'), 1000);
+		check(parseEs('1segs'), 1000);
+		check(parseEs('1segundo'), 1000);
+		check(parseEs('1segundos'), 1000);
 	});
 
 	it('seg + char de notación → null', () => {
-		check(parse('1segm', es), null); // 'm' es notación
-		check(parse('1segn', es), null); // 'n' aparece en 'min', 'minuto'
-		check(parse('1segd', es), null); // 'd' es notación
+		check(parseEs('1segm'), null); // 'm' es notación
+		check(parseEs('1segn'), null); // 'n' aparece en 'min', 'minuto'
+		check(parseEs('1segd'), null); // 'd' es notación
 	});
 });
 
@@ -134,39 +131,38 @@ describe('español — seg / segs / segundo / segundos', () => {
 
 describe('format (español)', () => {
 	it('short form', () => {
-		check(format(7200000, { language: es }), '2h');
-		check(format(3600000, { language: es }), '1h');
-		check(format(60000, { language: es }), '1m');
-		check(format(1000, { language: es }), '1s');
+		check(buildFormat({ language: es })(7200000), '2h');
+		check(buildFormat({ language: es })(3600000), '1h');
+		check(buildFormat({ language: es })(60000), '1m');
+		check(buildFormat({ language: es })(1000), '1s');
 	});
 
 	it('long form — singular and plural', () => {
-		check(format(3600000, { language: es, long: true }), '1 hora');
-		check(format(7200000, { language: es, long: true }), '2 horas');
-		check(format(60000, { language: es, long: true }), '1 minuto');
-		check(format(120000, { language: es, long: true }), '2 minutos');
-		check(format(1000, { language: es, long: true }), '1 segundo');
-		check(format(2000, { language: es, long: true }), '2 segundos');
+		check(buildFormat({ language: es, long: true })(3600000), '1 hora');
+		check(buildFormat({ language: es, long: true })(7200000), '2 horas');
+		check(buildFormat({ language: es, long: true })(60000), '1 minuto');
+		check(buildFormat({ language: es, long: true })(120000), '2 minutos');
+		check(buildFormat({ language: es, long: true })(1000), '1 segundo');
+		check(buildFormat({ language: es, long: true })(2000), '2 segundos');
 	});
 
 	it('multi-unit output', () => {
-		const num = parse('16 dias 8 horas 20 minutos', es)!;
-		check(format(num, { language: es, long: true }), '16 dias 8 horas 20 minutos');
+		const num = parseEs('16 dias 8 horas 20 minutos')!;
+		check(buildFormat({ language: es, long: true, length: 3 })(num), '16 dias 8 horas 20 minutos');
 	});
 
 	it('parse(format(ms)) === ms', () => {
 		for (const ms of [ 3600000, 5445000, 9000000, 86400000 ]) {
-			const str = format(ms, { language: es })!;
-			check(parse(str, es), ms);
+			const str = buildFormat({ language: es, length: 3 })(ms)!;
+			check(parseEs(str), ms);
 		}
 	});
 });
 
-// ─── Fast variants ───────────────────────────────────────────────────────────
+// ─── buildParse (español) ─────────────────────────────────────────────────────
 
-describe('buildFastParse (español)', () => {
-	it('current (v9 combined)', () => {
-		const parseEs = buildFastParse(es);
+describe('buildParse (español)', () => {
+	it('current', () => {
 		check(parseEs('2 horas'), 7200000);
 		check(parseEs('1 hora'), 3600000);
 		check(parseEs('30 minutos'), 1800000);
@@ -177,14 +173,14 @@ describe('buildFastParse (español)', () => {
 	});
 });
 
-describe('buildFastFormat (español)', () => {
+describe('buildFormat (español)', () => {
 	it('current', () => {
-		const formatEs = buildFastFormat({ language: es });
+		const formatEs = buildFormat({ language: es });
 		check(formatEs(7200000), '2h');
 		check(formatEs(-3600000), '- 1h');
 		check(formatEs(0), '0ms');
 
-		const formatEsLong = buildFastFormat({ language: es, long: true });
+		const formatEsLong = buildFormat({ language: es, long: true });
 		check(formatEsLong(7200000), '2 horas');
 		check(formatEsLong(1000), '1 segundo');
 		check(formatEsLong(2000), '2 segundos');
@@ -193,7 +189,7 @@ describe('buildFastFormat (español)', () => {
 	});
 });
 
-// ─── Fast parse variants — all notations ────────────────────────────────────
+// ─── all notations ────────────────────────────────────────────────────────────
 
 const ALL_NOTATIONS: Case[] = [
 	// Years — ñ is non-ASCII; trie handles it directly
@@ -272,11 +268,9 @@ const ALL_NOTATIONS: Case[] = [
 	{ input: '- 1s', expected: -S },
 ];
 
-describe('español — all notations (all variants)', () => {
-	runVariants(ALL_NOTATIONS);
-});
+describe('español — all notations', () => { runCases(ALL_NOTATIONS); });
 
-// ─── Fast parse variants — m / ms disambiguation ─────────────────────────────
+// ─── m / ms disambiguation ────────────────────────────────────────────────────
 
 const M_DISAMBIGUATION: Case[] = [
 	// m → minuto
@@ -311,11 +305,9 @@ const M_DISAMBIGUATION: Case[] = [
 	{ input: '2.5mes', expected: 2.5 * Mo },
 ];
 
-describe('español — m / ms disambiguation (all variants)', () => {
-	runVariants(M_DISAMBIGUATION);
-});
+describe('español — m / ms disambiguation', () => { runCases(M_DISAMBIGUATION); });
 
-// ─── Fast parse variants — multi-unit ────────────────────────────────────────
+// ─── multi-unit ───────────────────────────────────────────────────────────────
 
 const MULTI_UNIT: Case[] = [
 	// Two units
@@ -353,14 +345,9 @@ const MULTI_UNIT: Case[] = [
 	{ input: '1h 2xyz', expected: H },
 ];
 
-describe('español — multi-unit (all variants)', () => {
-	runVariants(MULTI_UNIT);
-});
+describe('español — multi-unit', () => { runCases(MULTI_UNIT); });
 
-// ─── Fast parse variants — boundary cases ────────────────────────────────────
-// After matching a notation, a char that IS in the BOUND table must NOT match.
-// Spanish BOUND chars (ASCII): a, d, e, g, h, i, l, m, n, o, r, s, t, u
-// ñ is non-ASCII (U+00F1) → triggers immediate match (c >= 128 check fires).
+// ─── boundary cases ───────────────────────────────────────────────────────────
 
 const BOUNDARY: Case[] = [
 	// Single-char notations + notation char → null
@@ -422,11 +409,9 @@ const BOUNDARY: Case[] = [
 	{ input: '1h3s', expected: H + 3 * S },
 ];
 
-describe('español — boundary: notation + notation-char (all variants)', () => {
-	runVariants(BOUNDARY);
-});
+describe('español — boundary: notation + notation-char', () => { runCases(BOUNDARY); });
 
-// ─── Fast parse variants — invalid inputs ────────────────────────────────────
+// ─── invalid inputs ───────────────────────────────────────────────────────────
 
 const INVALID: Case[] = [
 	{ input: '', expected: null },
@@ -453,6 +438,4 @@ const INVALID: Case[] = [
 	{ input: '1segund', expected: null }, // truncated "segundo"
 ];
 
-describe('español — invalid inputs (all variants)', () => {
-	runVariants(INVALID);
-});
+describe('español — invalid inputs', () => { runCases(INVALID); });

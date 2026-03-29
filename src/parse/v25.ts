@@ -10,13 +10,13 @@
  *   - V8 Maglev compiles the flat structure with optimal branch prediction.
  *   - Code size stays under Maglev's threshold for English/Spanish dicts.
  */
-import type { Language } from '../../core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '@src/core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
-import { extractNotations, generateLookupCode } from '../../utils/notation.ts';
+import type { Language } from '../core/index.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
+import type { ParseFunction } from '../core/types.ts';
+import { craftFunction } from '../utils/craft.ts';
+import { extractNotations, generateLookupCode } from '../utils/notation.ts';
 
-export function buildFastParse(language: Language): ParseFunction {
+export function buildParse(language: Language): ParseFunction {
 	const notations = extractNotations(language.dict);
 	const ranges = collectCharRanges(language.dict, true);
 	const boundaryArr = buildBoundaryTable(ranges);
@@ -159,65 +159,3 @@ ${lookupCode}
 
 	return craftFunction<ParseFunction>('fastParseV25', [ 'str' ], source, { BOUND: boundaryArr });
 }
-
-/*
- * ─── Example: generated notation dispatch for English, 'h'/'H' group ─────────
- *
- * craftFunction wraps the source in:
- *   var BOUND = ctx['BOUND'];
- *   function fastParseV25(str) { <source> }
- *   return fastParseV25;
- *
- * Inside the source, the `match:{}` block contains one `if` per (notation × case-variant),
- * sorted longest-first within each first-char group. The 'h' group (excerpt):
- *
- *   match: {
- *     // ... (groups for 'd', 'D', 'm', 'M', etc. come before 'h' in dict order) ...
- *
- *     // "hours" → 3,600,000 ms
- *     if (c0 === 104  // 'h'(104)
- *      && i+5 <= len  // needs 5 chars
- *      && (s.charCodeAt(i+1) === 111 || s.charCodeAt(i+1) === 79)  // [1] 'o'(111)/'O'(79)
- *      && (s.charCodeAt(i+2) === 117 || s.charCodeAt(i+2) === 85)  // [2] 'u'(117)/'U'(85)
- *      && (s.charCodeAt(i+3) === 114 || s.charCodeAt(i+3) === 82)  // [3] 'r'(114)/'R'(82)
- *      && (s.charCodeAt(i+4) === 115 || s.charCodeAt(i+4) === 83)) // [4] 's'(115)/'S'(83)
- *     {
- *         const _bci = i+5, _bc = s.charCodeAt(_bci);
- *         if (_bci >= len || _bc >= 128 || !BOUND[_bc])  // end | non-ASCII | not a boundary char
- *             { i += 5; v += pv * 3600000; mc++; break match; }
- *     }
- *     // "hour" → 3,600,000 ms
- *     if (c0 === 104  // 'h'(104)
- *      && i+4 <= len  // needs 4 chars
- *      && ...) { ... }
- *     // "hrs" → 3,600,000 ms  (3 chars)
- *     // "hr"  → 3,600,000 ms  (2 chars)
- *     // "h"   → 3,600,000 ms  (1 char, single-char form)
- *     if (c0 === 104) {  // 'h'(104)
- *         const _bci = i+1, _bc = s.charCodeAt(_bci);
- *         if (_bci >= len || _bc >= 128 || !BOUND[_bc])
- *             { i += 1; v += pv * 3600000; mc++; break match; }
- *     }
- *     // Uppercase variants follow: "Hours", "Hour", "Hrs", "Hr", "H" (c0===72)
- *     // ... (groups for other first chars follow) ...
- *   }
- *
- * Why no `else`: every `if` is independent. V8 can pipeline their evaluations
- * in parallel (ILP). An `else if` chain creates sequential data dependencies
- * across the whole group; with the full English dictionary (~15 groups, 60+
- * entries), that accumulated latency is measurable (v37: −5.4% on invalid).
- * In an isolated single-group micro-test the two structures are equivalent —
- * the effect only manifests at scale.
- *
- * Why `i+N <= len`: semantically redundant (charCodeAt out-of-range returns NaN,
- * and NaN===111 is false). It matters for JIT: this single range check lets V8
- * prove that charCodeAt(i+1)..charCodeAt(i+N-1) are all in-bounds and eliminate
- * their individual implicit bounds checks. Measured effect: 2× faster on matched
- * inputs vs the same code without the guard (micro-bench H2 result).
- *
- * Reading the trace for input "2hours":
- *   c0 = 'h'(104)
- *   "hours": c0===104 ✓, i+5<=len ✓, 'o'/'u'/'r'/'s' all match ✓
- *   boundary: _bci=i+5 is end-of-string → _bci>=len ✓
- *   → i+=5, v+=2*3600000, mc++, break match  ✓
- */

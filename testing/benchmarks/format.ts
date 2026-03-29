@@ -1,7 +1,7 @@
 import { Bench, type Task, type TaskResultCompleted } from 'tinybench';
 import vercelMs from 'ms';
 
-import { LANGUAGES, format, formatVariants as buildFormatVariants, buildFastFormat } from '@src/index.ts';
+import { LANGUAGES, buildFormat } from '@src/index.ts';
 import { createArgs } from '../utils.ts';
 import { createRequire } from 'module';
 
@@ -17,21 +17,13 @@ const FORMAT_SAMPLES = Array.from({ length: N }, () => {
 type FormatFn = (ms: number, long: boolean) => unknown;
 
 // v16 specialized functions — one per (long, length) combination
-const v16Short = buildFastFormat({ language: LANGUAGES.en });
-const v16Long = buildFastFormat({ language: LANGUAGES.en, long: true });
-const v16Short3 = buildFastFormat({ language: LANGUAGES.en, length: 3 });
-const v16Long3 = buildFastFormat({ language: LANGUAGES.en, long: true, length: 3 });
+const v16Short = buildFormat({ language: LANGUAGES.en });
+const v16Long = buildFormat({ language: LANGUAGES.en, long: true });
+const v16Short3 = buildFormat({ language: LANGUAGES.en, length: 3 });
+const v16Long3 = buildFormat({ language: LANGUAGES.en, long: true, length: 3 });
 
 const formatFns: Record<string, FormatFn> = {
 	'vercel/ms': (ms, long) => vercelMs(ms, long ? { long } : undefined),
-	normal: (ms, long) => format(ms, long ? { long, language: LANGUAGES.en } : { language: LANGUAGES.en }),
-	...Object.fromEntries(
-		Object.entries(buildFormatVariants).map(([ k, build ]) => {
-			const fn = build(LANGUAGES.en);
-			return [ k, (ms: number, long: boolean) => fn(ms, long) ];
-		}),
-	),
-	// v16: specialized per (long, length) — no runtime dispatch
 	'v16 short l=1': ms => v16Short(ms),
 	'v16 long  l=1': ms => v16Long(ms),
 	'v16 short l=3': ms => v16Short3(ms),

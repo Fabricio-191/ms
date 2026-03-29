@@ -1,10 +1,11 @@
 import { describe, it } from '@jest/globals';
 import { ok, strictEqual } from 'node:assert';
-import { LANGUAGES, TIMES, parse, format, parseVariants } from '@lib';
+import { LANGUAGES, TIMES, buildParse, buildFormat } from '@lib';
 import { check } from '../utils.ts';
 
 const { Y, Mo, W, D, H, M, S, Ms } = TIMES;
 const en = LANGUAGES.en;
+const parseEn = buildParse(en);
 
 // ─── Variant runner ───────────────────────────────────────────────────────────
 
@@ -13,19 +14,15 @@ interface Case {
 	expected: number | null;
 }
 
-function runVariants(cases: Case[]): void {
-	for (const [ name, build ] of Object.entries(parseVariants)) {
-		const fn = build(en);
-		describe(name, () => {
-			for (const { input, expected } of cases) {
-				it(`"${input}" → ${expected ?? 'null'}`, () => {
-					const actual = fn(input);
-					if (typeof expected === 'number' && typeof actual === 'number')
-						ok(actual === expected || Math.abs(expected - actual) < 1, `Expected ~${expected}, got ${actual}`);
-					else
-						strictEqual(actual, expected);
-				});
-			}
+function runCases(cases: Case[]): void {
+	const fn = parseEn;
+	for (const { input, expected } of cases) {
+		it(`"${input}" → ${expected ?? 'null'}`, () => {
+			const actual = fn(input);
+			if (typeof expected === 'number' && typeof actual === 'number')
+				ok(actual === expected || Math.abs(expected - actual) < 1, `Expected ~${expected}, got ${actual}`);
+			else
+				strictEqual(actual, expected);
 		});
 	}
 }
@@ -34,120 +31,120 @@ function runVariants(cases: Case[]): void {
 
 describe('parse (english)', () => {
 	it('single unit — short notations', () => {
-		check(parse('1h'), 3600000);
-		check(parse('1hr'), 3600000);
-		check(parse('1hrs'), 3600000);
-		check(parse('1m'), 60000);
-		check(parse('1min'), 60000);
-		check(parse('1mins'), 60000);
-		check(parse('1s'), 1000);
-		check(parse('1sec'), 1000);
-		check(parse('1secs'), 1000);
-		check(parse('1ms'), 1);
-		check(parse('1d'), 86400000);
-		check(parse('1w'), 604800000);
-		check(parse('1y'), 31557600000);
+		check(parseEn('1h'), 3600000);
+		check(parseEn('1hr'), 3600000);
+		check(parseEn('1hrs'), 3600000);
+		check(parseEn('1m'), 60000);
+		check(parseEn('1min'), 60000);
+		check(parseEn('1mins'), 60000);
+		check(parseEn('1s'), 1000);
+		check(parseEn('1sec'), 1000);
+		check(parseEn('1secs'), 1000);
+		check(parseEn('1ms'), 1);
+		check(parseEn('1d'), 86400000);
+		check(parseEn('1w'), 604800000);
+		check(parseEn('1y'), 31557600000);
 	});
 
 	it('single unit — long notations', () => {
-		check(parse('1 hour'), 3600000);
-		check(parse('1 hours'), 3600000);
-		check(parse('1 minute'), 60000);
-		check(parse('1 minutes'), 60000);
-		check(parse('1 second'), 1000);
-		check(parse('1 millisecond'), 1);
-		check(parse('1 milliseconds'), 1);
-		check(parse('1 day'), 86400000);
-		check(parse('1 days'), 86400000);
-		check(parse('1 week'), 604800000);
-		check(parse('1 weeks'), 604800000);
-		check(parse('1 year'), 31557600000);
+		check(parseEn('1 hour'), 3600000);
+		check(parseEn('1 hours'), 3600000);
+		check(parseEn('1 minute'), 60000);
+		check(parseEn('1 minutes'), 60000);
+		check(parseEn('1 second'), 1000);
+		check(parseEn('1 millisecond'), 1);
+		check(parseEn('1 milliseconds'), 1);
+		check(parseEn('1 day'), 86400000);
+		check(parseEn('1 days'), 86400000);
+		check(parseEn('1 week'), 604800000);
+		check(parseEn('1 weeks'), 604800000);
+		check(parseEn('1 year'), 31557600000);
 	});
 
 	it('multi-unit', () => {
-		check(parse('1m10s'), 70000);
-		check(parse('1m10secs'), 70000);
-		check(parse('5s50ms'), 5050);
-		check(parse('1h 30m'), 5400000);
-		check(parse('2h30m'), 7200000 + 1800000);
-		check(parse('1 week 2 days'), 777600000);
-		check(parse('2 days 1 hours'), 176400000);
-		check(parse('2 hours, 5.5 minutes and .3s'), 7530300);
-		check(parse('1h 30m 45s'), 5445000);
-		check(parse('1seconds'), 1000);
+		check(parseEn('1m10s'), 70000);
+		check(parseEn('1m10secs'), 70000);
+		check(parseEn('5s50ms'), 5050);
+		check(parseEn('1h 30m'), 5400000);
+		check(parseEn('2h30m'), 7200000 + 1800000);
+		check(parseEn('1 week 2 days'), 777600000);
+		check(parseEn('2 days 1 hours'), 176400000);
+		check(parseEn('2 hours, 5.5 minutes and .3s'), 7530300);
+		check(parseEn('1h 30m 45s'), 5445000);
+		check(parseEn('1seconds'), 1000);
 	});
 
 	it('decimal and leading-dot numbers', () => {
-		check(parse('2.5h'), 9000000);
-		check(parse('2.5 hrs'), 9000000);
-		check(parse('.5m'), 30000);
-		check(parse('1.5 hours'), 5400000);
-		check(parse('.25s'), 250);
+		check(parseEn('2.5h'), 9000000);
+		check(parseEn('2.5 hrs'), 9000000);
+		check(parseEn('.5m'), 30000);
+		check(parseEn('1.5 hours'), 5400000);
+		check(parseEn('.25s'), 250);
 	});
 
 	it('negative values', () => {
-		check(parse('-3 days'), -259200000);
-		check(parse('-1h'), -3600000);
-		check(parse('-.5m'), -30000);
-		check(parse('-.5 mins'), -30000);
-		check(parse('-100'), -100);
-		check(parse('- 2m 30s'), -150000);
+		check(parseEn('-3 days'), -259200000);
+		check(parseEn('-1h'), -3600000);
+		check(parseEn('-.5m'), -30000);
+		check(parseEn('-.5 mins'), -30000);
+		check(parseEn('-100'), -100);
+		check(parseEn('- 2m 30s'), -150000);
 	});
 
 	it('0–3 spaces between number and unit', () => {
-		check(parse('1s'), 1000);
-		check(parse('1 s'), 1000);
-		check(parse('1  s'), 1000);
-		check(parse('1   s'), 1000);
-		check(parse('1    s'), null);
-		check(parse('1\ts'), null);
-		check(parse('1\ns'), null);
+		check(parseEn('1s'), 1000);
+		check(parseEn('1 s'), 1000);
+		check(parseEn('1  s'), 1000);
+		check(parseEn('1   s'), 1000);
+		check(parseEn('1    s'), null);
+		check(parseEn('1\ts'), null);
+		check(parseEn('1\ns'), null);
 	});
 
 	it('case insensitive', () => {
-		check(parse('1.5H'), 5400000);
-		check(parse('1D'), 86400000);
-		check(parse('5M'), 300000);
-		check(parse('20 mIlLiSeCoNdS'), 20);
-		check(parse('1 SECOND'), 1000);
+		check(parseEn('1.5H'), 5400000);
+		check(parseEn('1D'), 86400000);
+		check(parseEn('5M'), 300000);
+		check(parseEn('20 mIlLiSeCoNdS'), 20);
+		check(parseEn('1 SECOND'), 1000);
 	});
 
 	it('plain numbers (no unit)', () => {
-		check(parse('100'), 100);
-		check(parse('-100'), -100);
-		check(parse('0'), 0);
-		check(parse('3.14'), 3.14);
+		check(parseEn('100'), 100);
+		check(parseEn('-100'), -100);
+		check(parseEn('0'), 0);
+		check(parseEn('3.14'), 3.14);
 	});
 
 	it('invalid inputs → null', () => {
-		check(parse(''), null);
-		check(parse('invalid'), null);
-		check(parse('abc'), null);
-		check(parse('abc123'), null);
-		check(parse('1xyz'), null);
-		check(parse('1.2.3ms'), null);
-		check(parse('.ms'), null);
-		check(parse('NaN'), null);
+		check(parseEn(''), null);
+		check(parseEn('invalid'), null);
+		check(parseEn('abc'), null);
+		check(parseEn('abc123'), null);
+		check(parseEn('1xyz'), null);
+		check(parseEn('1.2.3ms'), null);
+		check(parseEn('.ms'), null);
+		check(parseEn('NaN'), null);
 		// @ts-expect-error -- testing invalid input
-		check(parse(null), null);
+		check(parseEn(null), null);
 		// @ts-expect-error -- testing invalid input
-		check(parse(undefined), null);
+		check(parseEn(undefined), null);
 	});
 
 	it('edge cases — not null', () => {
-		check(parse('--1ms'), -1);
-		check(parse('   '), 0);
-		check(parse('\t\n'), 0);
-		check(parse('Infinity'), Infinity);
-		check(parse('100000000000000000000'), 1e20);
+		check(parseEn('--1ms'), -1);
+		check(parseEn('   '), 0);
+		check(parseEn('\t\n'), 0);
+		check(parseEn('Infinity'), Infinity);
+		check(parseEn('100000000000000000000'), 1e20);
 	});
 
 	it('language array — picks best match', () => {
-		check(parse('1 day', LANGUAGES.en), 86400000);
-		check(parse('1 day', LANGUAGES.es), null);
-		check(parse('12 seconds', [ LANGUAGES.en, LANGUAGES.es ]), 12000);
-		check(parse('-3 minutos', [ LANGUAGES.en, LANGUAGES.es ]), -180000);
-		check(parse('2 minutes 15 seconds', Object.values(LANGUAGES)), 135000);
+		check(buildParse(LANGUAGES.en)('1 day'), 86400000);
+		check(buildParse(LANGUAGES.es)('1 day'), null);
+		check(buildParse([ LANGUAGES.en, LANGUAGES.es ])('12 seconds'), 12000);
+		check(buildParse([ LANGUAGES.en, LANGUAGES.es ])('-3 minutos'), -180000);
+		check(buildParse(Object.values(LANGUAGES))('2 minutes 15 seconds'), 135000);
 	});
 });
 
@@ -155,67 +152,67 @@ describe('parse (english)', () => {
 
 describe('format (english)', () => {
 	it('short form', () => {
-		check(format(3600000), '1h');
-		check(format(7200000), '2h');
-		check(format(86400000), '1d');
-		check(format(60000), '1m');
-		check(format(1000), '1s');
-		check(format(1), '1ms');
-		check(format(0), '0ms');
+		check(buildFormat()(3600000), '1h');
+		check(buildFormat()(7200000), '2h');
+		check(buildFormat()(86400000), '1d');
+		check(buildFormat()(60000), '1m');
+		check(buildFormat()(1000), '1s');
+		check(buildFormat()(1), '1ms');
+		check(buildFormat()(0), '0ms');
 	});
 
 	it('long form — singular and plural', () => {
-		check(format(3600000, { long: true }), '1 hour');
-		check(format(7200000, { long: true }), '2 hours');
-		check(format(60000, { long: true }), '1 minute');
-		check(format(120000, { long: true }), '2 minutes');
-		check(format(1000, { long: true }), '1 second');
-		check(format(2000, { long: true }), '2 seconds');
-		check(format(1, { long: true }), '1 millisecond');
-		check(format(2, { long: true }), '2 milliseconds');
+		check(buildFormat({ long: true })(3600000), '1 hour');
+		check(buildFormat({ long: true })(7200000), '2 hours');
+		check(buildFormat({ long: true })(60000), '1 minute');
+		check(buildFormat({ long: true })(120000), '2 minutes');
+		check(buildFormat({ long: true })(1000), '1 second');
+		check(buildFormat({ long: true })(2000), '2 seconds');
+		check(buildFormat({ long: true })(1), '1 millisecond');
+		check(buildFormat({ long: true })(2), '2 milliseconds');
 	});
 
 	it('length option', () => {
 		const ms = 5445000; // 1h 30m 45s
-		check(format(ms, { length: 1 }), '1h');
-		check(format(ms, { length: 2 }), '1h 30m');
-		check(format(ms, { length: 3 }), '1h 30m 45s');
-		check(format(ms), '1h 30m 45s');
+		check(buildFormat({ length: 1 })(ms), '1h');
+		check(buildFormat({ length: 2 })(ms), '1h 30m');
+		check(buildFormat({ length: 3 })(ms), '1h 30m 45s');
+		check(buildFormat({ length: 3 })(ms), '1h 30m 45s');
 	});
 
 	it('format option (custom unit selection)', () => {
-		check(format(5445000, { format: 'MS' }), '90m 45s');
-		check(format(5445000, { format: 'HM' }), '1h 30m');
-		check(format(86400000 + 3600000, { format: 'DH' }), '1d 1h');
-		check(format(4100940000, { format: 'WDHM', length: 2 }), '6w 5d');
-		check(format(4100940000, { format: 'WDHM', length: 8 }), '6w 5d 11h 9m');
-		check(format(10, { format: 'HS' }), '0s');
+		check(buildFormat({ format: 'MS' })(5445000), '90m 45s');
+		check(buildFormat({ format: 'HM' })(5445000), '1h 30m');
+		check(buildFormat({ format: 'DH' })(86400000 + 3600000), '1d 1h');
+		check(buildFormat({ format: 'WDHM', length: 2 })(4100940000), '6w 5d');
+		check(buildFormat({ format: 'WDHM', length: 8 })(4100940000), '6w 5d 11h 9m');
+		check(buildFormat({ format: 'HS' })(10), '0s');
 	});
 
 	it('negative values', () => {
-		check(format(-3600000), '- 1h');
-		check(format(-7200000), '- 2h');
-		check(format(-3600000, { long: true }), '- 1 hour');
-		check(format(-5445000, { length: 3 }), '- 1h 30m 45s');
-		check(format(-1, { long: true }), '- 1 millisecond');
+		check(buildFormat()(-3600000), '- 1h');
+		check(buildFormat()(-7200000), '- 2h');
+		check(buildFormat({ long: true })(-3600000), '- 1 hour');
+		check(buildFormat({ length: 3 })(-5445000), '- 1h 30m 45s');
+		check(buildFormat({ long: true })(-1), '- 1 millisecond');
 	});
 
 	it('zero and sub-unit values', () => {
-		check(format(0), '0ms');
-		check(format(0, { long: true }), '0 milliseconds');
-		check(format(500, { format: 'HMS' }), '0s');
-		check(format(0, { format: 'DH' }), '0h');
+		check(buildFormat()(0), '0ms');
+		check(buildFormat({ long: true })(0), '0 milliseconds');
+		check(buildFormat({ format: 'HMS' })(500), '0s');
+		check(buildFormat({ format: 'DH' })(0), '0h');
 	});
 
 	it('parse(format(ms)) === ms', () => {
 		for (const ms of [ 3600000, 5445000, 777600000, 31557600000 ]) {
-			const str = format(ms)!;
-			check(parse(str), ms);
+			const str = buildFormat({ length: 3 })(ms)!;
+			check(parseEn(str), ms);
 		}
 	});
 });
 
-// ─── Fast parse variants — all notations ────────────────────────────────────
+// ─── Fast parse — all notations ──────────────────────────────────────────────
 
 const ALL_NOTATIONS: Case[] = [
 	// Years
@@ -301,11 +298,9 @@ const ALL_NOTATIONS: Case[] = [
 	{ input: '- 1s', expected: -S },
 ];
 
-describe('english — all notations (all variants)', () => {
-	runVariants(ALL_NOTATIONS);
-});
+describe('english — all notations', () => { runCases(ALL_NOTATIONS); });
 
-// ─── Fast parse variants — m / ms / mo / mth disambiguation ─────────────────
+// ─── m / ms / mo / mth disambiguation ────────────────────────────────────────
 
 const M_DISAMBIGUATION: Case[] = [
 	// m → minute
@@ -341,11 +336,9 @@ const M_DISAMBIGUATION: Case[] = [
 	{ input: '2.5mo', expected: 2.5 * Mo },
 ];
 
-describe('english — m / ms / mo / mth disambiguation (all variants)', () => {
-	runVariants(M_DISAMBIGUATION);
-});
+describe('english — m / ms / mo / mth disambiguation', () => { runCases(M_DISAMBIGUATION); });
 
-// ─── Fast parse variants — multi-unit ────────────────────────────────────────
+// ─── multi-unit ───────────────────────────────────────────────────────────────
 
 const MULTI_UNIT: Case[] = [
 	// Two units
@@ -384,13 +377,9 @@ const MULTI_UNIT: Case[] = [
 	{ input: '1h 2xyz', expected: H },
 ];
 
-describe('english — multi-unit (all variants)', () => {
-	runVariants(MULTI_UNIT);
-});
+describe('english — multi-unit', () => { runCases(MULTI_UNIT); });
 
-// ─── Fast parse variants — boundary cases ────────────────────────────────────
-// A valid notation immediately followed by a char that IS in the notation
-// alphabet (BOUND table) must NOT match — it could be a longer unknown token.
+// ─── boundary: notation + notation-char ──────────────────────────────────────
 
 const BOUNDARY: Case[] = [
 	// Single-char notations + another notation char → null
@@ -466,11 +455,9 @@ const BOUNDARY: Case[] = [
 	{ input: '1h3s', expected: H + 3 * S },
 ];
 
-describe('english — boundary: notation + notation-char (all variants)', () => {
-	runVariants(BOUNDARY);
-});
+describe('english — boundary: notation + notation-char', () => { runCases(BOUNDARY); });
 
-// ─── Fast parse variants — invalid inputs ────────────────────────────────────
+// ─── invalid inputs ───────────────────────────────────────────────────────────
 
 const INVALID: Case[] = [
 	{ input: '', expected: null },
@@ -495,6 +482,4 @@ const INVALID: Case[] = [
 	{ input: '1mseco', expected: null }, // partial "msecond"
 ];
 
-describe('english — invalid inputs (all variants)', () => {
-	runVariants(INVALID);
-});
+describe('english — invalid inputs', () => { runCases(INVALID); });

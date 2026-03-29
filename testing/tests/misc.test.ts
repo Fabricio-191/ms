@@ -24,29 +24,29 @@ describe('languages', () => {
 			Ms: { all: [ 'मिलिसेकंड', 'मिलिसेकंड्स' ], singular: 'मिलिसेकंड', shortSingular: 'मिलिसेकंड' },
 		});
 
-		check(lib.parse('1 दिन', hindi), 86400000);
-		check(lib.parse('1 दिन 3 घंटा 20 मिनटों', hindi), 98400000);
+		check(lib.buildParse(hindi)('1 दिन'), 86400000);
+		check(lib.buildParse(hindi)('1 दिन 3 घंटा 20 मिनटों'), 98400000);
 	});
 });
 
 describe('others', () => {
 	it('should return null for invalid inputs', () => {
+		const parse = lib.buildParse(lib.LANGUAGES.en);
+		const format = lib.buildFormat();
 		for (const value of [ '', undefined, null, [], {}, NaN, Infinity, -Infinity, 'absda', '☃', '10-.5', '123nothing', '12 minutesabc' ] as const) {
-		// @ts-expect-error -- testing invalid input
-			check(lib.parse(value), null);
 			// @ts-expect-error -- testing invalid input
-			check(lib.format(value), null);
+			check(parse(value), null);
+			// @ts-expect-error -- testing invalid input
+			check(format(value), null);
 		}
 	});
 });
 
 describe('CJS build (lib/cjs) — smoke test', () => {
 	it('should load and expose the same API', () => {
-		expect(cjsLib.parse('2h')).toBe(7200000);
-		expect(cjsLib.parse('- 2m 30s')).toBe(-150000);
-		expect(cjsLib.format(7200000)).toBe('2h');
-		expect(cjsLib.format(7200000, { long: true })).toBe('2 hours');
-		expect(cjsLib.buildFastParse(cjsLib.LANGUAGES.en)('2h')).toBe(7200000);
-		expect(cjsLib.buildFastFormat({ language: cjsLib.LANGUAGES.en })(7200000)).toBe('2h');
+		expect(cjsLib.buildParse(cjsLib.LANGUAGES.en)('2h')).toBe(7200000);
+		expect(cjsLib.buildParse(cjsLib.LANGUAGES.en)('- 2m 30s')).toBe(-150000);
+		expect(cjsLib.buildFormat()(7200000)).toBe('2h');
+		expect(cjsLib.buildFormat({ long: true })(7200000)).toBe('2 hours');
 	});
 });

@@ -1,6 +1,8 @@
 import { describe, it, expect } from '@jest/globals';
 import { strictEqual } from 'node:assert';
-import { LANGUAGES, TIMES, Language, buildFastFormat, parse } from '@lib';
+import { LANGUAGES, TIMES, Language, buildFormat as buildFastFormat, buildParse } from '@lib';
+
+const parseEn = buildParse(LANGUAGES.en);
 
 const { Y, Mo, W, D, H, M, S, Ms } = TIMES;
 const en = LANGUAGES.en;
@@ -432,7 +434,7 @@ describe('roundtrip — parse(format(ms)) === ms (english)', () => {
 		it(`ms=${ms}, opts=${JSON.stringify(opts)}`, () => {
 			const str = buildFastFormat(opts)(ms);
 			strictEqual(typeof str, 'string');
-			strictEqual(parse(str!), ms);
+			strictEqual(parseEn(str!), ms);
 		});
 	}
 });
