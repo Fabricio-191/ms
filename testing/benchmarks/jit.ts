@@ -8,14 +8,9 @@
  *   npm run bench:jit
  * O directamente:
  *   node --allow-natives-syntax --import tsx/esm testing/benchmarks/jit.ts
- *
- * Hipótesis investigada:
- *   - El wrapper (str) => fn(ROOT, BOUND, str) llega a TurboFan
- *   - La fn generada directamente se queda en Maglev (código muy grande)
- *   - craftFunction elimina el wrapper y captura contexto como closure
  */
 
-import { LANGUAGES, parseVariants } from '@src/index.ts';
+import { LANGUAGES, parseVariants, formatVariants, buildFastFormat } from '@src/index.ts';
 import { createArgs } from '../utils.ts';
 
 // Intrínsecos de V8 — sólo disponibles con --allow-natives-syntax.
@@ -49,15 +44,27 @@ function describeStatus(n: number): string {
 
 const WARMUP = 100_000;
 const samples = Array.from({ length: WARMUP }, () => createArgs(true, true));
+const formatSamples = Array.from({ length: WARMUP }, () => {
+	const { expected } = createArgs(true, true);
+	return Math.abs(expected);
+});
 
 // ─── Funciones a analizar ─────────────────────────────────────────────────────
 
-const v18Wrap = parseVariants.v18(LANGUAGES.en);
-const v23Wrap = parseVariants.v23(LANGUAGES.en);
 const v25Wrap = parseVariants.v25(LANGUAGES.en);
-const v29Wrap = parseVariants.v29(LANGUAGES.en);
-const v31Wrap = parseVariants.v31(LANGUAGES.en);
-const v32Wrap = parseVariants.v32(LANGUAGES.en);
+const v42Wrap = parseVariants.v42(LANGUAGES.en);
+
+const fv5 = formatVariants.v5(LANGUAGES.en);
+const fv6 = formatVariants.v6(LANGUAGES.en);
+const fv10 = formatVariants.v10(LANGUAGES.en);
+const fv11 = formatVariants.v11(LANGUAGES.en);
+const fv12 = formatVariants.v12(LANGUAGES.en);
+const fv15s = formatVariants.v15s(LANGUAGES.en);
+const fv15l = formatVariants.v15l(LANGUAGES.en);
+const fv16Short = buildFastFormat({ language: LANGUAGES.en });
+const fv16Long = buildFastFormat({ language: LANGUAGES.en, long: true });
+const fv16Short3 = buildFastFormat({ language: LANGUAGES.en, length: 3 });
+const fv16Long3 = buildFastFormat({ language: LANGUAGES.en, long: true, length: 3 });
 
 interface Entry {
 	name: string;
@@ -66,35 +73,75 @@ interface Entry {
 }
 
 const entries: Entry[] = [
+	// ─── Parse entries ────────────────────────────────────────────────────────
+	// The *returned* function is the hot function (craftFunction inner).
 	{
-		name: 'v18 (craftFunction, trie)',
-		fn: v18Wrap,
-		warm(): void { for (const s of samples) v18Wrap(s.input); },
-	},
-	{
-		name: 'v23 (craftFunction, trie)',
-		fn: v23Wrap,
-		warm(): void { for (const s of samples) v23Wrap(s.input); },
-	},
-	{
-		name: 'v25 (craftFunction, lookup)',
+		name: 'parse v25 (craftFunction, lookup)',
 		fn: v25Wrap,
 		warm(): void { for (const s of samples) v25Wrap(s.input); },
 	},
 	{
-		name: 'v29 (craftFunction, compressed DFA)',
-		fn: v29Wrap,
-		warm(): void { for (const s of samples) v29Wrap(s.input); },
+		name: 'parse v42 (avail=len-i)',
+		fn: v42Wrap,
+		warm(): void { for (const s of samples) v42Wrap(s.input); },
+	},
+
+	// ─── Format entries ───────────────────────────────────────────────────────
+	// v5/v6: returned fn IS the craftFunction inner (no wrapper).
+	{
+		name: 'format v5 — formatFn (merged)',
+		fn: fv5,
+		warm(): void { for (const ms of formatSamples) fv5(ms); },
 	},
 	{
-		name: 'v31 (eval closure, compressed)',
-		fn: v31Wrap,
-		warm(): void { for (const s of samples) v31Wrap(s.input); },
+		name: 'format v6 — formatFn (merged, short-first)',
+		fn: fv6,
+		warm(): void { for (const ms of formatSamples) fv6(ms); },
 	},
 	{
-		name: 'v32 (craftFunction, trie)',
-		fn: v32Wrap,
-		warm(): void { for (const s of samples) v32Wrap(s.input); },
+		name: 'format v10 — formatFn (Math.trunc)',
+		fn: fv10,
+		warm(): void { for (const ms of formatSamples) fv10(ms); },
+	},
+	{
+		name: 'format v11 — shortFn/longFn (specialized, arrow dispatch)',
+		fn: fv11,
+		warm(): void { for (const ms of formatSamples) fv11(ms); },
+	},
+	{
+		name: 'format v12 — shortFn/longFn (specialized, crafted dispatch)',
+		fn: fv12,
+		warm(): void { for (const ms of formatSamples) fv12(ms); },
+	},
+	{
+		name: 'format v15s — formatShort (specialized+split, short only)',
+		fn: fv15s,
+		warm(): void { for (const ms of formatSamples) fv15s(ms); },
+	},
+	{
+		name: 'format v15l — formatLong (specialized+split, long only)',
+		fn: fv15l,
+		warm(): void { for (const ms of formatSamples) fv15l(ms); },
+	},
+	{
+		name: 'format v16 short l=1 (fully parametric)',
+		fn: fv16Short,
+		warm(): void { for (const ms of formatSamples) fv16Short(ms); },
+	},
+	{
+		name: 'format v16 long  l=1 (fully parametric)',
+		fn: fv16Long,
+		warm(): void { for (const ms of formatSamples) fv16Long(ms); },
+	},
+	{
+		name: 'format v16 short l=3 (multi-unit)',
+		fn: fv16Short3,
+		warm(): void { for (const ms of formatSamples) fv16Short3(ms); },
+	},
+	{
+		name: 'format v16 long  l=3 (multi-unit)',
+		fn: fv16Long3,
+		warm(): void { for (const ms of formatSamples) fv16Long3(ms); },
 	},
 ];
 

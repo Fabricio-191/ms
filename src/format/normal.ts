@@ -59,7 +59,7 @@ function parseFormatOptions(options: Options = {}): ParsedOptions {
 	if (typeof parsedOptions.long !== 'boolean')
 		throw Error('\'long\' should be a boolean');
 
-	else if (typeof parsedOptions.length !== 'number' || parsedOptions.length < 1 || parsedOptions.length > 8)
+	else if (typeof parsedOptions.length !== 'number' || !Number.isFinite(parsedOptions.length) || parsedOptions.length < 1 || parsedOptions.length > 8)
 		throw Error('\'length\' should be a number between 1 and 8');
 
 	else if (typeof parsedOptions.format !== 'string')

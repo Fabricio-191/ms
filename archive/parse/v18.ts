@@ -23,6 +23,17 @@ import { craftFunction } from '../../utils/craft.ts';
 
 // ─── opt 4 + 7: code generator with path compression + boundary table ─────────
 
+/**
+ * Collects a maximal single-child chain from `(cc, node)` downward.
+ * Path compression: instead of emitting one `charCodeAt` check per trie level,
+ * consecutive single-child nodes are flattened into a sequence of consecutive
+ * index checks (`i+0`, `i+1`, …), which V8 can compile as a straight-line
+ * sequence with no branching overhead between chars.
+ *
+ * @returns `chain` — array of `[lo, hi]` char pairs for each position in the chain
+ *          (lo = lowercase code, hi = uppercase code; equal when non-letter).
+ *          `leaf` — first node that has zero or multiple children (chain terminus).
+ */
 function collectChain(cc: number, node: TrieNode): { chain: Array<[number, number]>; leaf: TrieNode } {
 	const upper = String.fromCharCode(cc).toUpperCase().charCodeAt(0);
 	const chain: Array<[number, number]> = [ [ cc, upper ] ];
@@ -38,6 +49,41 @@ function collectChain(cc: number, node: TrieNode): { chain: Array<[number, numbe
 	return { chain, leaf: cur };
 }
 
+/**
+ * Recursively generates trie-traversal code for a single trie node.
+ *
+ * For each node it emits (in order):
+ *   1. If the node is an accepting state (has a multiplier): a boundary check block
+ *      that, on success, adds `parsedValue * multiplier` to `value`, increments
+ *      `matchCount`, and breaks the enclosing `notationBlock` label.
+ *   2. If the node has one child: path-compressed consecutive char checks via
+ *      `collectChain` (e.g. "ears" in "years" → 4 consecutive `charCodeAt` guards).
+ *   3. If the node has multiple children: a `switch` on the next char with
+ *      case-insensitive pairs (both `'e'` and `'E'` map to the same child).
+ *
+ * Generated boundary check (accepting node):
+ * ```js
+ * { const c = s.charCodeAt(i);
+ *   if (i >= len || c >= 128 || !BOUND[c]) { value += parsedValue * <mult>; matchCount++; break notationBlock; } }
+ * ```
+ *
+ * Generated single-child compressed check (e.g. 'e'/'E'):
+ * ```js
+ * { const _c = s.charCodeAt(i + 0); if (_c !== 101 && _c !== 69) break notationBlock; } // 'e'
+ * ```
+ *
+ * Generated multi-child switch (e.g. 'e'/'E' and 'a'/'A' as siblings):
+ * ```js
+ * switch (s.charCodeAt(i)) {
+ *   case 101: // 'e'
+ *   case 69:  // 'E'
+ *     i++;
+ *     <recurse>
+ *     break;
+ *   ...
+ * }
+ * ```
+ */
 function generateCode(node: TrieNode, indent: string): string {
 	let code = '';
 
@@ -83,6 +129,31 @@ function generateCode(node: TrieNode, indent: string): string {
 	return code;
 }
 
+/**
+ * Generates the top-level dispatch `switch` over `ROOT[_c0]` branch IDs.
+ *
+ * The root trie node's children are pre-indexed into `ROOT[128]` by `buildRootDispatch`:
+ *   ROOT[charCode] = branch ID  (1-based; 0 = no notation starts with this char)
+ *
+ * Generated structure:
+ * ```js
+ * switch (_c0 < 128 ? ROOT[_c0] : 0) {
+ *   case 1:           // e.g. branch for 'y'/'Y'
+ *     i++;
+ *     <generateCode for that child>
+ *     break;
+ *   ...
+ *   case 0: if (_c0 >= 128) {   // non-ASCII dispatch (Japanese etc.)
+ *     switch (_c0) {
+ *       case <cc>:
+ *         i++;
+ *         <generateCode for that child>
+ *         break;
+ *     }
+ *   } break;
+ * }
+ * ```
+ */
 function generateRootCode(
 	branches: Map<number, TrieNode>,
 	nonAscii: Map<number, TrieNode>,
@@ -229,3 +300,62 @@ ${rootCode}					}
 
 	return craftFunction<ParseFunction | ParseWithCountFunction>('fastParseV18', [ 'str' ], source, { ROOT: rootArr, BOUND: boundaryArr });
 }
+
+/*
+ * ─── Example: generated code for English, 'h'/'H' branch ─────────────────────
+ *
+ * ROOT[104] = ROOT[72] = 5  ← both 'h'(104) and 'H'(72) map to branch ID 5
+ *
+ * generateRootCode emits the outer dispatch switch:
+ *
+ *   switch (_c0 < 128 ? ROOT[_c0] : 0) {
+ *     // ... other branches (case 1 = 'd'/'D', case 2 = 'm'/'M', ...) ...
+ *
+ *     case 5:       ← matched when _c0 is 'h'(104) or 'H'(72)
+ *       i++;        ← consume the first char
+ *       // generateCode for the 'h' child node:
+ *       //   node is accepting (h alone = "h" = 3,600,000 ms) AND has children (hr/hrs/hour/hours)
+ *       { const c = s.charCodeAt(i); if (i >= len || c >= 128 || !BOUND[c]) { value += parsedValue * 3600000; matchCount++; break notationBlock; } }
+ *       switch (s.charCodeAt(i)) {
+ *         case 111: // 'o'        ← "hour" / "hours" path
+ *         case 79:  // 'O'
+ *           i++;
+ *           { const _c = s.charCodeAt(i + 0); if (_c !== 117 && _c !== 85) break notationBlock; } // 'u'
+ *           { const _c = s.charCodeAt(i + 1); if (_c !== 114 && _c !== 82) break notationBlock; } // 'r'
+ *           i += 2;
+ *           // path-compressed: "ou" + "r" consumed in one block of consecutive checks
+ *           { const c = s.charCodeAt(i); if (i >= len || c >= 128 || !BOUND[c]) { value += parsedValue * 3600000; matchCount++; break notationBlock; } }
+ *           { const _c = s.charCodeAt(i + 0); if (_c !== 115 && _c !== 83) break notationBlock; } // 's'
+ *           i += 1;
+ *           { const c = s.charCodeAt(i); if (i >= len || c >= 128 || !BOUND[c]) { value += parsedValue * 3600000; matchCount++; break notationBlock; } }
+ *           break;
+ *         case 114: // 'r'        ← "hr" / "hrs" path
+ *         case 82:  // 'R'
+ *           i++;
+ *           { const c = s.charCodeAt(i); if (i >= len || c >= 128 || !BOUND[c]) { value += parsedValue * 3600000; matchCount++; break notationBlock; } }
+ *           { const _c = s.charCodeAt(i + 0); if (_c !== 115 && _c !== 83) break notationBlock; } // 's'
+ *           i += 1;
+ *           { const c = s.charCodeAt(i); if (i >= len || c >= 128 || !BOUND[c]) { value += parsedValue * 3600000; matchCount++; break notationBlock; } }
+ *           break;
+ *       }
+ *       break;
+ *
+ *     // ... remaining branches ...
+ *   }
+ *
+ * Reading the trace for input "2h":
+ *   _c0 = 'h'(104) → ROOT[104] = 5 → case 5
+ *   i++ (consume 'h')
+ *   boundary check: i is now at end-of-string → condition passes
+ *   → value += 2 * 3600000, matchCount++, break notationBlock  ✓
+ *
+ * Reading the trace for input "2hours":
+ *   _c0 = 'h'(104) → case 5, i++ (consume 'h')
+ *   boundary check fails (next char 'o' IS a notation char → BOUND['o'] = 1)
+ *   switch 'o'(111) → case 111, i++ (consume 'o')
+ *   compressed checks: charCodeAt(i+0)='u'(117) ✓, charCodeAt(i+1)='r'(114) ✓, i+=2
+ *   boundary check at "hours" → next char 's' IS notation char → BOUND['s'] = 1 → fails
+ *   compressed check: charCodeAt(i+0)='s'(115) ✓, i+=1
+ *   boundary check at end-of-string → passes
+ *   → value += 2 * 3600000, matchCount++, break notationBlock  ✓
+ */

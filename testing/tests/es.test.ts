@@ -179,14 +179,17 @@ describe('buildFastParse (español)', () => {
 
 describe('buildFastFormat (español)', () => {
 	it('current', () => {
-		const formatEs = buildFastFormat(es);
+		const formatEs = buildFastFormat({ language: es });
 		check(formatEs(7200000), '2h');
-		check(formatEs(7200000, true), '2 horas');
-		check(formatEs(1000, true), '1 segundo');
-		check(formatEs(2000, true), '2 segundos');
 		check(formatEs(-3600000), '- 1h');
-		check(formatEs(-3600000, true), '- 1 hora');
-		check(formatEs(0, true), '0 milisegundos');
+		check(formatEs(0), '0ms');
+
+		const formatEsLong = buildFastFormat({ language: es, long: true });
+		check(formatEsLong(7200000), '2 horas');
+		check(formatEsLong(1000), '1 segundo');
+		check(formatEsLong(2000), '2 segundos');
+		check(formatEsLong(-3600000), '- 1 hora');
+		check(formatEsLong(0), '0 milisegundos');
 	});
 });
 

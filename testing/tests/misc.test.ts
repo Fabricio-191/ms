@@ -47,6 +47,6 @@ describe('CJS build (lib/cjs) — smoke test', () => {
 		expect(cjsLib.format(7200000)).toBe('2h');
 		expect(cjsLib.format(7200000, { long: true })).toBe('2 hours');
 		expect(cjsLib.buildFastParse(cjsLib.LANGUAGES.en)('2h')).toBe(7200000);
-		expect(cjsLib.buildFastFormat(cjsLib.LANGUAGES.en)(7200000)).toBe('2h');
+		expect(cjsLib.buildFastFormat({ language: cjsLib.LANGUAGES.en })(7200000)).toBe('2h');
 	});
 });

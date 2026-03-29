@@ -8,15 +8,17 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:chromium.googlesource.com)",
-      "Bash(node:*)",
-      "Bash(node --import tsx/esm --eval \":*)",
-      "Bash(tsx --eval \":*)",
-      "Bash(sed:*)",
-      "Bash(npx jest:*)",
-      "Bash(grep:*)",
+      "Bash(node *)",
+      "Bash(tsx *)",
+      "Bash(npx *)",
       "Bash(python3:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(ls:*)",
+      "Bash(cd:*)",
       "Bash(mv:*)",
-      "Bash(ls:*)"
+      "Bash(mv src/format/variants/v13.ts archive/format/v13.ts)",
+      "Bash(mv src/format/variants/v14.ts archive/format/v14.ts)"
     ]
   }
 }

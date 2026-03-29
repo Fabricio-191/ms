@@ -1,16 +1,24 @@
 /**
- * Parse v23 — TurboFan-optimized variant.
+ * Parse v23 — TurboFan-optimized trie variant.
  *
  * Based on v18 with modifications to help V8's TurboFan compiler:
  * 1. No labeled statements — replaced with early returns via helper function
  * 2. No inline comments in generated code — cleaner for V8 parser
  * 3. Flattened control flow — less nesting depth
  * 4. Separated notation matching — V8 can optimize each path independently
+ *
+ * Results (Node.js v24.11.1, tinybench 1s, p50):
+ *   Single-unit valid:   ~1,929 ops/sec  (−10% vs v25)
+ *   Single-unit invalid: ~1,681 ops/sec  (−5.5% vs v25)
+ *   JIT tier: Maglev (33793)
+ *
+ * Superseded by v25 (flat lookup) which has simpler generated code and better
+ * branch prediction characteristics. Kept as reference for trie-based approach.
  */
-import type { Language } from '../../core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../utils/trie.ts';
-import type { ParseFunction } from '@src/core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import type { Language } from '../../src/core/index.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../src/utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
+import { craftFunction } from '../../src/utils/craft.ts';
 
 export type { ParseFunction };
 

@@ -61,6 +61,15 @@ export function collectCharRanges(dict: Record<string, number>, bothCases = fals
 /**
  * Generates a JS boolean expression that is true when `c` is a valid notation char.
  * Used both as the body of an `isNotationChar` arrow function and as an inline check.
+ *
+ * Each `[lo, hi]` range from `collectCharRanges` becomes either:
+ *   - An equality check `c === lo`          (single char, lo === hi)
+ *   - A range check `(c >= lo && c <= hi)`  (contiguous run)
+ *
+ * All checks are joined with ` || ` into a single expression.
+ *
+ * Example for English (partial): `c === 100 || (c >= 104 && c <= 109) || c === 115 || ...`
+ *   (100='d', 104–109='h'–'m', 115='s', …)
  */
 export function buildBoundaryExpr(ranges: Array<[number, number]>): string {
 	return ranges

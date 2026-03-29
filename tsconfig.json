@@ -4,7 +4,6 @@
 	"include": [
 		"src",
 		"testing",
-		"archive",
 		"eslint.config.ts",
 	],
 	"exclude": [

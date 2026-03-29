@@ -164,14 +164,16 @@ describe('buildFastParse (日本語)', () => {
 
 describe('buildFastFormat (日本語)', () => {
 	it('current', () => {
-		const formatJa = buildFastFormat(ja);
+		const formatJa = buildFastFormat({ language: ja });
 		check(formatJa(7200000), '2時間');
-		check(formatJa(7200000, true), '2 時間');
 		check(formatJa(1800000), '30分');
-		check(formatJa(1800000, true), '30 分');
 		check(formatJa(-7200000), '- 2時間');
-		check(formatJa(-7200000, true), '- 2 時間');
 		check(formatJa(0), '0ミリ秒');
+
+		const formatJaLong = buildFastFormat({ language: ja, long: true });
+		check(formatJaLong(7200000), '2 時間');
+		check(formatJaLong(1800000), '30 分');
+		check(formatJaLong(-7200000), '- 2 時間');
 	});
 });
 

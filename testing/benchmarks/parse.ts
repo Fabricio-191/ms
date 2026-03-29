@@ -2,22 +2,20 @@ import { Bench, type Task, type TaskResultCompleted } from 'tinybench';
 import vercelMs from 'ms';
 
 import { LANGUAGES, format, parse, parseVariants as buildVariants } from '@src/index.ts';
-import { createArgs, check, type FormatArgs } from '../utils.ts';
+import { createArgs, type FormatArgs } from '../utils.ts';
 import { createRequire } from 'module';
 
 type CompletedTask = Task & { result: TaskResultCompleted };
 
-const parseVariants = {
+const parseVariants: Record<string, (s: string) => number | null> = {
 	'vercel/ms': (s: string): number | null => vercelMs(s),
 	normal: (s: string): number | null => parse(s, LANGUAGES.en),
-	v18: buildVariants.v18(LANGUAGES.en),
-	v23: buildVariants.v23(LANGUAGES.en),
-	v25: buildVariants.v25(LANGUAGES.en),
-	v29: buildVariants.v29(LANGUAGES.en),
-	v31: buildVariants.v31(LANGUAGES.en),
-	v32: buildVariants.v32(LANGUAGES.en),
+	...Object.fromEntries(
+		Object.entries(buildVariants).map(([ k, build ]) => [ k, build(LANGUAGES.en) ]),
+	),
 };
 
+const concurrency = 'bench'; // null | 'task' | 'bench';
 const N = 10000;
 const INVALID_SAMPLES = Array.from({ length: N }, () => createArgs(false, true));
 const PARSE_SAMPLES_VERCEL = Array.from({ length: N }, (): FormatArgs => {
@@ -27,45 +25,35 @@ const PARSE_SAMPLES_VERCEL = Array.from({ length: N }, (): FormatArgs => {
 	return { ...args, input, expected };
 });
 
-export function benchParse(fn: (input: string) => number | null): () => void {
-	return () => {
-		for (const s of PARSE_SAMPLES_VERCEL) check(fn(s.input), s.expected);
-	};
-}
-
-export function benchParseInvalid(fn: (input: string) => number | null): () => void {
-	return () => {
-		for (const s of INVALID_SAMPLES) fn(s.input);
-	};
-}
-
 // ─── Parse single-unit — valid ────────────────────────────────────────────────
 
-const parseSingleValidBench = new Bench({ name: 'Parse single-unit — valid', time: 1_000 });
+const parseSingleValidBench = new Bench({
+	name: 'Parse single-unit — valid',
+	time: 1_000,
+	concurrency,
+});
 
-parseSingleValidBench
-	.add('vercel/ms', benchParse(parseVariants['vercel/ms']))
-	.add('parse', benchParse(parseVariants.normal))
-	.add('v18 single-pass', benchParse(parseVariants.v18))
-	.add('v23 turbofan-opt', benchParse(parseVariants.v23))
-	.add('v25 flat-lookup', benchParse(parseVariants.v25))
-	.add('v29 compressed-dfa', benchParse(parseVariants.v29))
-	.add('v31 eval-dfa', benchParse(parseVariants.v31))
-	.add('v32 craft-trie', benchParse(parseVariants.v32));
+for (const [ name, fn ] of Object.entries(parseVariants)) {
+	parseSingleValidBench.add(name, () => {
+		for (const s of PARSE_SAMPLES_VERCEL)
+			fn(s.input);
+	});
+}
 
 // ─── Parse single-unit — invalid ─────────────────────────────────────────────
 
-const parseSingleInvalidBench = new Bench({ name: 'Parse single-unit — invalid', time: 1_000 });
+const parseSingleInvalidBench = new Bench({
+	name: 'Parse single-unit — invalid',
+	time: 1_000,
+	concurrency,
+});
 
-parseSingleInvalidBench
-	.add('vercel/ms', benchParseInvalid(parseVariants['vercel/ms']))
-	.add('parse', benchParseInvalid(parseVariants.normal))
-	.add('v18 single-pass', benchParseInvalid(parseVariants.v18))
-	.add('v23 turbofan-opt', benchParseInvalid(parseVariants.v23))
-	.add('v25 flat-lookup', benchParseInvalid(parseVariants.v25))
-	.add('v29 compressed-dfa', benchParseInvalid(parseVariants.v29))
-	.add('v31 eval-dfa', benchParseInvalid(parseVariants.v31))
-	.add('v32 craft-trie', benchParseInvalid(parseVariants.v32));
+for (const [ name, fn ] of Object.entries(parseVariants)) {
+	parseSingleInvalidBench.add(name, () => {
+		for (const s of INVALID_SAMPLES)
+			fn(s.input);
+	});
+}
 
 // ─── Parse multi-unit ─────────────────────────────────────────────────────────
 
