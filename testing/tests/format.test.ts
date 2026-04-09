@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import { strictEqual } from 'node:assert';
-import { LANGUAGES, TIMES, Language, buildFormat as buildFastFormat, buildParse } from '@lib';
+import { LANGUAGES, TIMES, buildFormat as buildFastFormat, buildParse } from '@lib';
 
 const parseEn = buildParse(LANGUAGES.en);
 

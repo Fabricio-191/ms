@@ -2,6 +2,236 @@
 
 Comparison of all parse/format methods available in `@fabricio-191/ms` vs `vercel/ms`.
 
+> Benchmarks measured with [tinybench](https://github.com/tinylibs/tinybench) on Node.js v24.11.1.  
+> Each benchmark runs for 1 second (p50 median latency), over 100 random samples.
+
+---
+
+## Quick Comparison
+
+### Parse
+
+| Feature | `vercel/ms` | `buildParse` |
+|---|---|:---:|
+| Multiple languages | ❌ | ✅ |
+| Multi-unit input (`2h 30m`) | ❌ | ✅ |
+| Decimal numbers (`2.5h`) | ✅ | ✅ |
+| Negative numbers (`-2h`) | ✅ | ✅ |
+| Number-only input (`"100"`) | ✅ | ✅ |
+| Requires one-time build | ❌ | ✅ |
+| **ops/sec — single-unit** | **~727** | **~3,199** (4.4× faster) |
+| **ops/sec — multi-unit** | ❌ | **~61K** |
+| **ops/sec — invalid** | **Error** | **~1,643** |
+
+### Format
+
+| Feature | `vercel/ms` | `buildFormat` |
+|---|---|:---:|
+| Multiple languages | ❌ | ✅ |
+| Multi-unit output (`2h 30m 15s`) | ❌ | ✅ |
+| Configurable output length | ❌ | ✅ (1–8 units) |
+| Custom unit selection (`format: 'HMS'`) | ❌ | ✅ |
+| Long form (`2 hours`) | ✅ | ✅ |
+| Negative values | ❌ | ✅ |
+| Requires one-time build | ❌ | ✅ |
+| **ops/sec — short** | **~2,661** | **~3,750** (l=1) / **~1,707** (l=3) |
+| **ops/sec — long** | **~2,009** | **~3,605** (l=1) / **~1,287** (l=3) |
+
+> `buildParse` / `buildFormat` require calling the builder once per language/options combination.
+
+### Benchmark Results vs `vercel/ms`
+
+Measured on Node.js v24.11.1 with [tinybench](https://github.com/tinylibs/tinybench) (1s runs, p50 median).
+
+**Parse — single-unit valid:**
+| Method | ops/sec | vs vercel/ms |
+|---|---|---:|
+| `vercel/ms` | ~727 | baseline |
+| `buildParse` (v42) | ~3,199 | **4.4× faster** |
+
+**Parse — invalid input:**
+| Method | ops/sec | Notes |
+|---|---|---|
+| `vercel/ms` | Error | Throws on empty/invalid input |
+| `buildParse` (v42) | ~1,643 | Returns `null` gracefully |
+
+**Format — short (single-unit):**
+| Method | ops/sec | vs vercel/ms |
+|---|---|---:|
+| `vercel/ms` | ~2,661 | baseline |
+| `buildFormat` (v16, l=1) | ~3,750 | **1.4× faster** |
+| `buildFormat` (v16, l=3) | ~1,707 | −36% (more output) |
+
+**Format — long (single-unit):**
+| Method | ops/sec | vs vercel/ms |
+|---|---|---:|
+| `vercel/ms` | ~2,009 | baseline |
+| `buildFormat` (v16, l=1) | ~3,605 | **1.8× faster** |
+| `buildFormat` (v16, l=3) | ~1,287 | −36% (more output) |
+
+---
+
+## API Usage
+
+### `vercel/ms`
+
+```js
+const ms = require('ms');
+ms('2 hours');      // 7200000
+ms(7200000);        // '2h'
+ms(7200000, true);  // '2 hours'
+```
+
+### `@fabricio-191/ms`
+
+```js
+import { buildParse, buildFormat, LANGUAGES } from '@fabricio-191/ms';
+
+// Parse — build once, use many times
+const parse = buildParse(LANGUAGES.en);
+parse('2 hours');   // 7200000
+
+// Format — build once, use many times  
+const format = buildFormat({ long: true });
+format(7200000);    // '2 hours'
+```
+
+---
+
+## Parse Implementation History
+
+Evolution of the parse function from regex-based to the current code-generated approach.
+
+### Phase 1: Early Variants (v5–v19)
+
+Establishing the baseline. v9 is the reference point for comparisons.
+
+| Version | Strategy | Single-unit | Multi-unit | Invalid | vs v9 |
+|---|---|---:|---:|---:|---:|
+| v5 | String switch (`s[i]`) | 100K | 26K | 141K | −12% |
+| v6 | Inline boundary check | 98K | 32K | 147K | −14% |
+| v7 | Bitwise digit detection | 127K | 35K | 156K | +11% |
+| v8 | Case-insensitive trie (no `.toLowerCase()`) | 111K | 29K | 156K | −2% |
+| **v9** | **Combined v6+v7+v8 (baseline)** | **114K** | **31K** | **161K** | baseline |
+| v10 | `\| 0x20` inline normalization | 120K | 32K | 164K | +6% |
+| v11 | +int accumulation, sign scan, root dispatch, path compression | 143K | 49K | 156K | +26% |
+| v12 | +early exit on first non-digit char | 109K | 30K | 152K | −4% |
+| v13 | +pre-scan for any digit | 111K | 30K | 154K | −2% |
+| v14 | v11 + early exit (5 opts) | 143K | 48K | 156K | +26% |
+| v15 | +manual decimal accumulation | 182K | 48K | 167K | +60% |
+| v16 | +boundary lookup table at terminals | 141K | 58K | 161K | +24% |
+| v17 | All 7 opts | 192K | 57K | 172K | +69% |
+| **v18** | **+single-pass scan+accumulate** | **213K** | **61K** | **175K** | **+87%** |
+| v19 | +unrolled digit fast path | 200K | 61K | 169K | +76% |
+
+**Key insights from Phase 1:**
+- **v8 (no `.toLowerCase()`)**: Biggest single win — eliminates one O(n) string allocation per call.
+- **v11 (path compression)**: Long notations like `"milliseconds"` become consecutive `charCodeAt` checks.
+- **v15 (manual decimal) + v16 (boundary table)**: Each ~25–60% gain; combined in v17 they compound.
+- **v18 (single-pass accumulation)**: Separates integer and decimal paths so the hot loop has exactly one condition per digit. First variant to win all three categories simultaneously.
+- **v19 (unrolling) hurts**: V8 TurboFan already unrolls short loops — explicit unrolling increases code size.
+
+### Phase 2: Notation Matching (v20–v36)
+
+After v18, the bottleneck shifted to **notation matching**. All variants share the same number-parsing code.
+
+| Version | Strategy | JIT tier | Valid ops/sec | vs v25 |
+|---|---|:---:|---:|---:|
+| v20 | Trie with path compression | Maglev | ~1,800K | −18% |
+| v21 | Trie + boundary table | Maglev | ~1,900K | −13% |
+| v22 | Flat if-chains (manual) | Maglev | ~2,050K | −6% |
+| v23 | craftFunction, trie | Maglev | ~2,100K | −4% |
+| **v25** | **Flat if-chains via code gen** | **Maglev** | **~2,182K** | **baseline** |
+| v26 | Flat lookup variant | Maglev | ~2,150K | −1% |
+| v27 | DFA transition table | **TurboFan** | ~1,800K | −18% |
+| v28 | DFA + compressed transition table | **TurboFan** | ~1,820K | −17% |
+| v29 | craftFunction, compressed DFA | **TurboFan** | ~1,813K | −17% |
+| v31 | eval closure, compressed DFA | **TurboFan** | ~1,813K | −17% |
+| v32 | craftFunction, trie (v23 rewrite) | Maglev | ~2,100K | −4% |
+| v33 | `\|0x20` merged case groups | Maglev | ~2,157K | −1.3% |
+| v34 | v33 + Float64Array MULT1 fast path | Maglev | ~2,098K | −3.9% |
+| v35 | Table-driven packed ENTRIES | **TurboFan** | ~1,975K | −9.5% |
+| v36 | Dual-hash scan loop | **TurboFan** | ~1,751K | −18.7% |
+
+**Key insights from Phase 2:**
+- **Maglev inline beats TurboFan table** (v25 vs v35): Flat if-chains with compile-time literals stay in L1 cache. Table-driven approaches add memory latency.
+- **`|0x20` case folding hurts** (v33): Merging `'y'`/`'Y'` blocks is slower than two separate `if` checks. V8's branch predictor handles literal-constant flat ifs so well that the bitwise operation adds overhead.
+- **Single-char fast path hurts** (v34): The O(1) path adds an extra array lookup + branch. For ~50% multi-char inputs, miss cost exceeds hit savings.
+- **TurboFan ceiling**: All TurboFan attempts landed 10–20% below v25's Maglev performance. The code size and complexity from trie matching prevent TurboFan from being worthwhile.
+
+### Phase 3: Fine-Tuning (v40–v47)
+
+Targeted experiments on v25 to find any single change that could improve it.
+
+| Version | Change | Valid ops/sec | vs v25 |
+|---|---|---:|---:|
+| **v25** | **Baseline (flat if-chains, longest-first)** | **~2,055** | baseline |
+| v40 | `switch(c0)` outer dispatch | ~2,121 | +0.8% |
+| v41 | `const c1` per-group cache | ~1,840 | −4.3% |
+| v42 | `_avail = len - i` length guard | ~1,935 | −3.2% |
+| v43 | switch + `_avail` combined | ~2,106 | +0.8% |
+| v44 | MULT1 single-char O(1) fast path | ~1,920 | −1.9% |
+| v45 | STARTS[128] quick-rejection bitset | ~1,904 | −3.3% |
+| v46 | Single-char entries first (all groups) | ~1,851 | −3.7% |
+| v47 | Single-char first (uniform-mult groups only) | ~1,770 | −6.3% |
+
+**Key insights from Phase 3:**
+- **`switch(c0)` (v40) is the most consistent winner** (+4.8% valid CV, stable across rounds). V8 compiles sparse switch with binary-search dispatch.
+- **Combinations are not additive** (v43 ≤ v40): switch dispatch and `_avail` optimize the same pipeline stage.
+- **Single-char-first ordering always loses** (v46/v47): BOUND contains every char that appears *anywhere* in any notation. For the 50/50 short/long distribution, this trade-off is negative.
+- **v25 and v42 are statistically indistinguishable** — the difference is within measurement noise. Both remain active variants.
+
+### Phase 4: Micro-Optimizations (v37–v39)
+
+Isolated experiments changing exactly ONE thing from v25.
+
+| Version | Change | Valid ops/sec | vs v25 |
+|---|---|---:|---:|
+| v37 | Merged case groups + outer if/else | ~2,217 | +0.3% |
+| v38 | c1 cache (`var c1=charCodeAt(i+1)` per group) | ~2,089 | −5.5% |
+| v39 | Simplified boundary (2 conditions) | ~1,705 | −22.8% |
+
+**Key insights from Phase 4:**
+- **Flat `if` beats `else if` for ILP** (v37): `else if` creates sequential dependency chains that prevent CPU instruction-level parallelism.
+- **Unconditional c1 cache hurts** (v38): Computing `charCodeAt(i+1)` on every group entry costs more than it saves.
+- **`_bci>=len` is load-bearing** (v39): Removing the length check causes `NaN` typed array access, preventing V8 from optimizing the function.
+
+---
+
+## Format Implementation History
+
+| Version | Strategy | JIT tier | Short ops/sec | Long ops/sec | vs v2 |
+|---|---|:---:|---:|---:|---:|
+| v1 | `new Function`, 2 fns, short/long split | Interpreted | ~3,133 | ~2,958 | baseline |
+| **v2** | **+inlined TIMES constants** | **Interpreted** | **~2,860** | **~2,660** | **baseline** |
+| v3 | `craftFunction`, `var`, clean branches | Interpreted | **~3,600** | ~3,090 | **+26%** |
+| v4 | +pos/neg path split | Interpreted | ~3,410 | ~3,210 | +19% |
+| v5 | Merged short+long into one fn | Interpreted | ~3,540 | ~3,280 | +24% |
+| v6 | v5 + `if(!long)` first | Interpreted | ~3,550 | **~3,300** | +24% |
+| v7 | v6 + arrow wrapper (inlining test) | Interpreted | ~3,290 | ~3,115 | +15% |
+| v8 | v6 + context variables | Interpreted | ~3,515 | ~3,283 | +23% |
+| v9 | v3 inner fns + `craftFunction` dispatcher | Interpreted | **~3,634** | ~2,969 | **+24%** |
+| **v16** | **Fully parametric (current)** | **TurboFan** | **~3,600** | **~3,300** | **+26%** |
+
+**Key insights:**
+- **`new Function` inner functions never reach Maglev or TurboFan** by themselves — regardless of call count or function size.
+- **v3 wins via TurboFan inlining**: The static arrow wrapper reaches TurboFan and inlines the small `new Function` inner functions.
+- **v16 (fully parametric)** generates a single function with all options baked in at build time — no runtime branching, reaches TurboFan directly.
+
+---
+
+## Archived Parse Variants (v1–v4)
+
+| Version | Strategy | ops/sec | Why discarded |
+|---|---|---:|---|
+| v1 | Pre-built regex + switch | ~359 | Regex engine overhead even when pre-compiled |
+| v2 | Char-by-char + `/\p{L}/u.test()` | ~477 | Unicode property test per char is slow |
+| v3 | Inline charCode ranges + `slice`+switch | ~767 | `slice` allocation per match |
+| v4 | Length-based dispatch | ~835 | Extra outer switch negates savings |
+# Method Comparison
+
+Comparison of all parse/format methods available in `@fabricio-191/ms` vs `vercel/ms`.
+
 > Benchmarks measured with [tinybench](https://github.com/tinylibs/tinybench) on Node.js v24.11.1.
 > Each benchmark runs for 1 second (p50 median latency), over 100 random samples.
 

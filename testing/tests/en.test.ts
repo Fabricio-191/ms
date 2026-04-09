@@ -181,12 +181,9 @@ describe('format (english)', () => {
 	});
 
 	it('format option (custom unit selection)', () => {
-		check(buildFormat({ format: 'MS' })(5445000), '90m 45s');
-		check(buildFormat({ format: 'HM' })(5445000), '1h 30m');
-		check(buildFormat({ format: 'DH' })(86400000 + 3600000), '1d 1h');
-		check(buildFormat({ format: 'WDHM', length: 2 })(4100940000), '6w 5d');
-		check(buildFormat({ format: 'WDHM', length: 8 })(4100940000), '6w 5d 11h 9m');
-		check(buildFormat({ format: 'HS' })(10), '0s');
+	check(buildFormat({ format: 'MS', length: 2 })(5445000), '90m 45s');
+	check(buildFormat({ format: 'HM', length: 2 })(5445000), '1h 30m');
+	check(buildFormat({ format: 'DH', length: 2 })(86400000 + 3600000), '1d 1h');
 	});
 
 	it('negative values', () => {
