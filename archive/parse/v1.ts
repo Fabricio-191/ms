@@ -9,6 +9,7 @@
  */
 import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
+import { buildRegex } from '../utils/language.ts';
 
 function escapeString(value: string): string {
 	return value.replace(/\\/gu, '\\\\').replace(/'/gu, '\\x27');
@@ -31,7 +32,7 @@ function createSwitchBody(language: Language): string {
 }
 
 export function buildFastParse(language: Language): ParseFunction {
-	const regex = new RegExp(language.REGEX.source, 'giu');
+	const regex = new RegExp(buildRegex(language).source, 'giu');
 	const switchBody = createSwitchBody(language);
 
 	const source = `

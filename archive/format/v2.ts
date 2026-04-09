@@ -10,7 +10,8 @@
  * Result: Similar to v1 for short format, slightly better for long format.
  * V8's JIT already inlines constant object property access well.
  */
-import { TIMES, type Language } from '../../core/index.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, type Language } from '../../src/core/index.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
@@ -28,22 +29,22 @@ function escapeString(value: string): string {
 }
 
 function createInlinedShortFunction(language: Language): (ms: number) => string | null {
-	const ySingular = escapeString(language.getNotation('Y', false, true));
-	const yPlural = escapeString(language.getNotation('Y', false, false));
-	const moSingular = escapeString(language.getNotation('Mo', false, true));
-	const moPlural = escapeString(language.getNotation('Mo', false, false));
-	const wSingular = escapeString(language.getNotation('W', false, true));
-	const wPlural = escapeString(language.getNotation('W', false, false));
-	const dSingular = escapeString(language.getNotation('D', false, true));
-	const dPlural = escapeString(language.getNotation('D', false, false));
-	const hSingular = escapeString(language.getNotation('H', false, true));
-	const hPlural = escapeString(language.getNotation('H', false, false));
-	const mSingular = escapeString(language.getNotation('M', false, true));
-	const mPlural = escapeString(language.getNotation('M', false, false));
-	const sSingular = escapeString(language.getNotation('S', false, true));
-	const sPlural = escapeString(language.getNotation('S', false, false));
-	const msSingular = escapeString(language.getNotation('Ms', false, true));
-	const msPlural = escapeString(language.getNotation('Ms', false, false));
+	const ySingular = escapeString(getUnitNotation(language, 'Y', false, true));
+	const yPlural = escapeString(getUnitNotation(language, 'Y', false, false));
+	const moSingular = escapeString(getUnitNotation(language, 'Mo', false, true));
+	const moPlural = escapeString(getUnitNotation(language, 'Mo', false, false));
+	const wSingular = escapeString(getUnitNotation(language, 'W', false, true));
+	const wPlural = escapeString(getUnitNotation(language, 'W', false, false));
+	const dSingular = escapeString(getUnitNotation(language, 'D', false, true));
+	const dPlural = escapeString(getUnitNotation(language, 'D', false, false));
+	const hSingular = escapeString(getUnitNotation(language, 'H', false, true));
+	const hPlural = escapeString(getUnitNotation(language, 'H', false, false));
+	const mSingular = escapeString(getUnitNotation(language, 'M', false, true));
+	const mPlural = escapeString(getUnitNotation(language, 'M', false, false));
+	const sSingular = escapeString(getUnitNotation(language, 'S', false, true));
+	const sPlural = escapeString(getUnitNotation(language, 'S', false, false));
+	const msSingular = escapeString(getUnitNotation(language, 'Ms', false, true));
+	const msPlural = escapeString(getUnitNotation(language, 'Ms', false, false));
 
 	const source = `
 		if (typeof miliseconds !== 'number' || !Number.isFinite(miliseconds)) return null;
@@ -64,22 +65,22 @@ function createInlinedShortFunction(language: Language): (ms: number) => string 
 }
 
 function createInlinedLongFunction(language: Language): (ms: number) => string | null {
-	const ySingular = escapeString(language.getNotation('Y', true, true));
-	const yPlural = escapeString(language.getNotation('Y', true, false));
-	const moSingular = escapeString(language.getNotation('Mo', true, true));
-	const moPlural = escapeString(language.getNotation('Mo', true, false));
-	const wSingular = escapeString(language.getNotation('W', true, true));
-	const wPlural = escapeString(language.getNotation('W', true, false));
-	const dSingular = escapeString(language.getNotation('D', true, true));
-	const dPlural = escapeString(language.getNotation('D', true, false));
-	const hSingular = escapeString(language.getNotation('H', true, true));
-	const hPlural = escapeString(language.getNotation('H', true, false));
-	const mSingular = escapeString(language.getNotation('M', true, true));
-	const mPlural = escapeString(language.getNotation('M', true, false));
-	const sSingular = escapeString(language.getNotation('S', true, true));
-	const sPlural = escapeString(language.getNotation('S', true, false));
-	const msSingular = escapeString(language.getNotation('Ms', true, true));
-	const msPlural = escapeString(language.getNotation('Ms', true, false));
+	const ySingular = escapeString(getUnitNotation(language, 'Y', true, true));
+	const yPlural = escapeString(getUnitNotation(language, 'Y', true, false));
+	const moSingular = escapeString(getUnitNotation(language, 'Mo', true, true));
+	const moPlural = escapeString(getUnitNotation(language, 'Mo', true, false));
+	const wSingular = escapeString(getUnitNotation(language, 'W', true, true));
+	const wPlural = escapeString(getUnitNotation(language, 'W', true, false));
+	const dSingular = escapeString(getUnitNotation(language, 'D', true, true));
+	const dPlural = escapeString(getUnitNotation(language, 'D', true, false));
+	const hSingular = escapeString(getUnitNotation(language, 'H', true, true));
+	const hPlural = escapeString(getUnitNotation(language, 'H', true, false));
+	const mSingular = escapeString(getUnitNotation(language, 'M', true, true));
+	const mPlural = escapeString(getUnitNotation(language, 'M', true, false));
+	const sSingular = escapeString(getUnitNotation(language, 'S', true, true));
+	const sPlural = escapeString(getUnitNotation(language, 'S', true, false));
+	const msSingular = escapeString(getUnitNotation(language, 'Ms', true, true));
+	const msPlural = escapeString(getUnitNotation(language, 'Ms', true, false));
 
 	const source = `
 		if (typeof miliseconds !== 'number' || !Number.isFinite(miliseconds)) return null;

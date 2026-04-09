@@ -14,10 +14,10 @@
  *                                   no hasDot branch per iteration. Two separate tight loops replace the
  *                                   mixed digit/dot single loop of v17.
  */
-import type { Language } from '../../core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../utils/trie.ts';
+import type { Language } from '../../src/core/index.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../utils/trie.ts';
 import type { ParseFunction, ParseWithCountFunction } from '@src/core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────
 

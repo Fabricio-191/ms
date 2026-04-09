@@ -5,7 +5,7 @@
  * This tests whether closure vs arguments affects TurboFan optimization.
  */
 import type { Language } from '../../src/core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../src/utils/trie.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
 export type { ParseFunction };

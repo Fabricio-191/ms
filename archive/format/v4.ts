@@ -15,8 +15,9 @@
  *
  * Same two-function split as v3 (short + long) with same wrapper pattern.
  */
-import { TIMES, UNITS, type Language } from '../../core/index.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
@@ -30,8 +31,8 @@ function buildSplitBody(language: Language, long: boolean): string {
 
 	for (const unit of UNITS) {
 		const t = TIMES[unit];
-		const sing = escapeString(language.getNotation(unit, long, true));
-		const plur = escapeString(language.getNotation(unit, long, false));
+		const sing = escapeString(getUnitNotation(language, unit, long, true));
+		const plur = escapeString(getUnitNotation(language, unit, long, false));
 		// Positive path uses `ms` directly (ms >= 0 in this branch)
 		// Negative path uses `a = -ms`
 		const posExpr = t === 1 ? 'Math.floor(ms)' : `Math.floor(ms/${t})`;
@@ -46,7 +47,7 @@ function buildSplitBody(language: Language, long: boolean): string {
 		}
 	}
 
-	const zero = escapeString(language.getNotation(UNITS.at(-1)!, long, false));
+	const zero = escapeString(getUnitNotation(language, UNITS.at(-1)!, long, false));
 	// Both paths fall through to '0X' for values too small to represent (e.g. 0.5ms)
 	// Negative near-zero (e.g. -0.5ms) also returns '0ms' without prefix — matches v2/v3 behavior
 	posBranches += `return '0${zero}';`;

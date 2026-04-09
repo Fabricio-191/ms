@@ -10,7 +10,7 @@
  * 6. Manual decimal accumulation  — avoids parseFloat(slice()) for decimal inputs too, zero string allocation
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────

@@ -22,6 +22,7 @@
 		"bench:parse": "npm run transpile && tsx testing/benchmarks/parse.ts",
 		"bench:format": "npm run transpile && tsx testing/benchmarks/format.ts",
 		"bench:jit": "node --allow-natives-syntax --import tsx/esm testing/benchmarks/jit.ts",
+		"generate:examples": "tsx testing/generate-examples.ts",
 		"build": "npm run lint && npm run check:types && npm run transpile"
 	},
 	"engines": {

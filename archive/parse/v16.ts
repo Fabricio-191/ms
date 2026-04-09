@@ -11,7 +11,7 @@
  * original range check.
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────

@@ -23,11 +23,11 @@
  * and ALPHA = 1. All transitions go through the NA_KEYS/NA_VALS binary search,
  * same as v27.
  */
-import type { Language } from '../../core/index.ts';
-import { buildTrie, collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '../../core/types.ts';
-import { buildDFA } from '../../utils/dfa.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import type { Language } from '../../src/core/index.ts';
+import { buildTrie, collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
+import { buildDFA } from '../utils/dfa.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 export type { ParseFunction };
 

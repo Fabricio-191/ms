@@ -8,7 +8,7 @@
  * Handles: "invalid", "null", "NaN", "abc123", "xyz", etc. without scanning.
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
 function generateTrieCodeV9(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {

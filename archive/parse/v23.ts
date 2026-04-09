@@ -16,9 +16,9 @@
  * branch prediction characteristics. Kept as reference for trie-based approach.
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
-import { craftFunction } from '../../src/utils/craft.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 export type { ParseFunction };
 

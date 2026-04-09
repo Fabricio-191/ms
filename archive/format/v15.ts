@@ -26,8 +26,9 @@
  *
  * Uses Math.trunc throughout (v10 improvement).
  */
-import { TIMES, UNITS, type Language } from '../../core/index.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 type UnitKey = typeof UNITS[number];
@@ -38,8 +39,8 @@ function escapeString(value: string): string {
 
 function branchCode(unit: UnitKey, language: Language, long: boolean, noCondition = false): string {
 	const t = TIMES[unit];
-	const sing = escapeString(language.getNotation(unit, long, true));
-	const plur = escapeString(language.getNotation(unit, long, false));
+	const sing = escapeString(getUnitNotation(language, unit, long, true));
+	const plur = escapeString(getUnitNotation(language, unit, long, false));
 	const expr = t === 1 ? 'Math.trunc(a)' : `Math.trunc(a/${t})`;
 	if (noCondition) {
 		if (sing === plur) return `return p+${expr}+'${sing}';`;
@@ -59,7 +60,7 @@ function buildSpecializedBody(language: Language, long: boolean): string {
 	  branchCode(largeUnits.at(-1)!, language, long, true);
 
 	const smallUnits = allUnits.slice(mid + 1);
-	const zeroNotation = escapeString(language.getNotation(allUnits.at(-1)!, long, false));
+	const zeroNotation = escapeString(getUnitNotation(language, allUnits.at(-1)!, long, false));
 	const smallTier = `${smallUnits.map(u => branchCode(u, language, long)).join('')
 	}return '0${zeroNotation}';`;
 

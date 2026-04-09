@@ -26,11 +26,11 @@
  *   - w/W (all = 604,800,000): single-char 'w'/'W' first
  *   - y/Y (all = 31,557,600,000): single-char 'y'/'Y' first
  */
-import type { Language } from '../../core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '../../core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
-import { extractNotations, generateLookupCode } from '../../utils/notation.ts';
+import type { Language } from '../../src/core/index.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
+import { craftFunction } from '../utils/craft.ts';
+import { extractNotations, generateLookupCode } from '../utils/notation.ts';
 
 export function buildFastParse(language: Language): ParseFunction {
 	const ranges = collectCharRanges(language.dict, true);

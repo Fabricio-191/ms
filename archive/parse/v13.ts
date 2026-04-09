@@ -10,7 +10,7 @@
  * Contrast with v12 which only checks the first char but also catches "abc123".
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
 function generateTrieCodeV9(node: TrieNode, indent: string, ranges: Array<[number, number]>): string {

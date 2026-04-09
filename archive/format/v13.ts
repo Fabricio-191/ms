@@ -24,8 +24,9 @@
  * same size as v6, so Maglev threshold is not crossed. Benefit is purely
  * fewer comparisons at runtime.
  */
-import { TIMES, UNITS, type Language } from '../../core/index.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 type UnitKey = typeof UNITS[number];
@@ -36,8 +37,8 @@ function escapeString(value: string): string {
 
 function branchCode(unit: UnitKey, language: Language, long: boolean, noCondition = false): string {
 	const t = TIMES[unit];
-	const sing = escapeString(language.getNotation(unit, long, true));
-	const plur = escapeString(language.getNotation(unit, long, false));
+	const sing = escapeString(getUnitNotation(language, unit, long, true));
+	const plur = escapeString(getUnitNotation(language, unit, long, false));
 	const expr = t === 1 ? 'Math.trunc(a)' : `Math.trunc(a/${t})`;
 	if (noCondition) {
 		if (sing === plur) return `return p+${expr}+'${sing}';`;
@@ -60,7 +61,7 @@ function buildSplitBranches(language: Language, long: boolean): string {
 
 	// Small tier: UNITS[mid+1..] = M, S, Ms + zero return
 	const smallUnits = allUnits.slice(mid + 1) as UnitKey[];
-	const zeroNotation = escapeString(language.getNotation(allUnits.at(-1) as UnitKey, long, false));
+	const zeroNotation = escapeString(getUnitNotation(language, allUnits.at(-1) as UnitKey, long, false));
 	const smallTier = smallUnits.map(u => branchCode(u, language, long)).join('')
 		+ `return '0${zeroNotation}';`;
 

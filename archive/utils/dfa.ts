@@ -1,23 +1,13 @@
 import type { TrieNode } from './trie.ts';
 
 export interface DFA {
-	TRANS: Uint16Array; // [numStates * 128] — ASCII transitions (0 = dead state)
-	MULTS: Float64Array; // [numStates] — multiplier for accepting states (0 = not accepting)
-	NA_KEYS: Uint32Array; // sorted packed keys: (fromState << 16) | charCode, non-ASCII
-	NA_VALS: Uint16Array; // toState for each NA_KEYS entry
+	TRANS: Uint16Array;
+	MULTS: Float64Array;
+	NA_KEYS: Uint32Array;
+	NA_VALS: Uint16Array;
 	numStates: number;
 }
 
-/**
- * Converts a trie into a DFA transition table (BFS order).
- *
- * State 0 = dead. State 1 = root. States 2..N = trie nodes in BFS order.
- * Both lower and upper case map to the same child state (case-insensitive).
- *
- * ASCII transitions: TRANS[state * 128 + charCode] = nextState (0 = dead).
- * Non-ASCII transitions: binary search in NA_KEYS / NA_VALS.
- *   key = (fromState << 16) | charCode, sorted ascending.
- */
 export function buildDFA(root: TrieNode): DFA {
 	const stateMap = new Map<TrieNode, number>();
 	stateMap.set(root, 1);

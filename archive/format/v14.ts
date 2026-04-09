@@ -33,8 +33,9 @@
  * unit always "matches". For a=0 or sub-unit values, Math.trunc(a/1) = 0 and
  * the v===0 guard returns '0ms' (or equivalent).
  */
-import { TIMES, UNITS, type Language } from '../../core/index.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 type UnitKey = typeof UNITS[number];
@@ -47,10 +48,10 @@ export function buildFastFormat(language: Language): FastFormatFunction {
 	const n = T.length;
 
 	// Notation arrays — actual string values (not escaped for source injection)
-	const SS = allUnits.map(u => language.getNotation(u, false, true));
-	const SP = allUnits.map(u => language.getNotation(u, false, false));
-	const LS = allUnits.map(u => language.getNotation(u, true, true));
-	const LP = allUnits.map(u => language.getNotation(u, true, false));
+	const SS = allUnits.map(u => getUnitNotation(language, u, false, true));
+	const SP = allUnits.map(u => getUnitNotation(language, u, false, false));
+	const LS = allUnits.map(u => getUnitNotation(language, u, true, true));
+	const LP = allUnits.map(u => getUnitNotation(language, u, true, false));
 
 	// Fixed body — references T, SS, SP, LS, LP from closures
 	// Loop scans forward until a >= T[i]; stops at index n-1 (last unit)

@@ -11,7 +11,8 @@
  * V8 JIT optimizes the `long` branch well enough that separate functions
  * don't provide significant benefit.
  */
-import { TIMES, type Unit, type Language } from '../../core/index.ts';
+import { TIMES, type Unit, type Language } from '../../src/core/index.ts';
+import { getUnitNotation } from '../utils/language.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
@@ -26,8 +27,8 @@ function createShortBranches(language: Language): string {
 
 	for (const unit of UNITS) {
 		const unitValue = TIMES[unit];
-		const singular = escapeString(language.getNotation(unit, false, true));
-		const plural = escapeString(language.getNotation(unit, false, false));
+		const singular = escapeString(getUnitNotation(language, unit, false, true));
+		const plural = escapeString(getUnitNotation(language, unit, false, false));
 
 		const result = singular === plural ? `'${singular}'` : `(value === 1 ? '${singular}' : '${plural}')`;
 
@@ -39,7 +40,7 @@ function createShortBranches(language: Language): string {
 	}
 
 	const smallestUnit = UNITS.at(-1)!;
-	const zeroNotation = escapeString(language.getNotation(smallestUnit, false, false));
+	const zeroNotation = escapeString(getUnitNotation(language, smallestUnit, false, false));
 
 	branches += `
 			return '0${zeroNotation}';
@@ -53,8 +54,8 @@ function createLongBranches(language: Language): string {
 
 	for (const unit of UNITS) {
 		const unitValue = TIMES[unit];
-		const singular = escapeString(language.getNotation(unit, true, true));
-		const plural = escapeString(language.getNotation(unit, true, false));
+		const singular = escapeString(getUnitNotation(language, unit, true, true));
+		const plural = escapeString(getUnitNotation(language, unit, true, false));
 
 		const result = singular === plural ? `'${singular}'` : `(value === 1 ? '${singular}' : '${plural}')`;
 
@@ -66,7 +67,7 @@ function createLongBranches(language: Language): string {
 	}
 
 	const smallestUnit = UNITS.at(-1)!;
-	const zeroNotation = escapeString(language.getNotation(smallestUnit, true, false));
+	const zeroNotation = escapeString(getUnitNotation(language, smallestUnit, true, false));
 
 	branches += `
 			return '0${zeroNotation}';

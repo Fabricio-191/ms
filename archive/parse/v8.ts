@@ -1,5 +1,5 @@
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryExpr } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryExpr } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
 // v3.6: Avoids .toLowerCase() entirely by comparing both uppercase and lowercase

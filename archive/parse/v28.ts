@@ -17,7 +17,7 @@
  * iSlot (Uint32Array[1]) is a per-language mutable slot for returning new `i`.
  */
 import type { Language } from '../../src/core/index.ts';
-import { buildTrie, collectCharRanges, buildBoundaryTable } from '../../src/utils/trie.ts';
+import { buildTrie, collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
 import { buildDFA } from './dfa.ts';
 import type { ParseFunction } from '@src/core/types.ts';
 

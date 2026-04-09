@@ -11,8 +11,9 @@
  * If TurboFan inlines the merged function → wins both short AND long (best of both)
  * If TurboFan does NOT inline (body too large) → same perf as v6 (confirms size is the limit)
  */
-import { TIMES, UNITS, type Language } from '../../core/index.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
@@ -25,8 +26,8 @@ function buildBranches(language: Language, long: boolean): string {
 
 	for (const unit of UNITS) {
 		const t = TIMES[unit];
-		const sing = escapeString(language.getNotation(unit, long, true));
-		const plur = escapeString(language.getNotation(unit, long, false));
+		const sing = escapeString(getUnitNotation(language, unit, long, true));
+		const plur = escapeString(getUnitNotation(language, unit, long, false));
 		const expr = t === 1 ? 'Math.floor(a)' : `Math.floor(a/${t})`;
 
 		if (sing === plur) {
@@ -36,7 +37,7 @@ function buildBranches(language: Language, long: boolean): string {
 		}
 	}
 
-	const zero = escapeString(language.getNotation(UNITS.at(-1)!, long, false));
+	const zero = escapeString(getUnitNotation(language, UNITS.at(-1)!, long, false));
 	body += `return '0${zero}';`;
 	return body;
 }

@@ -1,5 +1,6 @@
-import { Language } from '../core/index.ts';
-import { LANGUAGES } from '../core/languages.ts';
+import { Language } from '../../src/core/index.ts';
+import { LANGUAGES } from '../../src/core/languages.ts';
+import { buildRegex } from '../utils/language.ts';
 
 export function parse(str: string, languages: Language | Language[] = LANGUAGES.en): number | null {
 	if (typeof str !== 'string' || str === '') return null;
@@ -27,7 +28,7 @@ function langParse(str: string, lang: Language): { value: number; matches_qty: n
 	let final_value = 0;
 	let matches_qty = 0;
 
-	const matches = str.matchAll(lang.REGEX);
+	const matches = str.matchAll(buildRegex(lang));
 
 	for (const match of matches) {
 		const { value, unit } = match.groups as { value: string; unit: string };

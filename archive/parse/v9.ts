@@ -1,5 +1,5 @@
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
 
 // v9: Combines all optimizations:

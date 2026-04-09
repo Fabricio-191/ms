@@ -18,8 +18,9 @@
  *
  * Uses Math.trunc instead of Math.floor (v10 improvement — safe for a >= 0).
  */
-import { TIMES, UNITS, type Language } from '../../core/index.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
@@ -32,8 +33,8 @@ function buildBody(language: Language, long: boolean): string {
 
 	for (const unit of UNITS) {
 		const t = TIMES[unit];
-		const sing = escapeString(language.getNotation(unit, long, true));
-		const plur = escapeString(language.getNotation(unit, long, false));
+		const sing = escapeString(getUnitNotation(language, unit, long, true));
+		const plur = escapeString(getUnitNotation(language, unit, long, false));
 		const expr = t === 1 ? 'Math.trunc(a)' : `Math.trunc(a/${t})`;
 
 		if (sing === plur)
@@ -42,7 +43,7 @@ function buildBody(language: Language, long: boolean): string {
 			branches += `if(a>=${t}){var v=${expr};return p+v+(v===1?'${sing}':'${plur}');}`;
 	}
 
-	const zero = escapeString(language.getNotation(UNITS.at(-1)!, long, false));
+	const zero = escapeString(getUnitNotation(language, UNITS.at(-1)!, long, false));
 	branches += `return '0${zero}';`;
 
 	return `if(typeof ms!=='number'||!Number.isFinite(ms))return null;var neg=ms<0;var a=neg?-ms:ms;var p=neg?'- ':'';${branches}`;

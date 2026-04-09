@@ -26,10 +26,10 @@
  * Hypothesis disproved — discarded.
  */
 import type { Language } from '../../src/core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../src/utils/trie.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
-import { craftFunction } from '../../src/utils/craft.ts';
-import { extractNotations, generateOptimizedLookupCode, buildSingleCharTable } from '../../src/utils/notation.ts';
+import { craftFunction } from '../utils/craft.ts';
+import { extractNotations, generateOptimizedLookupCode, buildSingleCharTable } from '../utils/notation.ts';
 
 export type { ParseFunction };
 

@@ -30,11 +30,11 @@
  *     check (both miss) before falling through — small overhead.
  *   - Phase 2 code is shorter (no single-char entries) → potentially TurboFan.
  */
-import type { Language } from '../../core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '../../core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
-import { extractNotations, generateLookupCode, buildBothCaseSingleCharTable } from '../../utils/notation.ts';
+import type { Language } from '../../src/core/index.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
+import { craftFunction } from '../utils/craft.ts';
+import { extractNotations, generateLookupCode, buildBothCaseSingleCharTable } from '../utils/notation.ts';
 
 export function buildFastParse(language: Language): ParseFunction {
 	const ranges = collectCharRanges(language.dict, true);

@@ -1,4 +1,4 @@
-import type { TrieNode } from '../../src/utils/trie.ts';
+import type { TrieNode } from '../utils/trie.ts';
 
 export interface DFA {
 	TRANS: Uint16Array; // [numStates * 128] — ASCII transitions (0 = dead state)

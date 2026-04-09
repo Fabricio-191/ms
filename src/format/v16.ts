@@ -34,13 +34,12 @@
  *   length:   1  ← default is 1 (single-unit, fastest) unlike normal which defaulted to 3
  *   format:   'YMoDHMSMs'
  */
-import { TIMES, Language, type Unit } from '../core/index.ts';
+import { TIMES, Language, type Unit, type Notations } from '../core/index.ts';
 import { LANGUAGES } from '../core/languages.ts';
 import { craftFunction } from '../utils/craft.ts';
 
 export type FastFormatFn = (ms: number) => string | null;
 
-// ValidFormat: every ordered subset of units (excluding the empty string).
 export type ValidFormat = Exclude<`${'Y' | ''}${'Mo' | ''}${'W' | ''}${'D' | ''}${'H' | ''}${'M' | ''}${'S' | ''}${'Ms' | ''}`, ''>;
 
 const FORMATS_REGEX = /Mo|Ms|Y|W|D|H|M|S/gu;
@@ -56,8 +55,17 @@ function escapeString(value: string): string {
 	return value.replace(/\\/gu, '\\\\').replace(/'/gu, '\\x27');
 }
 
+function getNotation(notations: Notations, long: boolean, singular: boolean): string {
+	if (long) {
+		if (singular) return ` ${notations.singular}`;
+		return ` ${notations.plural ?? notations.singular}`;
+	}
+	if (singular) return notations.shortSingular ?? notations.singular;
+	return notations.shortPlural ?? notations.shortSingular ?? notations.plural ?? notations.singular;
+}
+
 function notation(language: Language, unit: Unit, long: boolean, singular: boolean): string {
-	return escapeString(language.getNotation(unit, long, singular));
+	return escapeString(getNotation(language.units[unit], long, singular));
 }
 
 // ─── length === 1 ─────────────────────────────────────────────────────────────

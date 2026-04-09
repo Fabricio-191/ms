@@ -13,7 +13,7 @@
  * - Language data lives entirely in the typed arrays passed as parameters.
  */
 import type { Language } from '../../src/core/index.ts';
-import { buildTrie, collectCharRanges, buildBoundaryTable } from '../../src/utils/trie.ts';
+import { buildTrie, collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
 import { buildDFA } from './dfa.ts';
 import type { ParseFunction } from '@src/core/types.ts';
 

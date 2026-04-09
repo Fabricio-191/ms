@@ -2,10 +2,6 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-}
-
 export const TIMES = Object.freeze({
 	Y: 1000 * 60 * 60 * 24 * 365.25,
 	Mo: 1000 * 60 * 60 * 24 * 30,
@@ -73,7 +69,6 @@ export class Language {
 	};
 
 	public readonly dict: Record<string, number> = {};
-	public readonly REGEX: RegExp;
 
 	public constructor(name: string, data: LanguageData) {
 		checkLanguageData(data);
@@ -95,26 +90,6 @@ export class Language {
 			for (const notation of this.units[key].all)
 				this.dict[notation.toLowerCase()] = TIMES[key];
 		}
-
-		const escapedNotations = Object.keys(this.dict)
-			.sort((a, b) => b.length - a.length)
-			.map(escapeRegex)
-			.join('|');
-
-		this.REGEX = RegExp(`(?<![.\\d])(?<value>\\d*\\.?\\d+) {0,3}(?<unit>${escapedNotations})(?!\\p{L})`, 'giu');
-	}
-
-	public getNotation(unit: Unit, long: boolean, singular: boolean): string {
-		const notations = this.units[unit];
-
-		if (long) {
-			if (singular) return ` ${notations.singular}`;
-
-			return ` ${notations.plural ?? notations.singular}`;
-		}
-		if (singular) return notations.shortSingular ?? notations.singular;
-
-		return notations.shortPlural ?? notations.shortSingular ?? notations.plural ?? notations.singular;
 	}
 }
 

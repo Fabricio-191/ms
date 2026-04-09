@@ -31,10 +31,10 @@
  * are >= 1 — prevents `if(gi)` from treating the first group as falsy when offset=0.
  */
 import type { Language } from '../../src/core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../src/utils/trie.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
 import type { ParseFunction } from '../../src/core/types.ts';
-import { craftFunction } from '../../src/utils/craft.ts';
-import { extractNotations, buildPackedEntries } from '../../src/utils/notation.ts';
+import { craftFunction } from '../utils/craft.ts';
+import { extractNotations, buildPackedEntries } from '../utils/notation.ts';
 
 export type { ParseFunction };
 

@@ -19,8 +19,9 @@
  * If correct, documents that TurboFan's inlining threshold is instruction-count based,
  * not source-size based.
  */
-import { TIMES, UNITS, type Language } from '../../core/index.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import { getUnitNotation } from '../utils/language.ts';
+import { TIMES, UNITS, type Language } from '../../src/core/index.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 type FastFormatFunction = (miliseconds: number, long?: boolean) => string | null;
 
@@ -29,14 +30,14 @@ function buildContext(language: Language): Record<string, unknown> {
 	for (let i = 0; i < UNITS.length; i++) {
 		const unit = UNITS[i]!;
 		ctx[`t${i}`] = TIMES[unit];
-		ctx[`ss${i}`] = language.getNotation(unit, false, true);
-		ctx[`sp${i}`] = language.getNotation(unit, false, false);
-		ctx[`ls${i}`] = language.getNotation(unit, true, true);
-		ctx[`lp${i}`] = language.getNotation(unit, true, false);
+		ctx[`ss${i}`] = getUnitNotation(language, unit, false, true);
+		ctx[`sp${i}`] = getUnitNotation(language, unit, false, false);
+		ctx[`ls${i}`] = getUnitNotation(language, unit, true, true);
+		ctx[`lp${i}`] = getUnitNotation(language, unit, true, false);
 	}
 	const last = UNITS.at(-1)!;
-	ctx['z'] = '0' + language.getNotation(last, false, false);
-	ctx['zl'] = '0' + language.getNotation(last, true, false);
+	ctx['z'] = '0' + getUnitNotation(language, last, false, false);
+	ctx['zl'] = '0' + getUnitNotation(language, last, true, false);
 	return ctx;
 }
 
@@ -49,10 +50,10 @@ function buildMergedBody(language: Language): string {
 		const t = TIMES[unit];
 		const expr = t === 1 ? 'Math.floor(a)' : `Math.floor(a/t${i})`;
 
-		const ss = language.getNotation(unit, false, true);
-		const sp = language.getNotation(unit, false, false);
-		const ls = language.getNotation(unit, true, true);
-		const lp = language.getNotation(unit, true, false);
+		const ss = getUnitNotation(language, unit, false, true);
+		const sp = getUnitNotation(language, unit, false, false);
+		const ls = getUnitNotation(language, unit, true, true);
+		const lp = getUnitNotation(language, unit, true, false);
 
 		if (ss === sp) {
 			shortBranches += `if(a>=t${i})return p+${expr}+ss${i};`;

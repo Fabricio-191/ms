@@ -10,11 +10,11 @@
  *
  * Algorithm: identical to v29. See v29.ts for the compressed-alphabet DFA details.
  */
-import type { Language } from '../../core/index.ts';
-import { buildTrie, collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '../../core/types.ts';
-import { buildDFA } from '../../utils/dfa.ts';
-import { craftFunction } from '../../utils/craft.ts';
+import type { Language } from '../../src/core/index.ts';
+import { buildTrie, collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
+import { buildDFA } from '../utils/dfa.ts';
+import { craftFunction } from '../utils/craft.ts';
 
 export type { ParseFunction };
 

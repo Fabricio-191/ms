@@ -9,7 +9,7 @@
  *    for 4+ digit numbers.
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../utils/trie.ts';
 import type { ParseFunction } from '@src/core/types.ts';
 
 // ─── opt 3: root dispatch table ───────────────────────────────────────────────

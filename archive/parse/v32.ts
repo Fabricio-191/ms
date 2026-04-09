@@ -18,11 +18,11 @@
  * wrapper, since it is not tainted by direct `eval()` scope. Result: both land at
  * Maglev — the body size (~75 lines) controls the tier, not the eval vs craftFunction choice.
  */
-import type { Language } from '../../core/index.ts';
-import { collectCharRanges, buildBoundaryTable } from '../../utils/trie.ts';
-import type { ParseFunction } from '../../core/types.ts';
-import { craftFunction } from '../../utils/craft.ts';
-import { extractNotations, generateLookupCode } from '../../utils/notation.ts';
+import type { Language } from '../../src/core/index.ts';
+import { collectCharRanges, buildBoundaryTable } from '../utils/trie.ts';
+import type { ParseFunction } from '../../src/core/types.ts';
+import { craftFunction } from '../utils/craft.ts';
+import { extractNotations, generateLookupCode } from '../utils/notation.ts';
 
 export type { ParseFunction };
 

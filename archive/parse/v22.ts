@@ -10,7 +10,7 @@
  *    - Direct comparison `d >=0` is CPU-predictable for typical digit streams
  */
 import type { Language } from '../../src/core/index.ts';
-import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../../src/utils/trie.ts';
+import { type TrieNode, buildTrie, collectCharRanges, buildBoundaryTable, buildRootDispatch } from '../utils/trie.ts';
 import type { ParseFunction } from '@src/core/types.ts';
 
 // ─── opt 10: branchless digit lookup table ───────────────────────────────────────

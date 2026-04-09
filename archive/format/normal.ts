@@ -1,5 +1,6 @@
-import { Language, TIMES, type Unit } from '../core/index.ts';
-import { LANGUAGES } from '../core/languages.ts';
+import { Language, TIMES, type Unit } from '../../src/core/index.ts';
+import { LANGUAGES } from '../../src/core/languages.ts';
+import { getUnitNotation } from '../utils/language.ts';
 
 export function format(miliseconds: number, options: Options = {}): string | null {
 	if (typeof miliseconds !== 'number' || !Number.isFinite(miliseconds)) return null;
@@ -16,14 +17,14 @@ export function format(miliseconds: number, options: Options = {}): string | nul
 
 		remaining -= value * TIMES[unit];
 
-		str += `${value}${lang.getNotation(unit, parsedOptions.long, value === 1)} `;
+		str += `${value}${getUnitNotation(lang, unit, parsedOptions.long, value === 1)} `;
 
 		parsedOptions.length -= 1;
 		if (parsedOptions.length === 0) break;
 	}
 
 	if (str === '' || str === '- ') // if the input is 0 or if it's too small to be represented in the specified format, return '0' with the smallest unit in the format
-		return `0${lang.getNotation(parsedOptions.format.at(-1)!, parsedOptions.long, false)}`;
+		return `0${getUnitNotation(lang, parsedOptions.format.at(-1)!, parsedOptions.long, false)}`;
 
 	return str.trimEnd();
 }
